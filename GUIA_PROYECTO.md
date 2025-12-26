@@ -45,7 +45,45 @@ Los medios de pago son **administrables** desde un módulo de configuración:
 - Los abonos reducen el saldo pendiente
 - Se registra fecha, valor y nota opcional
 
-### 2.6 Cálculo del Saldo Pendiente
+### 2.6 Categorías de Gasto
+Las categorías son **administrables** desde la aplicación:
+- El usuario puede **añadir**, **editar** y **eliminar** categorías
+- Cada categoría tiene: nombre, icono (opcional), color y estado (activo/inactivo)
+- No se puede eliminar una categoría que tenga gastos asociados (solo desactivar)
+- La categoría es **opcional** al registrar un gasto
+- Categorías por defecto (creadas con seeder):
+  1. Alimentación
+  2. Transporte
+  3. Servicios
+  4. Entretenimiento
+  5. Salud
+  6. Otros
+
+### 2.7 Conceptos Frecuentes
+Sistema para acelerar el registro diario:
+- Se guardan automáticamente los conceptos más usados
+- **Autocompletado** al escribir en el campo concepto
+- Lista de **favoritos** que el usuario puede marcar manualmente
+- Al seleccionar un favorito, puede autocompletar medio de pago y tipo
+- Administrable: el usuario puede eliminar conceptos de la lista
+
+### 2.8 Plantillas Rápidas
+Combinaciones predefinidas para registro en **2-3 taps**:
+- El usuario crea plantillas con: nombre, concepto, medio de pago, tipo, categoría y valor (opcional)
+- Ejemplo: "Almuerzo" → Concepto: "Almuerzo trabajo", Efectivo, Casa, Alimentación, $15.000
+- Acceso rápido desde el **dashboard** con botones destacados
+- Al usar una plantilla: solo confirmar fecha y valor (si no está predefinido)
+- Máximo 6 plantillas visibles en dashboard (las más usadas)
+
+### 2.9 Gastos Recurrentes
+Para gastos que se repiten mensualmente:
+- El usuario configura: concepto, medio de pago, tipo, categoría, valor, día del mes
+- Se registran **automáticamente** cada mes en la fecha configurada
+- Ejemplos: Netflix, Spotify, arriendo, servicios públicos
+- El usuario puede pausar o eliminar gastos recurrentes
+- Notificación visual cuando hay gastos recurrentes pendientes de confirmar
+
+### 2.10 Cálculo del Saldo Pendiente
 ```
 Saldo Persona 1 =
     + Suma de gastos tipo "persona_1"
@@ -66,25 +104,41 @@ finanzas/
 │   │   │   ├── GastoController.php
 │   │   │   ├── AbonoController.php
 │   │   │   ├── MedioPagoController.php
+│   │   │   ├── CategoriaController.php
+│   │   │   ├── ConceptoFrecuenteController.php
+│   │   │   ├── PlantillaController.php
+│   │   │   ├── GastoRecurrenteController.php
 │   │   │   ├── ConfiguracionController.php
 │   │   │   └── DashboardController.php
 │   │   └── Requests/
 │   │       ├── GastoRequest.php
 │   │       ├── AbonoRequest.php
-│   │       └── MedioPagoRequest.php
+│   │       ├── MedioPagoRequest.php
+│   │       ├── CategoriaRequest.php
+│   │       ├── PlantillaRequest.php
+│   │       └── GastoRecurrenteRequest.php
 │   └── Models/
 │       ├── Gasto.php
 │       ├── Abono.php
 │       ├── MedioPago.php
+│       ├── Categoria.php
+│       ├── ConceptoFrecuente.php
+│       ├── Plantilla.php
+│       ├── GastoRecurrente.php
 │       └── Configuracion.php
 ├── database/
 │   ├── migrations/
 │   │   ├── 2024_01_01_000001_create_medios_pago_table.php
-│   │   ├── 2024_01_01_000002_create_gastos_table.php
-│   │   ├── 2024_01_01_000003_create_abonos_table.php
-│   │   └── 2024_01_01_000004_create_configuraciones_table.php
+│   │   ├── 2024_01_01_000002_create_categorias_table.php
+│   │   ├── 2024_01_01_000003_create_gastos_table.php
+│   │   ├── 2024_01_01_000004_create_abonos_table.php
+│   │   ├── 2024_01_01_000005_create_conceptos_frecuentes_table.php
+│   │   ├── 2024_01_01_000006_create_plantillas_table.php
+│   │   ├── 2024_01_01_000007_create_gastos_recurrentes_table.php
+│   │   └── 2024_01_01_000008_create_configuraciones_table.php
 │   └── seeders/
 │       ├── MedioPagoSeeder.php
+│       ├── CategoriaSeeder.php
 │       └── ConfiguracionSeeder.php
 ├── resources/
 │   ├── js/
@@ -105,6 +159,18 @@ finanzas/
 │   │   │   │   ├── MedioPagoForm.vue
 │   │   │   │   ├── MedioPagoList.vue
 │   │   │   │   └── MedioPagoItem.vue
+│   │   │   ├── Categorias/
+│   │   │   │   ├── CategoriaForm.vue
+│   │   │   │   ├── CategoriaList.vue
+│   │   │   │   └── CategoriaItem.vue
+│   │   │   ├── Plantillas/
+│   │   │   │   ├── PlantillaForm.vue
+│   │   │   │   ├── PlantillaList.vue
+│   │   │   │   └── PlantillaQuickButtons.vue
+│   │   │   ├── GastosRecurrentes/
+│   │   │   │   ├── GastoRecurrenteForm.vue
+│   │   │   │   ├── GastoRecurrenteList.vue
+│   │   │   │   └── GastoRecurrenteItem.vue
 │   │   │   ├── Dashboard/
 │   │   │   │   ├── SaldoCard.vue
 │   │   │   │   ├── ResumenMes.vue
@@ -129,6 +195,11 @@ finanzas/
 │   │   │   ├── gastos.js
 │   │   │   ├── abonos.js
 │   │   │   ├── mediosPago.js
+│   │   │   ├── categorias.js
+│   │   │   ├── conceptosFrecuentes.js
+│   │   │   ├── plantillas.js
+│   │   │   ├── gastosRecurrentes.js
+│   │   │   ├── theme.js
 │   │   │   └── config.js
 │   │   └── router.js
 │   └── views/
@@ -148,51 +219,52 @@ finanzas/
 
 ### 4.1 Diagrama Entidad-Relación
 ```
-┌─────────────────────┐
-│    configuraciones  │
-├─────────────────────┤
-│ id                  │
-│ clave (unique)      │
-│ valor               │
-│ created_at          │
-│ updated_at          │
-└─────────────────────┘
+┌─────────────────────┐     ┌─────────────────────┐     ┌─────────────────────┐
+│    configuraciones  │     │    medios_pago      │     │     categorias      │
+├─────────────────────┤     ├─────────────────────┤     ├─────────────────────┤
+│ id                  │     │ id                  │     │ id                  │
+│ clave (unique)      │     │ nombre              │     │ nombre              │
+│ valor               │     │ icono (nullable)    │     │ icono (nullable)    │
+│ created_at          │     │ activo              │     │ color               │
+│ updated_at          │     │ orden               │     │ activo              │
+└─────────────────────┘     │ created_at          │     │ orden               │
+                            │ updated_at          │     │ created_at          │
+                            └─────────────────────┘     │ updated_at          │
+                                      ▲                 └─────────────────────┘
+                                      │                           ▲
+                                      │                           │
+┌─────────────────────────────────────┴───────────────────────────┴─────────────┐
+│                                   gastos                                       │
+├───────────────────────────────────────────────────────────────────────────────┤
+│ id | fecha | medio_pago_id (FK) | categoria_id (FK, nullable) | concepto |   │
+│ valor | tipo | created_at | updated_at                                        │
+└───────────────────────────────────────────────────────────────────────────────┘
 
-┌─────────────────────┐
-│    medios_pago      │
-├─────────────────────┤
-│ id                  │
-│ nombre              │
-│ icono (nullable)    │
-│ activo              │
-│ orden               │
+┌─────────────────────┐     ┌─────────────────────────────────────────────────┐
+│       abonos        │     │              conceptos_frecuentes               │
+├─────────────────────┤     ├─────────────────────────────────────────────────┤
+│ id                  │     │ id | concepto | medio_pago_id (FK, nullable) |  │
+│ fecha               │     │ tipo | uso_count | es_favorito | created_at |   │
+│ valor               │     │ updated_at                                      │
+│ nota (nullable)     │     └─────────────────────────────────────────────────┘
 │ created_at          │
-│ updated_at          │
-└─────────────────────┘
+│ updated_at          │     ┌─────────────────────────────────────────────────┐
+└─────────────────────┘     │                   plantillas                    │
+                            ├─────────────────────────────────────────────────┤
+                            │ id | nombre | concepto | medio_pago_id (FK) |   │
+                            │ categoria_id (FK, nullable) | tipo | valor |    │
+                            │ uso_count | activo | orden | created_at |       │
+                            │ updated_at                                      │
+                            └─────────────────────────────────────────────────┘
 
-┌─────────────────────┐       ┌─────────────────────┐
-│       gastos        │       │    medios_pago      │
-├─────────────────────┤       ├─────────────────────┤
-│ id                  │       │                     │
-│ fecha               │       │                     │
-│ medio_pago_id (FK)──┼──────►│ id                  │
-│ concepto            │       │                     │
-│ valor               │       │                     │
-│ tipo                │       │                     │
-│ created_at          │       │                     │
-│ updated_at          │       │                     │
-└─────────────────────┘       └─────────────────────┘
-
-┌─────────────────────┐
-│       abonos        │
-├─────────────────────┤
-│ id                  │
-│ fecha               │
-│ valor               │
-│ nota (nullable)     │
-│ created_at          │
-│ updated_at          │
-└─────────────────────┘
+                            ┌─────────────────────────────────────────────────┐
+                            │              gastos_recurrentes                 │
+                            ├─────────────────────────────────────────────────┤
+                            │ id | concepto | medio_pago_id (FK) |            │
+                            │ categoria_id (FK, nullable) | tipo | valor |    │
+                            │ dia_mes | activo | ultimo_registro |            │
+                            │ created_at | updated_at                         │
+                            └─────────────────────────────────────────────────┘
 ```
 
 ### 4.2 Tabla: `medios_pago`
@@ -218,12 +290,39 @@ finanzas/
 | Nequi | wallet | true | 3 |
 | Efectivo | banknotes | true | 4 |
 
-### 4.3 Tabla: `gastos`
+### 4.3 Tabla: `categorias`
+| Campo | Tipo | Restricciones | Descripción |
+|-------|------|---------------|-------------|
+| id | BIGINT | PK, AUTO_INCREMENT | Identificador único |
+| nombre | VARCHAR(100) | NOT NULL | Nombre de la categoría |
+| icono | VARCHAR(50) | NULLABLE | Nombre del icono |
+| color | VARCHAR(7) | NOT NULL, DEFAULT '#6B7280' | Color hex para UI |
+| activo | BOOLEAN | NOT NULL, DEFAULT TRUE | Si está disponible |
+| orden | INTEGER | NOT NULL, DEFAULT 0 | Orden de aparición |
+| created_at | TIMESTAMP | | Fecha de creación |
+| updated_at | TIMESTAMP | | Fecha de actualización |
+
+**Índices:**
+- `idx_categorias_activo` en columna `activo`
+- `idx_categorias_orden` en columna `orden`
+
+**Datos iniciales (Seeder):**
+| nombre | icono | color | activo | orden |
+|--------|-------|-------|--------|-------|
+| Alimentación | utensils | #10B981 | true | 1 |
+| Transporte | car | #3B82F6 | true | 2 |
+| Servicios | zap | #F59E0B | true | 3 |
+| Entretenimiento | film | #8B5CF6 | true | 4 |
+| Salud | heart | #EF4444 | true | 5 |
+| Otros | folder | #6B7280 | true | 6 |
+
+### 4.4 Tabla: `gastos`
 | Campo | Tipo | Restricciones | Descripción |
 |-------|------|---------------|-------------|
 | id | BIGINT | PK, AUTO_INCREMENT | Identificador único |
 | fecha | DATE | NOT NULL | Fecha del gasto |
 | medio_pago_id | BIGINT | NOT NULL, FK → medios_pago.id | Referencia al medio de pago |
+| categoria_id | BIGINT | NULLABLE, FK → categorias.id | Referencia a la categoría (opcional) |
 | concepto | VARCHAR(255) | NOT NULL | Descripción del gasto |
 | valor | DECIMAL(12,2) | NOT NULL, UNSIGNED | Monto del gasto |
 | tipo | VARCHAR(20) | NOT NULL | Enum: persona_1, persona_2, casa |
@@ -234,8 +333,9 @@ finanzas/
 - `idx_gastos_fecha` en columna `fecha`
 - `idx_gastos_tipo` en columna `tipo`
 - `idx_gastos_medio_pago_id` en columna `medio_pago_id`
+- `idx_gastos_categoria_id` en columna `categoria_id`
 
-### 4.4 Tabla: `abonos`
+### 4.5 Tabla: `abonos`
 | Campo | Tipo | Restricciones | Descripción |
 |-------|------|---------------|-------------|
 | id | BIGINT | PK, AUTO_INCREMENT | Identificador único |
@@ -248,7 +348,64 @@ finanzas/
 **Índices:**
 - `idx_abonos_fecha` en columna `fecha`
 
-### 4.5 Tabla: `configuraciones`
+### 4.6 Tabla: `conceptos_frecuentes`
+| Campo | Tipo | Restricciones | Descripción |
+|-------|------|---------------|-------------|
+| id | BIGINT | PK, AUTO_INCREMENT | Identificador único |
+| concepto | VARCHAR(255) | NOT NULL | Texto del concepto |
+| medio_pago_id | BIGINT | NULLABLE, FK → medios_pago.id | Medio de pago asociado (opcional) |
+| tipo | VARCHAR(20) | NULLABLE | Tipo asociado (opcional) |
+| uso_count | INTEGER | NOT NULL, DEFAULT 1 | Contador de usos |
+| es_favorito | BOOLEAN | NOT NULL, DEFAULT FALSE | Marcado como favorito |
+| created_at | TIMESTAMP | | Fecha de creación |
+| updated_at | TIMESTAMP | | Fecha de actualización |
+
+**Índices:**
+- `idx_conceptos_frecuentes_concepto` en columna `concepto`
+- `idx_conceptos_frecuentes_uso_count` en columna `uso_count`
+- `idx_conceptos_frecuentes_favorito` en columna `es_favorito`
+
+### 4.7 Tabla: `plantillas`
+| Campo | Tipo | Restricciones | Descripción |
+|-------|------|---------------|-------------|
+| id | BIGINT | PK, AUTO_INCREMENT | Identificador único |
+| nombre | VARCHAR(50) | NOT NULL | Nombre corto para el botón |
+| concepto | VARCHAR(255) | NOT NULL | Concepto predefinido |
+| medio_pago_id | BIGINT | NOT NULL, FK → medios_pago.id | Medio de pago |
+| categoria_id | BIGINT | NULLABLE, FK → categorias.id | Categoría (opcional) |
+| tipo | VARCHAR(20) | NOT NULL | Tipo: persona_1, persona_2, casa |
+| valor | DECIMAL(12,2) | NULLABLE | Valor predefinido (opcional) |
+| uso_count | INTEGER | NOT NULL, DEFAULT 0 | Contador de usos |
+| activo | BOOLEAN | NOT NULL, DEFAULT TRUE | Si está activa |
+| orden | INTEGER | NOT NULL, DEFAULT 0 | Orden de aparición |
+| created_at | TIMESTAMP | | Fecha de creación |
+| updated_at | TIMESTAMP | | Fecha de actualización |
+
+**Índices:**
+- `idx_plantillas_activo` en columna `activo`
+- `idx_plantillas_orden` en columna `orden`
+- `idx_plantillas_uso_count` en columna `uso_count`
+
+### 4.8 Tabla: `gastos_recurrentes`
+| Campo | Tipo | Restricciones | Descripción |
+|-------|------|---------------|-------------|
+| id | BIGINT | PK, AUTO_INCREMENT | Identificador único |
+| concepto | VARCHAR(255) | NOT NULL | Concepto del gasto |
+| medio_pago_id | BIGINT | NOT NULL, FK → medios_pago.id | Medio de pago |
+| categoria_id | BIGINT | NULLABLE, FK → categorias.id | Categoría (opcional) |
+| tipo | VARCHAR(20) | NOT NULL | Tipo: persona_1, persona_2, casa |
+| valor | DECIMAL(12,2) | NOT NULL | Valor del gasto |
+| dia_mes | INTEGER | NOT NULL | Día del mes (1-31) |
+| activo | BOOLEAN | NOT NULL, DEFAULT TRUE | Si está activo |
+| ultimo_registro | DATE | NULLABLE | Fecha del último registro automático |
+| created_at | TIMESTAMP | | Fecha de creación |
+| updated_at | TIMESTAMP | | Fecha de actualización |
+
+**Índices:**
+- `idx_gastos_recurrentes_activo` en columna `activo`
+- `idx_gastos_recurrentes_dia_mes` en columna `dia_mes`
+
+### 4.9 Tabla: `configuraciones`
 | Campo | Tipo | Restricciones | Descripción |
 |-------|------|---------------|-------------|
 | id | BIGINT | PK, AUTO_INCREMENT | Identificador único |
@@ -264,6 +421,7 @@ finanzas/
 | nombre_persona_2 | Persona 2 | Nombre de la persona 2 |
 | porcentaje_persona_1 | 40 | % de gastos casa para persona 1 |
 | porcentaje_persona_2 | 60 | % de gastos casa para persona 2 |
+| tema | system | Tema: light, dark, system |
 
 ---
 
@@ -314,7 +472,50 @@ class MedioPago extends Model
 }
 ```
 
-### 5.2 Modelo: Gasto
+### 5.2 Modelo: Categoria
+```php
+// app/Models/Categoria.php
+
+class Categoria extends Model
+{
+    protected $fillable = [
+        'nombre',
+        'icono',
+        'color',
+        'activo',
+        'orden'
+    ];
+
+    protected $casts = [
+        'activo' => 'boolean',
+        'orden' => 'integer'
+    ];
+
+    // Relaciones
+    public function gastos()
+    {
+        return $this->hasMany(Gasto::class);
+    }
+
+    // Scopes
+    public function scopeActivos($query)
+    {
+        return $query->where('activo', true);
+    }
+
+    public function scopeOrdenados($query)
+    {
+        return $query->orderBy('orden');
+    }
+
+    public function puedeEliminarse()
+    {
+        return $this->gastos()->count() === 0;
+    }
+}
+```
+
+### 5.3 Modelo: Gasto
 ```php
 // app/Models/Gasto.php
 
@@ -323,6 +524,7 @@ class Gasto extends Model
     protected $fillable = [
         'fecha',
         'medio_pago_id',
+        'categoria_id',
         'concepto',
         'valor',
         'tipo'
@@ -350,6 +552,11 @@ class Gasto extends Model
         return $this->belongsTo(MedioPago::class);
     }
 
+    public function categoria()
+    {
+        return $this->belongsTo(Categoria::class);
+    }
+
     // Scopes
     public function scopeFecha($query, $desde, $hasta)
     {
@@ -365,10 +572,15 @@ class Gasto extends Model
     {
         return $query->where('medio_pago_id', $medioPagoId);
     }
+
+    public function scopeCategoria($query, $categoriaId)
+    {
+        return $query->where('categoria_id', $categoriaId);
+    }
 }
 ```
 
-### 5.3 Modelo: Abono
+### 5.4 Modelo: Abono
 ```php
 // app/Models/Abono.php
 
@@ -393,7 +605,206 @@ class Abono extends Model
 }
 ```
 
-### 5.4 Modelo: Configuracion
+### 5.5 Modelo: ConceptoFrecuente
+```php
+// app/Models/ConceptoFrecuente.php
+
+class ConceptoFrecuente extends Model
+{
+    protected $table = 'conceptos_frecuentes';
+
+    protected $fillable = [
+        'concepto',
+        'medio_pago_id',
+        'tipo',
+        'uso_count',
+        'es_favorito'
+    ];
+
+    protected $casts = [
+        'uso_count' => 'integer',
+        'es_favorito' => 'boolean'
+    ];
+
+    // Relaciones
+    public function medioPago()
+    {
+        return $this->belongsTo(MedioPago::class);
+    }
+
+    // Scopes
+    public function scopeFavoritos($query)
+    {
+        return $query->where('es_favorito', true);
+    }
+
+    public function scopeMasUsados($query, $limite = 10)
+    {
+        return $query->orderByDesc('uso_count')->limit($limite);
+    }
+
+    // Incrementar uso
+    public function incrementarUso()
+    {
+        $this->increment('uso_count');
+    }
+
+    // Buscar o crear concepto
+    public static function registrarUso($concepto, $medioPagoId = null, $tipo = null)
+    {
+        $registro = self::firstOrCreate(
+            ['concepto' => $concepto],
+            ['medio_pago_id' => $medioPagoId, 'tipo' => $tipo]
+        );
+        $registro->incrementarUso();
+        return $registro;
+    }
+}
+```
+
+### 5.6 Modelo: Plantilla
+```php
+// app/Models/Plantilla.php
+
+class Plantilla extends Model
+{
+    protected $fillable = [
+        'nombre',
+        'concepto',
+        'medio_pago_id',
+        'categoria_id',
+        'tipo',
+        'valor',
+        'uso_count',
+        'activo',
+        'orden'
+    ];
+
+    protected $casts = [
+        'valor' => 'decimal:2',
+        'uso_count' => 'integer',
+        'activo' => 'boolean',
+        'orden' => 'integer'
+    ];
+
+    // Relaciones
+    public function medioPago()
+    {
+        return $this->belongsTo(MedioPago::class);
+    }
+
+    public function categoria()
+    {
+        return $this->belongsTo(Categoria::class);
+    }
+
+    // Scopes
+    public function scopeActivas($query)
+    {
+        return $query->where('activo', true);
+    }
+
+    public function scopeOrdenadas($query)
+    {
+        return $query->orderBy('orden');
+    }
+
+    public function scopeMasUsadas($query, $limite = 6)
+    {
+        return $query->orderByDesc('uso_count')->limit($limite);
+    }
+
+    // Usar plantilla (crea gasto)
+    public function usar($fecha, $valorOverride = null)
+    {
+        $this->increment('uso_count');
+
+        return Gasto::create([
+            'fecha' => $fecha,
+            'concepto' => $this->concepto,
+            'medio_pago_id' => $this->medio_pago_id,
+            'categoria_id' => $this->categoria_id,
+            'tipo' => $this->tipo,
+            'valor' => $valorOverride ?? $this->valor
+        ]);
+    }
+}
+```
+
+### 5.7 Modelo: GastoRecurrente
+```php
+// app/Models/GastoRecurrente.php
+
+class GastoRecurrente extends Model
+{
+    protected $table = 'gastos_recurrentes';
+
+    protected $fillable = [
+        'concepto',
+        'medio_pago_id',
+        'categoria_id',
+        'tipo',
+        'valor',
+        'dia_mes',
+        'activo',
+        'ultimo_registro'
+    ];
+
+    protected $casts = [
+        'valor' => 'decimal:2',
+        'dia_mes' => 'integer',
+        'activo' => 'boolean',
+        'ultimo_registro' => 'date'
+    ];
+
+    // Relaciones
+    public function medioPago()
+    {
+        return $this->belongsTo(MedioPago::class);
+    }
+
+    public function categoria()
+    {
+        return $this->belongsTo(Categoria::class);
+    }
+
+    // Scopes
+    public function scopeActivos($query)
+    {
+        return $query->where('activo', true);
+    }
+
+    public function scopePendientes($query)
+    {
+        $hoy = now();
+        return $query->activos()
+            ->where('dia_mes', '<=', $hoy->day)
+            ->where(function ($q) use ($hoy) {
+                $q->whereNull('ultimo_registro')
+                  ->orWhere('ultimo_registro', '<', $hoy->startOfMonth());
+            });
+    }
+
+    // Registrar gasto recurrente
+    public function registrar()
+    {
+        $gasto = Gasto::create([
+            'fecha' => now()->setDay($this->dia_mes),
+            'concepto' => $this->concepto,
+            'medio_pago_id' => $this->medio_pago_id,
+            'categoria_id' => $this->categoria_id,
+            'tipo' => $this->tipo,
+            'valor' => $this->valor
+        ]);
+
+        $this->update(['ultimo_registro' => now()]);
+
+        return $gasto;
+    }
+}
+```
+
+### 5.8 Modelo: Configuracion
 ```php
 // app/Models/Configuracion.php
 
@@ -446,13 +857,23 @@ class Configuracion extends Model
 | DELETE | `/api/medios-pago/{id}` | Eliminar medio de pago | Solo si no tiene gastos |
 | PUT | `/api/medios-pago/reordenar` | Reordenar medios de pago | `{orden: [id1, id2, ...]}` |
 
+#### Categorías
+| Método | Endpoint | Descripción | Body/Params |
+|--------|----------|-------------|-------------|
+| GET | `/api/categorias` | Listar categorías | `?activas=true` (opcional) |
+| POST | `/api/categorias` | Crear categoría | `{nombre, icono, color, activo, orden}` |
+| GET | `/api/categorias/{id}` | Obtener categoría | - |
+| PUT | `/api/categorias/{id}` | Actualizar categoría | `{nombre, icono, color, activo, orden}` |
+| DELETE | `/api/categorias/{id}` | Eliminar categoría | Solo si no tiene gastos |
+| PUT | `/api/categorias/reordenar` | Reordenar categorías | `{orden: [id1, id2, ...]}` |
+
 #### Gastos
 | Método | Endpoint | Descripción | Body/Params |
 |--------|----------|-------------|-------------|
-| GET | `/api/gastos` | Listar gastos con filtros | `?desde=&hasta=&tipo=&medio_pago_id=&page=` |
-| POST | `/api/gastos` | Crear nuevo gasto | `{fecha, medio_pago_id, concepto, valor, tipo}` |
+| GET | `/api/gastos` | Listar gastos con filtros | `?desde=&hasta=&tipo=&medio_pago_id=&categoria_id=&page=` |
+| POST | `/api/gastos` | Crear nuevo gasto | `{fecha, medio_pago_id, categoria_id, concepto, valor, tipo}` |
 | GET | `/api/gastos/{id}` | Obtener gasto específico | - |
-| PUT | `/api/gastos/{id}` | Actualizar gasto | `{fecha, medio_pago_id, concepto, valor, tipo}` |
+| PUT | `/api/gastos/{id}` | Actualizar gasto | `{fecha, medio_pago_id, categoria_id, concepto, valor, tipo}` |
 | DELETE | `/api/gastos/{id}` | Eliminar gasto | - |
 
 #### Abonos
@@ -463,6 +884,38 @@ class Configuracion extends Model
 | GET | `/api/abonos/{id}` | Obtener abono específico | - |
 | PUT | `/api/abonos/{id}` | Actualizar abono | `{fecha, valor, nota}` |
 | DELETE | `/api/abonos/{id}` | Eliminar abono | - |
+
+#### Conceptos Frecuentes
+| Método | Endpoint | Descripción | Body/Params |
+|--------|----------|-------------|-------------|
+| GET | `/api/conceptos-frecuentes` | Listar conceptos | `?favoritos=true&limite=10` |
+| GET | `/api/conceptos-frecuentes/buscar` | Autocompletado | `?q=texto` |
+| PUT | `/api/conceptos-frecuentes/{id}/favorito` | Toggle favorito | `{es_favorito: true/false}` |
+| DELETE | `/api/conceptos-frecuentes/{id}` | Eliminar concepto | - |
+
+#### Plantillas
+| Método | Endpoint | Descripción | Body/Params |
+|--------|----------|-------------|-------------|
+| GET | `/api/plantillas` | Listar plantillas | `?activas=true` |
+| GET | `/api/plantillas/rapidas` | Top 6 más usadas | - |
+| POST | `/api/plantillas` | Crear plantilla | `{nombre, concepto, medio_pago_id, categoria_id, tipo, valor, orden}` |
+| GET | `/api/plantillas/{id}` | Obtener plantilla | - |
+| PUT | `/api/plantillas/{id}` | Actualizar plantilla | `{nombre, concepto, medio_pago_id, categoria_id, tipo, valor, activo, orden}` |
+| DELETE | `/api/plantillas/{id}` | Eliminar plantilla | - |
+| POST | `/api/plantillas/{id}/usar` | Usar plantilla (crea gasto) | `{fecha, valor}` (valor opcional) |
+| PUT | `/api/plantillas/reordenar` | Reordenar plantillas | `{orden: [id1, id2, ...]}` |
+
+#### Gastos Recurrentes
+| Método | Endpoint | Descripción | Body/Params |
+|--------|----------|-------------|-------------|
+| GET | `/api/gastos-recurrentes` | Listar gastos recurrentes | `?activos=true` |
+| GET | `/api/gastos-recurrentes/pendientes` | Listar pendientes del mes | - |
+| POST | `/api/gastos-recurrentes` | Crear gasto recurrente | `{concepto, medio_pago_id, categoria_id, tipo, valor, dia_mes}` |
+| GET | `/api/gastos-recurrentes/{id}` | Obtener gasto recurrente | - |
+| PUT | `/api/gastos-recurrentes/{id}` | Actualizar gasto recurrente | `{concepto, medio_pago_id, categoria_id, tipo, valor, dia_mes, activo}` |
+| DELETE | `/api/gastos-recurrentes/{id}` | Eliminar gasto recurrente | - |
+| POST | `/api/gastos-recurrentes/{id}/registrar` | Registrar manualmente | - |
+| POST | `/api/gastos-recurrentes/registrar-pendientes` | Registrar todos los pendientes | - |
 
 #### Dashboard
 | Método | Endpoint | Descripción | Body/Params |
@@ -480,7 +933,7 @@ class Configuracion extends Model
 #### Exportación
 | Método | Endpoint | Descripción | Body/Params |
 |--------|----------|-------------|-------------|
-| GET | `/api/exportar/excel` | Exportar a Excel | `?desde=&hasta=&tipo=&medio_pago=` |
+| GET | `/api/exportar/excel` | Exportar a Excel | `?desde=&hasta=&tipo=&medio_pago_id=&categoria_id=` |
 
 ### 6.2 Respuestas API
 
@@ -644,6 +1097,7 @@ class GastoRequest extends FormRequest
         return [
             'fecha' => 'required|date',
             'medio_pago_id' => 'required|exists:medios_pago,id',
+            'categoria_id' => 'nullable|exists:categorias,id',
             'concepto' => 'required|string|max:255',
             'valor' => 'required|numeric|min:0.01',
             'tipo' => 'required|in:persona_1,persona_2,casa'
@@ -656,6 +1110,7 @@ class GastoRequest extends FormRequest
             'fecha.required' => 'La fecha es obligatoria',
             'medio_pago_id.required' => 'Selecciona un medio de pago',
             'medio_pago_id.exists' => 'Medio de pago no válido',
+            'categoria_id.exists' => 'Categoría no válida',
             'concepto.required' => 'El concepto es obligatorio',
             'valor.required' => 'El valor es obligatorio',
             'valor.min' => 'El valor debe ser mayor a 0',
@@ -704,6 +1159,76 @@ class AbonoRequest extends FormRequest
             'fecha' => 'required|date',
             'valor' => 'required|numeric|min:0.01',
             'nota' => 'nullable|string|max:255'
+        ];
+    }
+}
+```
+
+### 8.4 CategoriaRequest
+```php
+// app/Http/Requests/CategoriaRequest.php
+
+class CategoriaRequest extends FormRequest
+{
+    public function rules()
+    {
+        return [
+            'nombre' => 'required|string|max:100',
+            'icono' => 'nullable|string|max:50',
+            'color' => 'required|string|regex:/^#[0-9A-Fa-f]{6}$/',
+            'activo' => 'boolean',
+            'orden' => 'integer|min:0'
+        ];
+    }
+}
+```
+
+### 8.5 PlantillaRequest
+```php
+// app/Http/Requests/PlantillaRequest.php
+
+class PlantillaRequest extends FormRequest
+{
+    public function rules()
+    {
+        return [
+            'nombre' => 'required|string|max:50',
+            'concepto' => 'required|string|max:255',
+            'medio_pago_id' => 'required|exists:medios_pago,id',
+            'categoria_id' => 'nullable|exists:categorias,id',
+            'tipo' => 'required|in:persona_1,persona_2,casa',
+            'valor' => 'nullable|numeric|min:0.01',
+            'activo' => 'boolean',
+            'orden' => 'integer|min:0'
+        ];
+    }
+}
+```
+
+### 8.6 GastoRecurrenteRequest
+```php
+// app/Http/Requests/GastoRecurrenteRequest.php
+
+class GastoRecurrenteRequest extends FormRequest
+{
+    public function rules()
+    {
+        return [
+            'concepto' => 'required|string|max:255',
+            'medio_pago_id' => 'required|exists:medios_pago,id',
+            'categoria_id' => 'nullable|exists:categorias,id',
+            'tipo' => 'required|in:persona_1,persona_2,casa',
+            'valor' => 'required|numeric|min:0.01',
+            'dia_mes' => 'required|integer|min:1|max:31',
+            'activo' => 'boolean'
+        ];
+    }
+
+    public function messages()
+    {
+        return [
+            'dia_mes.min' => 'El día debe ser entre 1 y 31',
+            'dia_mes.max' => 'El día debe ser entre 1 y 31'
         ];
     }
 }
@@ -848,20 +1373,30 @@ export const useConfigStore = defineStore('config', {
 ```
 Componentes:
 - SaldoCard: Muestra saldo pendiente de persona 1 (destacado, grande)
-- ResumenMes: Gastos del mes por tipo y medio de pago
+- PlantillasRapidas: Botones de acceso rápido (máx 6, las más usadas)
+  - Al tocar: abre modal para confirmar fecha y valor
+  - Registro en 2-3 taps
+- AlertaRecurrentes: Banner si hay gastos recurrentes pendientes
+  - Muestra cantidad pendiente
+  - Botón para registrar todos o ver detalle
+- ResumenMes: Gastos del mes por tipo y categoría
 - UltimosMovimientos: Lista de últimos 10 movimientos
 
 Funcionalidades:
 - Auto-refresh cada 30 segundos (opcional)
 - Pull-to-refresh en móvil
+- Acceso rápido a nuevo gasto con autocompletado de conceptos
 ```
 
 #### Gastos/Create.vue
 ```
 Campos del formulario:
 - Fecha (date picker, default: hoy)
-- Medio de pago (select)
-- Concepto (input text)
+- Medio de pago (select con iconos)
+- Concepto (input text con autocompletado de conceptos frecuentes)
+  - Al escribir, muestra sugerencias
+  - Al seleccionar favorito, puede autocompletar medio de pago y tipo
+- Categoría (select opcional con colores)
 - Valor (input number con formato moneda)
 - Tipo/¿De quién? (3 botones: Persona1, Persona2, Casa)
 
@@ -870,6 +1405,7 @@ Características:
 - Botón de guardar habilitado solo si es válido
 - Feedback visual al guardar (toast/snackbar)
 - Después de guardar: limpiar formulario y mostrar opción de ver dashboard
+- El concepto se guarda automáticamente en conceptos frecuentes
 ```
 
 #### Historial.vue
@@ -880,30 +1416,56 @@ Funcionalidades:
   - Rango de fechas (date range picker)
   - Tipo (multiselect)
   - Medio de pago (multiselect)
+  - Categoría (multiselect con colores)
 - Ordenar por fecha (asc/desc)
 - Scroll infinito o paginación
 - Swipe para editar/eliminar (móvil)
 - Botón exportar a Excel
+- Cada item muestra: fecha, concepto, valor, tipo, categoría (badge color)
 ```
 
 #### Configuracion.vue
 ```
 Secciones:
 
-1. Personas y Porcentajes
+1. Apariencia
+   - Toggle de tema: Claro / Oscuro / Sistema
+   - Preview del tema seleccionado
+
+2. Personas y Porcentajes
    - Nombre persona 1 (input text)
    - Nombre persona 2 (input text)
    - Porcentaje persona 1 (slider o input 0-100)
    - Porcentaje persona 2 (calculado automáticamente)
 
-2. Medios de Pago (Módulo administrable)
+3. Medios de Pago (Módulo administrable)
    - Lista de medios de pago existentes (drag & drop para reordenar)
    - Cada item muestra: icono, nombre, estado (activo/inactivo)
    - Botón para añadir nuevo medio de pago
    - Acciones por item: editar, activar/desactivar, eliminar
    - Al eliminar: confirmar si no tiene gastos, o solo desactivar si tiene gastos
 
-3. Estadísticas
+4. Categorías (Módulo administrable)
+   - Lista de categorías con color e icono
+   - Drag & drop para reordenar
+   - Botón para añadir nueva categoría
+   - Acciones: editar, activar/desactivar, eliminar
+
+5. Plantillas Rápidas
+   - Lista de plantillas configuradas
+   - Mostrar: nombre, concepto, tipo, valor
+   - Drag & drop para reordenar (afecta orden en dashboard)
+   - Botón para crear nueva plantilla
+   - Acciones: editar, activar/desactivar, eliminar
+
+6. Gastos Recurrentes
+   - Lista de gastos recurrentes
+   - Mostrar: concepto, valor, día del mes, estado
+   - Indicador de próximo registro
+   - Botón para crear nuevo gasto recurrente
+   - Acciones: editar, pausar/activar, eliminar, registrar ahora
+
+7. Estadísticas y Datos
    - Total de gastos registrados
    - Total de abonos registrados
    - Opción para respaldar/exportar datos
@@ -1009,22 +1571,124 @@ if ('serviceWorker' in navigator) {
 
 ## 11. UI/UX Diseño
 
-### 11.1 Paleta de colores
+### 11.1 Sistema de Temas (Modo Claro/Oscuro)
+
+El sistema soporta tres modos de tema:
+- **light**: Tema claro (fondo blanco)
+- **dark**: Tema oscuro (fondo oscuro)
+- **system**: Sigue la preferencia del sistema operativo
+
+**Implementación:**
+```javascript
+// resources/js/Stores/theme.js
+import { defineStore } from 'pinia'
+
+export const useThemeStore = defineStore('theme', {
+    state: () => ({
+        tema: 'system' // 'light' | 'dark' | 'system'
+    }),
+
+    getters: {
+        temaActivo: (state) => {
+            if (state.tema === 'system') {
+                return window.matchMedia('(prefers-color-scheme: dark)').matches
+                    ? 'dark'
+                    : 'light'
+            }
+            return state.tema
+        }
+    },
+
+    actions: {
+        setTema(tema) {
+            this.tema = tema
+            localStorage.setItem('tema', tema)
+            this.aplicarTema()
+        },
+
+        aplicarTema() {
+            const html = document.documentElement
+            if (this.temaActivo === 'dark') {
+                html.classList.add('dark')
+            } else {
+                html.classList.remove('dark')
+            }
+        },
+
+        inicializar() {
+            this.tema = localStorage.getItem('tema') || 'system'
+            this.aplicarTema()
+
+            // Escuchar cambios en preferencia del sistema
+            window.matchMedia('(prefers-color-scheme: dark)')
+                .addEventListener('change', () => this.aplicarTema())
+        }
+    }
+})
+```
+
+### 11.2 Paleta de colores
 ```css
+/* Tema Claro (default) */
 :root {
     --primary: #4f46e5;      /* Indigo - acciones principales */
     --primary-dark: #3730a3;
     --success: #10b981;      /* Verde - positivo/abonos */
     --danger: #ef4444;       /* Rojo - negativo/debe */
     --warning: #f59e0b;      /* Amarillo - alertas */
-    --gray-50: #f9fafb;
-    --gray-100: #f3f4f6;
-    --gray-500: #6b7280;
-    --gray-900: #111827;
+
+    --bg-primary: #ffffff;
+    --bg-secondary: #f9fafb;
+    --bg-tertiary: #f3f4f6;
+
+    --text-primary: #111827;
+    --text-secondary: #4b5563;
+    --text-muted: #9ca3af;
+
+    --border: #e5e7eb;
+    --card-bg: #ffffff;
+    --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Tema Oscuro */
+:root.dark {
+    --primary: #818cf8;      /* Indigo más claro para contraste */
+    --primary-dark: #6366f1;
+    --success: #34d399;
+    --danger: #f87171;
+    --warning: #fbbf24;
+
+    --bg-primary: #111827;
+    --bg-secondary: #1f2937;
+    --bg-tertiary: #374151;
+
+    --text-primary: #f9fafb;
+    --text-secondary: #d1d5db;
+    --text-muted: #6b7280;
+
+    --border: #374151;
+    --card-bg: #1f2937;
+    --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 ```
 
-### 11.2 Navegación móvil (Bottom Navigation)
+**Uso con Tailwind CSS:**
+```javascript
+// tailwind.config.js
+module.exports = {
+    darkMode: 'class',
+    // ...resto de configuración
+}
+```
+
+**Ejemplo en componentes Vue:**
+```html
+<div class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
+    <h1 class="text-primary dark:text-indigo-400">Título</h1>
+</div>
+```
+
+### 11.3 Navegación móvil (Bottom Navigation)
 ```
 ┌─────────────────────────────────────┐
 │                                     │
@@ -1036,12 +1700,12 @@ if ('serviceWorker' in navigator) {
 └─────────────────────────────────────┘
 ```
 
-### 11.3 Wireframes
+### 11.4 Wireframes
 
 #### Dashboard (móvil)
 ```
 ┌─────────────────────────────────┐
-│  Finanzas Compartidas      ≡   │
+│  Finanzas Compartidas    🌙 ≡  │
 ├─────────────────────────────────┤
 │ ┌─────────────────────────────┐ │
 │ │   SALDO PENDIENTE           │ │
@@ -1049,6 +1713,18 @@ if ('serviceWorker' in navigator) {
 │ │   $150.000                  │ │
 │ │   ══════════════════        │ │
 │ └─────────────────────────────┘ │
+│                                 │
+│ ┌─────────────────────────────┐ │
+│ │ ⚠️ 3 gastos recurrentes     │ │
+│ │ pendientes    [Registrar]   │ │
+│ └─────────────────────────────┘ │
+│                                 │
+│ Registro rápido                 │
+│ ┌───────┬───────┬───────┐       │
+│ │Almuer.│ Gasl. │Mercado│       │
+│ ├───────┼───────┼───────┤       │
+│ │Netflix│Transp.│ Café  │       │
+│ └───────┴───────┴───────┘       │
 │                                 │
 │ Resumen Diciembre 2024          │
 │ ┌──────────┬──────────────────┐ │
@@ -1060,10 +1736,10 @@ if ('serviceWorker' in navigator) {
 │ Últimos movimientos             │
 │ ┌─────────────────────────────┐ │
 │ │ 📅 05/12 Spotify    $10.100 │ │
-│ │ David • Davivienda          │ │
+│ │ David • 🎬 Entretenimiento  │ │
 │ ├─────────────────────────────┤ │
-│ │ 📅 02/12 Pasaporte $189.096 │ │
-│ │ Laura • Daviplata           │ │
+│ │ 📅 02/12 Mercado   $189.096 │ │
+│ │ Casa • 🍽️ Alimentación      │ │
 │ └─────────────────────────────┘ │
 │                                 │
 ├─────────────────────────────────┤
@@ -1084,22 +1760,31 @@ if ('serviceWorker' in navigator) {
 │                                 │
 │ Medio de pago                   │
 │ ┌─────────────────────────────┐ │
-│ │ Davivienda Crédito      ▼  │ │
+│ │ 💳 Davivienda Crédito   ▼  │ │
 │ └─────────────────────────────┘ │
 │                                 │
 │ Concepto                        │
 │ ┌─────────────────────────────┐ │
-│ │ Ej: Almuerzo restaurante    │ │
+│ │ Almu...                     │ │
+│ ├─────────────────────────────┤ │
+│ │ ⭐ Almuerzo trabajo         │ │
+│ │    Almuerzo restaurante     │ │
+│ │    Almuerzo casa            │ │
+│ └─────────────────────────────┘ │
+│                                 │
+│ Categoría (opcional)            │
+│ ┌─────────────────────────────┐ │
+│ │ 🍽️ Alimentación         ▼  │ │
 │ └─────────────────────────────┘ │
 │                                 │
 │ Valor                           │
 │ ┌─────────────────────────────┐ │
-│ │ $ 0                         │ │
+│ │ $ 15.000                    │ │
 │ └─────────────────────────────┘ │
 │                                 │
 │ ¿De quién es este gasto?        │
 │ ┌─────────┬─────────┬─────────┐ │
-│ │  Laura  │  David  │  Casa   │ │
+│ │  Laura  │  David  │ [Casa]  │ │
 │ └─────────┴─────────┴─────────┘ │
 │                                 │
 │ ┌─────────────────────────────┐ │
@@ -1158,43 +1843,82 @@ if ('serviceWorker' in navigator) {
 
 ## 13. Plan de Implementación
 
-### Fase 1: Backend Laravel
+### Fase 1: Backend Laravel - Base
 1. [ ] Crear proyecto Laravel
 2. [ ] Configurar SQLite
-3. [ ] Crear migraciones (medios_pago, gastos, abonos, configuraciones)
-4. [ ] Crear seeders (medios de pago y configuración inicial)
-5. [ ] Crear modelos (MedioPago, Gasto, Abono, Configuracion)
+3. [ ] Crear migraciones (medios_pago, categorias, gastos, abonos, configuraciones)
+4. [ ] Crear seeders (medios de pago, categorías, configuración inicial)
+5. [ ] Crear modelos base (MedioPago, Categoria, Gasto, Abono, Configuracion)
 6. [ ] Crear Form Requests (validaciones)
-7. [ ] Crear controladores (incluyendo MedioPagoController)
-8. [ ] Definir rutas API (incluyendo CRUD de medios de pago)
+7. [ ] Crear controladores CRUD básicos
+8. [ ] Definir rutas API base
 9. [ ] Probar endpoints con Postman/curl
 
-### Fase 2: Frontend Vue
+### Fase 2: Backend Laravel - Funcionalidades Avanzadas
+1. [ ] Crear migraciones (conceptos_frecuentes, plantillas, gastos_recurrentes)
+2. [ ] Crear modelos (ConceptoFrecuente, Plantilla, GastoRecurrente)
+3. [ ] Crear controladores avanzados
+4. [ ] Implementar lógica de conceptos frecuentes (autocompletado, favoritos)
+5. [ ] Implementar lógica de plantillas rápidas
+6. [ ] Implementar lógica de gastos recurrentes (detección pendientes, registro automático)
+7. [ ] Endpoints API para todos los módulos
+8. [ ] Probar flujos completos
+
+### Fase 3: Frontend Vue - Base
 1. [ ] Configurar Vue 3 + Vite
-2. [ ] Instalar Tailwind CSS
+2. [ ] Instalar y configurar Tailwind CSS (con darkMode: 'class')
 3. [ ] Instalar Pinia (stores)
 4. [ ] Instalar Vue Router
 5. [ ] Crear layout base (AppLayout, BottomNav)
-6. [ ] Crear componentes UI reutilizables
-7. [ ] Crear store de medios de pago
-8. [ ] Crear componentes de medios de pago (MedioPagoForm, MedioPagoList, MedioPagoItem)
-9. [ ] Crear páginas (Dashboard, Gastos, Abonos, Historial, Config con gestión de medios de pago)
-10. [ ] Conectar con API
-11. [ ] Implementar filtros y búsqueda
+6. [ ] Implementar sistema de temas (theme.js store)
+7. [ ] Crear componentes UI reutilizables (Button, Input, Select, Modal)
+8. [ ] Crear stores base (config, gastos, abonos, mediosPago, categorias)
 
-### Fase 3: PWA
+### Fase 4: Frontend Vue - Páginas y Componentes
+1. [ ] Crear Dashboard con:
+   - SaldoCard
+   - PlantillasRapidas (botones acceso rápido)
+   - AlertaRecurrentes (banner pendientes)
+   - ResumenMes
+   - UltimosMovimientos
+2. [ ] Crear formulario de gastos con:
+   - Autocompletado de conceptos
+   - Selector de categoría con colores
+   - Selector de medio de pago con iconos
+3. [ ] Crear página de Historial con filtros avanzados
+4. [ ] Crear página de Configuración con todas las secciones:
+   - Toggle de tema
+   - Personas y porcentajes
+   - Gestión de medios de pago
+   - Gestión de categorías
+   - Gestión de plantillas rápidas
+   - Gestión de gastos recurrentes
+
+### Fase 5: Frontend Vue - Funcionalidades Avanzadas
+1. [ ] Implementar autocompletado de conceptos
+2. [ ] Implementar sistema de favoritos
+3. [ ] Implementar plantillas rápidas con modal de confirmación
+4. [ ] Implementar notificación de gastos recurrentes pendientes
+5. [ ] Implementar drag & drop para reordenar items
+6. [ ] Conectar todas las funcionalidades con API
+
+### Fase 6: PWA
 1. [ ] Crear manifest.json
-2. [ ] Crear iconos (192px, 512px)
+2. [ ] Crear iconos (192px, 512px) - versiones clara y oscura
 3. [ ] Crear service worker básico
 4. [ ] Probar instalación en iOS y Android
+5. [ ] Verificar que el tema se respeta en la PWA
 
-### Fase 4: Testing local
-1. [ ] Probar flujo completo de gastos
+### Fase 7: Testing local
+1. [ ] Probar flujo completo de gastos (con categoría y autocompletado)
 2. [ ] Probar flujo de abonos
-3. [ ] Verificar cálculo de saldo
-4. [ ] Probar en diferentes dispositivos
+3. [ ] Probar plantillas rápidas
+4. [ ] Probar gastos recurrentes
+5. [ ] Verificar cálculo de saldo
+6. [ ] Probar modo oscuro en todos los componentes
+7. [ ] Probar en diferentes dispositivos (móvil, tablet)
 
-### Fase 5: Deploy (Servidor)
+### Fase 8: Deploy (Servidor)
 1. [ ] Instalar Ubuntu Server en portátil
 2. [ ] Configurar red (IP fija, port forwarding)
 3. [ ] Instalar stack (Nginx, PHP, etc.)
