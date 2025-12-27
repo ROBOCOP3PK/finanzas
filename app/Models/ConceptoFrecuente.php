@@ -10,6 +10,7 @@ class ConceptoFrecuente extends Model
     protected $table = 'conceptos_frecuentes';
 
     protected $fillable = [
+        'user_id',
         'concepto',
         'medio_pago_id',
         'tipo',
@@ -51,10 +52,10 @@ class ConceptoFrecuente extends Model
     }
 
     // Buscar o crear concepto
-    public static function registrarUso(string $concepto, ?int $medioPagoId = null, ?string $tipo = null): self
+    public static function registrarUso(string $concepto, ?int $medioPagoId = null, ?string $tipo = null, ?int $userId = null): self
     {
         $registro = self::firstOrCreate(
-            ['concepto' => $concepto],
+            ['concepto' => $concepto, 'user_id' => $userId],
             ['medio_pago_id' => $medioPagoId, 'tipo' => $tipo]
         );
         $registro->incrementarUso();

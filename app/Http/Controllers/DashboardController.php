@@ -2,8 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Abono;
-use App\Models\Configuracion;
 use App\Models\Gasto;
 use App\Models\GastoRecurrente;
 use App\Models\MedioPago;
@@ -12,26 +10,29 @@ use Illuminate\Http\Request;
 
 class DashboardController extends Controller
 {
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
-        $config = Configuracion::todas();
-        $saldoPendiente = $this->calcularSaldoPendiente();
-        $resumenMes = $this->getResumenMes();
-        $porMedioPago = $this->getGastosPorMedioPago();
-        $ultimosMovimientos = $this->getUltimosMovimientos();
-        $pendientesRecurrentes = GastoRecurrente::pendientes()->count();
+        $user = $request->user();
+
+        $deudaPersona2 = $user->calcularDeudaPersona2();
+        $gastoMes = $user->gastoMesActual();
+        $resumenMes = $this->getResumenMes($user);
+        $porMedioPago = $this->getGastosPorMedioPago($user);
+        $ultimosMovimientos = $this->getUltimosMovimientos($user);
+        $pendientesRecurrentes = GastoRecurrente::where('user_id', $user->id)
+            ->where('activo', true)
+            ->count();
 
         return response()->json([
             'success' => true,
             'data' => [
-                'saldo_pendiente' => $saldoPendiente,
-                'configuracion' => [
-                    'nombre_persona_1' => $config['nombre_persona_1'] ?? 'Persona 1',
-                    'nombre_persona_2' => $config['nombre_persona_2'] ?? 'Persona 2',
-                    'porcentaje_persona_1' => (float) ($config['porcentaje_persona_1'] ?? 50),
-                    'porcentaje_persona_2' => (float) ($config['porcentaje_persona_2'] ?? 50),
-                    'tema' => $config['tema'] ?? 'system'
-                ],
+                'deuda_persona_2' => $deudaPersona2,
+                'gasto_mes_actual' => $gastoMes,
+                'porcentaje_persona_2' => (float) $user->porcentaje_persona_2,
+                'persona_secundaria' => $user->personaSecundaria ? [
+                    'id' => $user->personaSecundaria->id,
+                    'nombre' => $user->personaSecundaria->name
+                ] : null,
                 'resumen_mes' => $resumenMes,
                 'por_medio_pago' => $porMedioPago,
                 'ultimos_movimientos' => $ultimosMovimientos,
@@ -40,72 +41,69 @@ class DashboardController extends Controller
         ]);
     }
 
-    public function saldo(): JsonResponse
+    public function saldo(Request $request): JsonResponse
     {
+        $user = $request->user();
+
         return response()->json([
             'success' => true,
             'data' => [
-                'saldo_pendiente' => $this->calcularSaldoPendiente(),
-                'nombre_persona' => Configuracion::nombrePersona1()
+                'deuda_persona_2' => $user->calcularDeudaPersona2(),
+                'gasto_mes_actual' => $user->gastoMesActual()
             ]
         ]);
     }
 
     public function resumenMes(Request $request): JsonResponse
     {
+        $user = $request->user();
         $mes = $request->input('mes', now()->month);
         $anio = $request->input('anio', now()->year);
 
         return response()->json([
             'success' => true,
-            'data' => $this->getResumenMes($mes, $anio)
+            'data' => $this->getResumenMes($user, $mes, $anio)
         ]);
     }
 
-    private function calcularSaldoPendiente(): float
-    {
-        $porcentaje1 = Configuracion::porcentajePersona1() / 100;
-
-        $gastosPersona1 = Gasto::tipo(Gasto::TIPO_PERSONA_1)->sum('valor');
-        $gastosCasa = Gasto::tipo(Gasto::TIPO_CASA)->sum('valor');
-        $totalAbonos = Abono::sum('valor');
-
-        $saldo = $gastosPersona1 + ($gastosCasa * $porcentaje1) - $totalAbonos;
-
-        return round($saldo, 2);
-    }
-
-    private function getResumenMes(?int $mes = null, ?int $anio = null): array
+    private function getResumenMes($user, ?int $mes = null, ?int $anio = null): array
     {
         $mes = $mes ?? now()->month;
         $anio = $anio ?? now()->year;
 
-        $gastosPersona1 = Gasto::delMes($mes, $anio)->tipo(Gasto::TIPO_PERSONA_1)->sum('valor');
-        $gastosPersona2 = Gasto::delMes($mes, $anio)->tipo(Gasto::TIPO_PERSONA_2)->sum('valor');
-        $gastosCasa = Gasto::delMes($mes, $anio)->tipo(Gasto::TIPO_CASA)->sum('valor');
-        $totalAbonos = Abono::delMes($mes, $anio)->sum('valor');
+        $gastosPersonal = $user->gastos()->delMes($mes, $anio)->tipo(Gasto::TIPO_PERSONAL)->sum('valor');
+        $gastosPareja = $user->gastos()->delMes($mes, $anio)->tipo(Gasto::TIPO_PAREJA)->sum('valor');
+        $gastosCompartido = $user->gastos()->delMes($mes, $anio)->tipo(Gasto::TIPO_COMPARTIDO)->sum('valor');
+        $totalAbonos = $user->abonos()->delMes($mes, $anio)->sum('valor');
+
+        $totalGastos = $gastosPersonal + $gastosPareja + $gastosCompartido;
 
         return [
             'mes' => $mes,
             'anio' => $anio,
-            'total_gastos' => round($gastosPersona1 + $gastosPersona2 + $gastosCasa, 2),
-            'gastos_persona_1' => round($gastosPersona1, 2),
-            'gastos_persona_2' => round($gastosPersona2, 2),
-            'gastos_casa' => round($gastosCasa, 2),
+            'total_gastos' => round($totalGastos, 2),
+            'gastos_personal' => round($gastosPersonal, 2),
+            'gastos_pareja' => round($gastosPareja, 2),
+            'gastos_compartido' => round($gastosCompartido, 2),
             'total_abonos' => round($totalAbonos, 2)
         ];
     }
 
-    private function getGastosPorMedioPago(): array
+    private function getGastosPorMedioPago($user): array
     {
         $mes = now()->month;
         $anio = now()->year;
 
-        return MedioPago::activos()
+        return MedioPago::where(function ($query) use ($user) {
+                $query->where('user_id', $user->id)
+                      ->orWhereNull('user_id');
+            })
+            ->activos()
             ->ordenados()
             ->get()
-            ->mapWithKeys(function ($medioPago) use ($mes, $anio) {
-                $total = Gasto::delMes($mes, $anio)
+            ->mapWithKeys(function ($medioPago) use ($user, $mes, $anio) {
+                $total = $user->gastos()
+                    ->delMes($mes, $anio)
                     ->medioPago($medioPago->id)
                     ->sum('valor');
                 return [$medioPago->nombre => round($total, 2)];
@@ -113,9 +111,10 @@ class DashboardController extends Controller
             ->toArray();
     }
 
-    private function getUltimosMovimientos(int $limite = 10): array
+    private function getUltimosMovimientos($user, int $limite = 10): array
     {
-        $gastos = Gasto::with(['medioPago', 'categoria'])
+        $gastos = $user->gastos()
+            ->with(['medioPago', 'categoria'])
             ->orderByDesc('fecha')
             ->orderByDesc('created_at')
             ->limit($limite)
@@ -134,7 +133,8 @@ class DashboardController extends Controller
                 ];
             });
 
-        $abonos = Abono::orderByDesc('fecha')
+        $abonos = $user->abonos()
+            ->orderByDesc('fecha')
             ->orderByDesc('created_at')
             ->limit($limite)
             ->get()

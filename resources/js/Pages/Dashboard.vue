@@ -1,10 +1,22 @@
 <template>
     <div class="p-4 space-y-4">
-        <!-- Saldo Card -->
-        <SaldoCard
-            :saldo="dashboardStore.saldoPendiente"
-            :nombrePersona="dashboardStore.configuracion.nombre_persona_1"
-        />
+        <!-- Cards principales: Deuda y Gasto del Mes -->
+        <div class="grid grid-cols-2 gap-3">
+            <!-- Card Deuda -->
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-4">
+                <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Te debe</p>
+                <p class="text-xl font-bold" :class="dashboardStore.deudaPersona2 > 0 ? 'text-red-500' : 'text-green-500'">
+                    {{ dashboardStore.deudaFormateada }}
+                </p>
+            </div>
+            <!-- Card Gasto Mes -->
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-4">
+                <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Gasto este mes</p>
+                <p class="text-xl font-bold text-gray-900 dark:text-white">
+                    {{ dashboardStore.gastoMesFormateado }}
+                </p>
+            </div>
+        </div>
 
         <!-- Alerta Gastos Recurrentes -->
         <AlertaRecurrentes
@@ -20,12 +32,11 @@
 
         <!-- Resumen del Mes -->
         <ResumenMes
-            :nombrePersona1="dashboardStore.configuracion.nombre_persona_1"
-            :nombrePersona2="dashboardStore.configuracion.nombre_persona_2"
-            :gastosPersona1="dashboardStore.resumenMes.gastos_persona_1"
-            :gastosPersona2="dashboardStore.resumenMes.gastos_persona_2"
-            :gastosCasa="dashboardStore.resumenMes.gastos_casa"
+            :gastosPersonal="dashboardStore.resumenMes.gastos_personal"
+            :gastosPareja="dashboardStore.resumenMes.gastos_pareja"
+            :gastosCompartido="dashboardStore.resumenMes.gastos_compartido"
             :totalAbonos="dashboardStore.resumenMes.total_abonos"
+            :porcentajePersona2="dashboardStore.porcentajePersona2"
         />
 
         <!-- Últimos Movimientos -->
@@ -69,8 +80,6 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
-import SaldoCard from '../Components/Dashboard/SaldoCard.vue';
 import AlertaRecurrentes from '../Components/Dashboard/AlertaRecurrentes.vue';
 import PlantillasRapidas from '../Components/Dashboard/PlantillasRapidas.vue';
 import ResumenMes from '../Components/Dashboard/ResumenMes.vue';
@@ -82,13 +91,10 @@ import Toast from '../Components/UI/Toast.vue';
 import { useDashboardStore } from '../Stores/dashboard';
 import { usePlantillasStore } from '../Stores/plantillas';
 import { useGastosRecurrentesStore } from '../Stores/gastosRecurrentes';
-import { useConfigStore } from '../Stores/config';
 
-const router = useRouter();
 const dashboardStore = useDashboardStore();
 const plantillasStore = usePlantillasStore();
 const gastosRecurrentesStore = useGastosRecurrentesStore();
-const configStore = useConfigStore();
 
 const showPlantillaModal = ref(false);
 const plantillaSeleccionada = ref(null);
@@ -103,8 +109,7 @@ const toastType = ref('success');
 onMounted(async () => {
     await Promise.all([
         dashboardStore.cargarDashboard(),
-        plantillasStore.cargarRapidas(),
-        configStore.cargarConfiguracion()
+        plantillasStore.cargarRapidas()
     ]);
 });
 
@@ -131,7 +136,6 @@ const usarPlantilla = async () => {
         toastType.value = 'success';
         showToast.value = true;
 
-        // Recargar dashboard
         await dashboardStore.cargarDashboard();
     } catch (error) {
         toastMessage.value = 'Error al registrar el gasto';

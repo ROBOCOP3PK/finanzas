@@ -144,9 +144,6 @@ onMounted(async () => {
     if (categoriasStore.categorias.length === 0) {
         await categoriasStore.cargarCategorias(true);
     }
-    if (!configStore.loaded) {
-        await configStore.cargarConfiguracion();
-    }
 
     // Si hay gasto para editar, cargar datos
     if (props.gasto) {

@@ -12,7 +12,10 @@ class GastoController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $query = Gasto::with(['medioPago', 'categoria'])
+        $user = $request->user();
+
+        $query = $user->gastos()
+            ->with(['medioPago', 'categoria'])
             ->orderByDesc('fecha')
             ->orderByDesc('created_at');
 
@@ -53,13 +56,20 @@ class GastoController extends Controller
 
     public function store(GastoRequest $request): JsonResponse
     {
-        $gasto = Gasto::create($request->validated());
+        $user = $request->user();
+
+        $data = $request->validated();
+        $data['user_id'] = $user->id;
+        $data['registrado_por'] = $user->id;
+
+        $gasto = Gasto::create($data);
 
         // Registrar concepto frecuente
         ConceptoFrecuente::registrarUso(
             $request->concepto,
             $request->medio_pago_id,
-            $request->tipo
+            $request->tipo,
+            $user->id
         );
 
         $gasto->load(['medioPago', 'categoria']);
@@ -71,8 +81,18 @@ class GastoController extends Controller
         ], 201);
     }
 
-    public function show(Gasto $gasto): JsonResponse
+    public function show(Request $request, Gasto $gasto): JsonResponse
     {
+        $user = $request->user();
+
+        // Verificar que el gasto pertenece al usuario
+        if ($gasto->user_id !== $user->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No autorizado'
+            ], 403);
+        }
+
         $gasto->load(['medioPago', 'categoria']);
 
         return response()->json([
@@ -83,6 +103,16 @@ class GastoController extends Controller
 
     public function update(GastoRequest $request, Gasto $gasto): JsonResponse
     {
+        $user = $request->user();
+
+        // Verificar que el gasto pertenece al usuario
+        if ($gasto->user_id !== $user->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No autorizado'
+            ], 403);
+        }
+
         $gasto->update($request->validated());
         $gasto->load(['medioPago', 'categoria']);
 
@@ -93,8 +123,18 @@ class GastoController extends Controller
         ]);
     }
 
-    public function destroy(Gasto $gasto): JsonResponse
+    public function destroy(Request $request, Gasto $gasto): JsonResponse
     {
+        $user = $request->user();
+
+        // Verificar que el gasto pertenece al usuario
+        if ($gasto->user_id !== $user->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No autorizado'
+            ], 403);
+        }
+
         $gasto->delete();
 
         return response()->json([

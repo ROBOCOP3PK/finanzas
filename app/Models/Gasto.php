@@ -8,12 +8,14 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class Gasto extends Model
 {
     protected $fillable = [
+        'user_id',
         'fecha',
         'medio_pago_id',
         'categoria_id',
         'concepto',
         'valor',
-        'tipo'
+        'tipo',
+        'registrado_por'
     ];
 
     protected $casts = [
@@ -22,17 +24,27 @@ class Gasto extends Model
     ];
 
     // Constantes para tipos
-    const TIPO_PERSONA_1 = 'persona_1';
-    const TIPO_PERSONA_2 = 'persona_2';
-    const TIPO_CASA = 'casa';
+    const TIPO_PERSONAL = 'personal';   // 100% del usuario principal
+    const TIPO_PAREJA = 'pareja';       // 100% de la persona secundaria (genera deuda)
+    const TIPO_COMPARTIDO = 'compartido'; // Se divide por porcentaje
 
     const TIPOS = [
-        self::TIPO_PERSONA_1,
-        self::TIPO_PERSONA_2,
-        self::TIPO_CASA
+        self::TIPO_PERSONAL,
+        self::TIPO_PAREJA,
+        self::TIPO_COMPARTIDO
     ];
 
     // Relaciones
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function registradoPor(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'registrado_por');
+    }
+
     public function medioPago(): BelongsTo
     {
         return $this->belongsTo(MedioPago::class);
@@ -44,6 +56,11 @@ class Gasto extends Model
     }
 
     // Scopes
+    public function scopeDelUsuario($query, $userId)
+    {
+        return $query->where('user_id', $userId);
+    }
+
     public function scopeFecha($query, $desde, $hasta)
     {
         return $query->whereBetween('fecha', [$desde, $hasta]);

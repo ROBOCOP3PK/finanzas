@@ -11,7 +11,11 @@ class AbonoController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $query = Abono::orderByDesc('fecha')->orderByDesc('created_at');
+        $user = $request->user();
+
+        $query = $user->abonos()
+            ->orderByDesc('fecha')
+            ->orderByDesc('created_at');
 
         // Filtro por rango de fechas
         if ($request->filled('desde') && $request->filled('hasta')) {
@@ -35,7 +39,12 @@ class AbonoController extends Controller
 
     public function store(AbonoRequest $request): JsonResponse
     {
-        $abono = Abono::create($request->validated());
+        $user = $request->user();
+
+        $data = $request->validated();
+        $data['user_id'] = $user->id;
+
+        $abono = Abono::create($data);
 
         return response()->json([
             'success' => true,
@@ -44,8 +53,17 @@ class AbonoController extends Controller
         ], 201);
     }
 
-    public function show(Abono $abono): JsonResponse
+    public function show(Request $request, Abono $abono): JsonResponse
     {
+        $user = $request->user();
+
+        if ($abono->user_id !== $user->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No autorizado'
+            ], 403);
+        }
+
         return response()->json([
             'success' => true,
             'data' => $abono
@@ -54,6 +72,15 @@ class AbonoController extends Controller
 
     public function update(AbonoRequest $request, Abono $abono): JsonResponse
     {
+        $user = $request->user();
+
+        if ($abono->user_id !== $user->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No autorizado'
+            ], 403);
+        }
+
         $abono->update($request->validated());
 
         return response()->json([
@@ -63,8 +90,17 @@ class AbonoController extends Controller
         ]);
     }
 
-    public function destroy(Abono $abono): JsonResponse
+    public function destroy(Request $request, Abono $abono): JsonResponse
     {
+        $user = $request->user();
+
+        if ($abono->user_id !== $user->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No autorizado'
+            ], 403);
+        }
+
         $abono->delete();
 
         return response()->json([

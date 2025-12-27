@@ -3,20 +3,17 @@ import api from '../axios';
 
 export const useDashboardStore = defineStore('dashboard', {
     state: () => ({
-        saldoPendiente: 0,
-        configuracion: {
-            nombre_persona_1: 'Persona 1',
-            nombre_persona_2: 'Persona 2',
-            porcentaje_persona_1: 50,
-            porcentaje_persona_2: 50
-        },
+        deudaPersona2: 0,
+        gastoMesActual: 0,
+        porcentajePersona2: 40,
+        personaSecundaria: null,
         resumenMes: {
             mes: null,
             anio: null,
             total_gastos: 0,
-            gastos_persona_1: 0,
-            gastos_persona_2: 0,
-            gastos_casa: 0,
+            gastos_personal: 0,
+            gastos_pareja: 0,
+            gastos_compartido: 0,
             total_abonos: 0
         },
         porMedioPago: {},
@@ -27,12 +24,19 @@ export const useDashboardStore = defineStore('dashboard', {
     }),
 
     getters: {
-        saldoFormateado: (state) => {
+        deudaFormateada: (state) => {
             return new Intl.NumberFormat('es-CO', {
                 style: 'currency',
                 currency: 'COP',
                 minimumFractionDigits: 0
-            }).format(state.saldoPendiente);
+            }).format(state.deudaPersona2);
+        },
+        gastoMesFormateado: (state) => {
+            return new Intl.NumberFormat('es-CO', {
+                style: 'currency',
+                currency: 'COP',
+                minimumFractionDigits: 0
+            }).format(state.gastoMesActual);
         }
     },
 
@@ -44,8 +48,10 @@ export const useDashboardStore = defineStore('dashboard', {
                 const response = await api.get('/dashboard');
                 const data = response.data.data;
 
-                this.saldoPendiente = data.saldo_pendiente;
-                this.configuracion = data.configuracion;
+                this.deudaPersona2 = data.deuda_persona_2;
+                this.gastoMesActual = data.gasto_mes_actual;
+                this.porcentajePersona2 = data.porcentaje_persona_2;
+                this.personaSecundaria = data.persona_secundaria;
                 this.resumenMes = data.resumen_mes;
                 this.porMedioPago = data.por_medio_pago;
                 this.ultimosMovimientos = data.ultimos_movimientos;
@@ -61,7 +67,8 @@ export const useDashboardStore = defineStore('dashboard', {
         async cargarSaldo() {
             try {
                 const response = await api.get('/dashboard/saldo');
-                this.saldoPendiente = response.data.data.saldo_pendiente;
+                this.deudaPersona2 = response.data.data.deuda_persona_2;
+                this.gastoMesActual = response.data.data.gasto_mes_actual;
             } catch (error) {
                 console.error('Error cargando saldo:', error);
             }

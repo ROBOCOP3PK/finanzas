@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Categoria extends Model
 {
     protected $fillable = [
+        'user_id',
         'nombre',
         'icono',
         'color',
