@@ -2,8 +2,9 @@
 
 namespace Database\Seeders;
 
+use App\Models\MedioPago;
+use App\Models\User;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
 
 class MedioPagoSeeder extends Seeder
 {
@@ -12,6 +13,10 @@ class MedioPagoSeeder extends Seeder
      */
     public function run(): void
     {
+        // Obtener el primer usuario
+        $user = User::first();
+        $userId = $user?->id;
+
         $mediosPago = [
             ['nombre' => 'Davivienda Crédito', 'icono' => 'credit-card', 'activo' => true, 'orden' => 1],
             ['nombre' => 'Daviplata', 'icono' => 'smartphone', 'activo' => true, 'orden' => 2],
@@ -20,10 +25,9 @@ class MedioPagoSeeder extends Seeder
         ];
 
         foreach ($mediosPago as $medio) {
-            DB::table('medios_pago')->insert([
+            MedioPago::create([
                 ...$medio,
-                'created_at' => now(),
-                'updated_at' => now(),
+                'user_id' => $userId,
             ]);
         }
     }

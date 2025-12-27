@@ -1,6 +1,6 @@
 <template>
     <div class="p-4 space-y-4">
-        <h1 class="text-xl font-bold text-gray-900 dark:text-white">Configuración</h1>
+        <h1 class="text-xl font-bold text-gray-900 dark:text-white">Configuracion</h1>
 
         <!-- Tema -->
         <Card title="Apariencia">
@@ -21,43 +21,51 @@
             </div>
         </Card>
 
-        <!-- Personas y Porcentajes -->
-        <Card title="Personas y Porcentajes">
-            <div class="space-y-4">
-                <Input
-                    v-model="config.nombre_persona_1"
-                    label="Nombre Persona 1"
-                />
-                <Input
-                    v-model="config.nombre_persona_2"
-                    label="Nombre Persona 2"
-                />
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Porcentaje gastos de casa
-                    </label>
-                    <div class="flex items-center gap-4">
-                        <div class="flex-1">
-                            <input
-                                type="range"
-                                v-model="config.porcentaje_persona_1"
-                                min="0"
-                                max="100"
-                                class="w-full"
-                            />
-                        </div>
-                        <div class="text-sm text-gray-600 dark:text-gray-400 w-24 text-right">
-                            {{ config.porcentaje_persona_1 }}% / {{ 100 - config.porcentaje_persona_1 }}%
-                        </div>
-                    </div>
-                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                        {{ config.nombre_persona_1 }}: {{ config.porcentaje_persona_1 }}% |
-                        {{ config.nombre_persona_2 }}: {{ 100 - config.porcentaje_persona_1 }}%
-                    </p>
-                </div>
-                <Button @click="guardarConfig" :loading="guardando" class="w-full">
-                    Guardar Cambios
+        <!-- Categorias -->
+        <Card title="Categorias">
+            <template #action>
+                <Button size="sm" @click="abrirModalCategoria()">
+                    <PlusIcon class="w-4 h-4 mr-1" />
+                    Nueva
                 </Button>
+            </template>
+            <div class="space-y-2">
+                <div
+                    v-for="cat in categoriasStore.categorias"
+                    :key="cat.id"
+                    class="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-700 last:border-0"
+                >
+                    <div class="flex items-center gap-3">
+                        <span
+                            class="w-4 h-4 rounded"
+                            :style="{ backgroundColor: cat.color }"
+                        ></span>
+                        <span :class="['text-gray-900 dark:text-white', !cat.activo && 'opacity-50']">
+                            {{ cat.nombre }}
+                        </span>
+                        <span v-if="!cat.activo" class="text-xs text-gray-400">(inactiva)</span>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            @click="abrirModalCategoria(cat)"
+                        >
+                            <PencilIcon class="w-4 h-4" />
+                        </Button>
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            @click="confirmarEliminarCategoria(cat)"
+                            class="text-red-500 hover:text-red-600"
+                        >
+                            <TrashIcon class="w-4 h-4" />
+                        </Button>
+                    </div>
+                </div>
+                <p v-if="categoriasStore.categorias.length === 0" class="text-gray-500 dark:text-gray-400 text-center py-4">
+                    No hay categorias configuradas
+                </p>
             </div>
         </Card>
 
@@ -84,31 +92,72 @@
             </div>
         </Card>
 
-        <!-- Categorías -->
-        <Card title="Categorías">
-            <div class="space-y-2">
-                <div
-                    v-for="cat in categoriasStore.categorias"
-                    :key="cat.id"
-                    class="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-700 last:border-0"
-                >
-                    <div class="flex items-center gap-3">
-                        <span
-                            class="w-4 h-4 rounded"
-                            :style="{ backgroundColor: cat.color }"
-                        ></span>
-                        <span class="text-gray-900 dark:text-white">{{ cat.nombre }}</span>
+        <!-- Modal Categoria -->
+        <Modal :show="showModalCategoria" :title="categoriaEditando ? 'Editar Categoria' : 'Nueva Categoria'" @close="cerrarModalCategoria">
+            <div class="space-y-4">
+                <Input
+                    v-model="formCategoria.nombre"
+                    label="Nombre"
+                    placeholder="Ej: Comida, Transporte..."
+                    :error="erroresCategoria.nombre"
+                />
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Color
+                    </label>
+                    <div class="flex flex-wrap gap-2">
+                        <button
+                            v-for="color in coloresDisponibles"
+                            :key="color"
+                            type="button"
+                            @click="formCategoria.color = color"
+                            :class="[
+                                'w-8 h-8 rounded-full border-2 transition-all',
+                                formCategoria.color === color ? 'border-gray-900 dark:border-white scale-110' : 'border-transparent'
+                            ]"
+                            :style="{ backgroundColor: color }"
+                        ></button>
                     </div>
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        @click="toggleCategoria(cat)"
-                    >
-                        {{ cat.activo ? 'Desactivar' : 'Activar' }}
-                    </Button>
+                </div>
+                <div class="flex items-center gap-2">
+                    <input
+                        type="checkbox"
+                        id="categoriaActiva"
+                        v-model="formCategoria.activo"
+                        class="rounded border-gray-300 text-primary focus:ring-primary"
+                    />
+                    <label for="categoriaActiva" class="text-sm text-gray-700 dark:text-gray-300">
+                        Categoria activa
+                    </label>
                 </div>
             </div>
-        </Card>
+            <template #footer>
+                <div class="flex gap-2 justify-end">
+                    <Button variant="secondary" @click="cerrarModalCategoria">Cancelar</Button>
+                    <Button @click="guardarCategoria" :loading="guardandoCategoria">
+                        {{ categoriaEditando ? 'Actualizar' : 'Crear' }}
+                    </Button>
+                </div>
+            </template>
+        </Modal>
+
+        <!-- Modal Confirmar Eliminar -->
+        <Modal :show="showModalEliminar" title="Eliminar Categoria" @close="showModalEliminar = false">
+            <p class="text-gray-600 dark:text-gray-400">
+                Estas seguro de eliminar la categoria <strong>{{ categoriaEliminar?.nombre }}</strong>?
+            </p>
+            <p class="text-sm text-gray-500 dark:text-gray-500 mt-2">
+                Solo se puede eliminar si no tiene gastos asociados.
+            </p>
+            <template #footer>
+                <div class="flex gap-2 justify-end">
+                    <Button variant="secondary" @click="showModalEliminar = false">Cancelar</Button>
+                    <Button variant="danger" @click="eliminarCategoria" :loading="eliminandoCategoria">
+                        Eliminar
+                    </Button>
+                </div>
+            </template>
+        </Modal>
 
         <Toast
             :show="showToast"
@@ -121,17 +170,17 @@
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue';
+import { PlusIcon, PencilIcon, TrashIcon } from '@heroicons/vue/24/outline';
 import Card from '../Components/UI/Card.vue';
 import Input from '../Components/UI/Input.vue';
 import Button from '../Components/UI/Button.vue';
+import Modal from '../Components/UI/Modal.vue';
 import Toast from '../Components/UI/Toast.vue';
 import { useThemeStore } from '../Stores/theme';
-import { useConfigStore } from '../Stores/config';
 import { useMediosPagoStore } from '../Stores/mediosPago';
 import { useCategoriasStore } from '../Stores/categorias';
 
 const themeStore = useThemeStore();
-const configStore = useConfigStore();
 const mediosPagoStore = useMediosPagoStore();
 const categoriasStore = useCategoriasStore();
 
@@ -141,71 +190,147 @@ const temas = [
     { value: 'system', label: 'Sistema' }
 ];
 
-const config = reactive({
-    nombre_persona_1: '',
-    nombre_persona_2: '',
-    porcentaje_persona_1: 50
-});
+const coloresDisponibles = [
+    '#EF4444', // red
+    '#F97316', // orange
+    '#F59E0B', // amber
+    '#EAB308', // yellow
+    '#84CC16', // lime
+    '#22C55E', // green
+    '#10B981', // emerald
+    '#14B8A6', // teal
+    '#06B6D4', // cyan
+    '#0EA5E9', // sky
+    '#3B82F6', // blue
+    '#6366F1', // indigo
+    '#8B5CF6', // violet
+    '#A855F7', // purple
+    '#D946EF', // fuchsia
+    '#EC4899', // pink
+];
 
-const guardando = ref(false);
+// Toast
 const showToast = ref(false);
 const toastMessage = ref('');
 const toastType = ref('success');
 
-onMounted(async () => {
-    await Promise.all([
-        configStore.cargarConfiguracion(),
-        mediosPagoStore.cargarMediosPago(),
-        categoriasStore.cargarCategorias()
-    ]);
-
-    config.nombre_persona_1 = configStore.nombre_persona_1;
-    config.nombre_persona_2 = configStore.nombre_persona_2;
-    config.porcentaje_persona_1 = configStore.porcentaje_persona_1;
-});
-
-const cambiarTema = (tema) => {
-    themeStore.setTema(tema);
+const mostrarToast = (mensaje, tipo = 'success') => {
+    toastMessage.value = mensaje;
+    toastType.value = tipo;
+    showToast.value = true;
 };
 
-const guardarConfig = async () => {
-    guardando.value = true;
+// Categoria Modal
+const showModalCategoria = ref(false);
+const categoriaEditando = ref(null);
+const guardandoCategoria = ref(false);
+const erroresCategoria = reactive({});
+
+const formCategoria = reactive({
+    nombre: '',
+    color: '#3B82F6',
+    activo: true
+});
+
+const abrirModalCategoria = (categoria = null) => {
+    categoriaEditando.value = categoria;
+    if (categoria) {
+        formCategoria.nombre = categoria.nombre;
+        formCategoria.color = categoria.color;
+        formCategoria.activo = categoria.activo;
+    } else {
+        formCategoria.nombre = '';
+        formCategoria.color = '#3B82F6';
+        formCategoria.activo = true;
+    }
+    Object.keys(erroresCategoria).forEach(key => delete erroresCategoria[key]);
+    showModalCategoria.value = true;
+};
+
+const cerrarModalCategoria = () => {
+    showModalCategoria.value = false;
+    categoriaEditando.value = null;
+};
+
+const guardarCategoria = async () => {
+    Object.keys(erroresCategoria).forEach(key => delete erroresCategoria[key]);
+
+    if (!formCategoria.nombre.trim()) {
+        erroresCategoria.nombre = 'El nombre es requerido';
+        return;
+    }
+
+    guardandoCategoria.value = true;
     try {
-        await configStore.guardarConfiguracion({
-            nombre_persona_1: config.nombre_persona_1,
-            nombre_persona_2: config.nombre_persona_2,
-            porcentaje_persona_1: parseInt(config.porcentaje_persona_1),
-            porcentaje_persona_2: 100 - parseInt(config.porcentaje_persona_1)
-        });
-        toastMessage.value = 'Configuración guardada';
-        toastType.value = 'success';
-        showToast.value = true;
+        if (categoriaEditando.value) {
+            await categoriasStore.actualizarCategoria(categoriaEditando.value.id, {
+                nombre: formCategoria.nombre,
+                color: formCategoria.color,
+                activo: formCategoria.activo
+            });
+            mostrarToast('Categoria actualizada');
+        } else {
+            await categoriasStore.crearCategoria({
+                nombre: formCategoria.nombre,
+                color: formCategoria.color,
+                activo: formCategoria.activo
+            });
+            mostrarToast('Categoria creada');
+        }
+        cerrarModalCategoria();
     } catch (error) {
-        toastMessage.value = error.response?.data?.message || 'Error al guardar';
-        toastType.value = 'error';
-        showToast.value = true;
+        const mensaje = error.response?.data?.message || 'Error al guardar';
+        mostrarToast(mensaje, 'error');
     } finally {
-        guardando.value = false;
+        guardandoCategoria.value = false;
     }
 };
 
+// Eliminar Categoria
+const showModalEliminar = ref(false);
+const categoriaEliminar = ref(null);
+const eliminandoCategoria = ref(false);
+
+const confirmarEliminarCategoria = (categoria) => {
+    categoriaEliminar.value = categoria;
+    showModalEliminar.value = true;
+};
+
+const eliminarCategoria = async () => {
+    if (!categoriaEliminar.value) return;
+
+    eliminandoCategoria.value = true;
+    try {
+        await categoriasStore.eliminarCategoria(categoriaEliminar.value.id);
+        mostrarToast('Categoria eliminada');
+        showModalEliminar.value = false;
+    } catch (error) {
+        const mensaje = error.response?.data?.message || 'Error al eliminar';
+        mostrarToast(mensaje, 'error');
+    } finally {
+        eliminandoCategoria.value = false;
+    }
+};
+
+// Medios de Pago
 const toggleMedioPago = async (mp) => {
     try {
         await mediosPagoStore.actualizarMedioPago(mp.id, { ...mp, activo: !mp.activo });
     } catch (error) {
-        toastMessage.value = 'Error al actualizar';
-        toastType.value = 'error';
-        showToast.value = true;
+        mostrarToast('Error al actualizar', 'error');
     }
 };
 
-const toggleCategoria = async (cat) => {
-    try {
-        await categoriasStore.actualizarCategoria(cat.id, { ...cat, activo: !cat.activo });
-    } catch (error) {
-        toastMessage.value = 'Error al actualizar';
-        toastType.value = 'error';
-        showToast.value = true;
-    }
+// Theme
+const cambiarTema = (tema) => {
+    themeStore.setTema(tema);
 };
+
+// Cargar datos
+onMounted(async () => {
+    await Promise.all([
+        mediosPagoStore.cargarMediosPago(),
+        categoriasStore.cargarCategorias()
+    ]);
+});
 </script>

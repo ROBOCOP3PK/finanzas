@@ -6,9 +6,12 @@
             border ? 'border border-gray-200 dark:border-gray-700' : ''
         ]"
     >
-        <div v-if="title" class="mb-3">
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ title }}</h3>
-            <p v-if="subtitle" class="text-sm text-gray-500 dark:text-gray-400">{{ subtitle }}</p>
+        <div v-if="title || $slots.action" class="flex items-center justify-between mb-3">
+            <div>
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ title }}</h3>
+                <p v-if="subtitle" class="text-sm text-gray-500 dark:text-gray-400">{{ subtitle }}</p>
+            </div>
+            <slot name="action" />
         </div>
         <slot />
     </div>
