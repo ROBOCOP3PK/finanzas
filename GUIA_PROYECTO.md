@@ -783,7 +783,179 @@ php artisan serve --port=8080
 
 ---
 
-### 12.3 Stack de Software
+### 12.3 Instalación de Ubuntu Server
+
+#### 12.3.1 Crear USB Booteable
+
+**Requisitos:**
+- USB de mínimo 4GB
+- ISO de Ubuntu Server 24.04 LTS descargado
+
+**En Windows (con Rufus):**
+
+1. Descargar Rufus desde https://rufus.ie
+2. Insertar USB de mínimo 4GB
+3. Abrir Rufus y configurar según la tabla:
+
+| Opción | Qué seleccionar | Notas |
+|--------|-----------------|-------|
+| **Dispositivo** | Tu USB (ej: "Kingston 8GB") | Verificar que sea la USB correcta |
+| **Selección de arranque** | Click "SELECCIONAR" → elegir ISO | `ubuntu-24.04-live-server-amd64.iso` |
+| **Opción de imagen** | Escribir en modo Imagen ISO | Dejar predeterminado |
+| **Esquema de partición** | **GPT** | Para portátiles 2012+ |
+| **Sistema de destino** | **UEFI (no CSM)** | Se selecciona automático con GPT |
+| **Etiqueta de volumen** | Ubuntu Server | Opcional, puede dejarse |
+| **Sistema de archivos** | FAT32 | Se pone automático |
+| **Tamaño del clúster** | Predeterminado | No tocar |
+
+**Diagrama de Rufus:**
+```
+┌─────────────────────────────────────────────────────────┐
+│  RUFUS 4.x                                              │
+├─────────────────────────────────────────────────────────┤
+│                                                         │
+│  Dispositivo:        [Kingston 8GB (F:)]           ▼   │
+│                                                         │
+│  Selección de arranque:                                 │
+│  [ubuntu-24.04-live-server-amd64.iso]      [SELECCIONAR]│
+│                                                         │
+│  Opción de imagen:   [Escribir en modo Imagen ISO] ▼   │
+│                                                         │
+│  Esquema partición:  [GPT]                         ▼   │ ← Clave
+│                                                         │
+│  Sistema de destino: [UEFI (no CSM)]               ▼   │ ← Automático
+│                                                         │
+│  ─────────────────────────────────────────────────────  │
+│                                                         │
+│  Etiqueta volumen:   [Ubuntu Server]                    │
+│  Sistema archivos:   [FAT32]                       ▼   │
+│  Tamaño del clúster: [4096 bytes (Predet.)]        ▼   │
+│                                                         │
+│                                          [EMPEZAR]      │
+└─────────────────────────────────────────────────────────┘
+```
+
+**¿GPT o MBR? ¿Cómo saber?**
+
+| Usar GPT + UEFI si... | Usar MBR + BIOS si... |
+|-----------------------|-----------------------|
+| Portátil de 2012 o más reciente | Portátil anterior a 2012 |
+| Tenía Windows 8, 10 u 11 | Tenía Windows 7 o XP |
+| BIOS menciona "UEFI" | BIOS no menciona UEFI |
+
+> **Consejo:** Si no sabes, prueba primero **GPT + UEFI**. Si no arranca desde la USB, vuelve a crearla con **MBR + BIOS**.
+
+4. Click en **EMPEZAR**
+5. Si pregunta modo de escritura → "Escribir en modo Imagen ISO" → **OK**
+6. Confirmar que borrará la USB → **OK**
+7. Esperar ~5-10 minutos hasta que diga "LISTO"
+8. Cerrar Rufus y expulsar USB de forma segura
+
+**En Linux:**
+```bash
+# Identificar la USB (ej: /dev/sdb)
+lsblk
+
+# Crear booteable (reemplazar /dev/sdX con tu USB)
+sudo dd if=ubuntu-24.04-live-server-amd64.iso of=/dev/sdX bs=4M status=progress
+```
+
+#### 12.3.2 Arrancar desde USB
+
+1. Insertar la USB en el portátil
+2. Encender y entrar al **menú de boot**:
+   - Presionar repetidamente **F12**, **F2**, **Esc** o **Del** (varía según marca)
+   - Si no funciona, entrar a BIOS y cambiar orden de arranque
+3. Seleccionar la USB como dispositivo de arranque
+
+> **Nota:** Si no arranca, desactivar "Secure Boot" en BIOS
+
+#### 12.3.3 Proceso de Instalación
+
+| Pantalla | Configuración |
+|----------|---------------|
+| **1. Idioma** | Español (o English) |
+| **2. Teclado** | Spanish / Spanish (Latin American) |
+| **3. Tipo de instalación** | Ubuntu Server (NO minimized) |
+| **4. Red** | Automático si hay cable. Anotar la IP asignada |
+| **5. Proxy** | Dejar vacío |
+| **6. Mirror** | Dejar predeterminado |
+| **7. Almacenamiento** | "Use an entire disk" → Seleccionar disco de 500GB |
+| **8. Perfil** | Ver configuración abajo |
+| **9. SSH** | ✅ Marcar "Install OpenSSH server" |
+| **10. Snaps** | NO seleccionar nada |
+
+**Configuración del perfil (Pantalla 8):**
+```
+Tu nombre: David Gonzalez
+Nombre del servidor: finanzas-server
+Nombre de usuario: david
+Contraseña: (una segura)
+```
+
+**Almacenamiento (Pantalla 7):**
+- Seleccionar "Use an entire disk"
+- Seleccionar el disco de 500GB
+- NO marcar "Set up this disk as LVM group" (simplifica el manejo)
+- Confirmar que borrará todo el disco
+
+#### 12.3.4 Finalizar Instalación
+
+1. Esperar a que termine (~10-20 min)
+2. Cuando diga "Installation complete" → seleccionar **Reboot Now**
+3. Retirar la USB cuando lo indique
+
+#### 12.3.5 Primer Inicio
+
+Después de reiniciar aparecerá pantalla negra con texto:
+
+```
+finanzas-server login: david
+Password: (tu contraseña, no se ve al escribir)
+```
+
+**Primeros comandos a ejecutar:**
+```bash
+# Actualizar sistema
+sudo apt update && sudo apt upgrade -y
+
+# Ver IP asignada (para conectar por SSH)
+ip a
+```
+
+#### 12.3.6 Conectar por SSH (Recomendado)
+
+Es más cómodo trabajar desde otro PC, permite copiar/pegar comandos:
+
+**Desde Linux/Mac:**
+```bash
+ssh david@192.168.1.X  # Reemplazar con la IP del servidor
+```
+
+**Desde Windows (PowerShell o Git Bash):**
+```bash
+ssh david@192.168.1.X
+```
+
+**Desde Windows (PuTTY):**
+1. Descargar PuTTY: https://putty.org
+2. Host Name: `192.168.1.X`
+3. Port: `22`
+4. Click en "Open"
+
+#### 12.3.7 Solución de Problemas de Instalación
+
+| Problema | Solución |
+|----------|----------|
+| No arranca desde USB | Desactivar "Secure Boot" en BIOS |
+| No detecta el disco | Cambiar modo SATA de RAID a AHCI en BIOS |
+| Pantalla se apaga/negro | Presionar cualquier tecla (es normal) |
+| Olvidé la IP | En el servidor ejecutar: `ip a` |
+| No conecta SSH | Verificar que están en la misma red |
+
+---
+
+### 12.4 Stack de Software
 
 ```
 ┌─────────────────────────────────────────────────────────┐
