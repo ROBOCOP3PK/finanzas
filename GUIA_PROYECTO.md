@@ -760,18 +760,23 @@ php artisan serve --port=8080
 ### 12.1 Hardware Disponible
 | Componente | Especificación |
 |------------|----------------|
+| Modelo | HP G42 (portátil ~2010-2011) |
 | Procesador | Intel Core i5 |
-| RAM | 8 GB |
-| Almacenamiento | 500 GB HDD/SSD |
+| RAM | 3 GB DDR3 |
+| Almacenamiento | 500 GB HDD |
 | Uso | Servidor dedicado para esta aplicación |
 
-> **Nota:** Estas especificaciones son más que suficientes para una aplicación Laravel personal con pocos usuarios.
+> **Nota:** Incluso con 3GB de RAM, estas especificaciones son suficientes para una aplicación Laravel personal con pocos usuarios concurrentes.
+
+> **⚠️ Importante sobre RAM:** No mezclar módulos DDR3 (1.5V) con DDR3L (1.35V). Son incompatibles y causan Kernel Panic durante la instalación.
 
 ---
 
 ### 12.2 Sistema Operativo
 
-**Recomendado:** Ubuntu Server 24.04 LTS (sin interfaz gráfica)
+**Recomendado:** Ubuntu Server 22.04 LTS (sin interfaz gráfica)
+
+> **Nota:** Para hardware antiguo (pre-2012) usar Ubuntu 22.04 LTS en lugar de 24.04. La versión 24.04 puede tener problemas de compatibilidad con hardware antiguo (GRUB se queda colgado).
 
 **¿Por qué Ubuntu Server sin GUI?**
 - Consume ~200MB RAM vs ~2GB con escritorio
@@ -780,6 +785,8 @@ php artisan serve --port=8080
 - Amplia documentación y comunidad
 
 **Descarga:** https://ubuntu.com/download/server
+- Para hardware moderno (2012+): Ubuntu Server 24.04 LTS
+- Para hardware antiguo (pre-2012): Ubuntu Server 22.04 LTS
 
 ---
 
@@ -789,61 +796,65 @@ php artisan serve --port=8080
 
 **Requisitos:**
 - USB de mínimo 4GB
-- ISO de Ubuntu Server 24.04 LTS descargado
+- ISO de Ubuntu Server 22.04 LTS descargado
 
 **En Windows (con Rufus):**
 
 1. Descargar Rufus desde https://rufus.ie
 2. Insertar USB de mínimo 4GB
-3. Abrir Rufus y configurar según la tabla:
+3. Abrir Rufus y configurar según tu hardware:
 
-| Opción | Qué seleccionar | Notas |
-|--------|-----------------|-------|
-| **Dispositivo** | Tu USB (ej: "Kingston 8GB") | Verificar que sea la USB correcta |
-| **Selección de arranque** | Click "SELECCIONAR" → elegir ISO | `ubuntu-24.04-live-server-amd64.iso` |
-| **Opción de imagen** | Escribir en modo Imagen ISO | Dejar predeterminado |
-| **Esquema de partición** | **GPT** | Para portátiles 2012+ |
-| **Sistema de destino** | **UEFI (no CSM)** | Se selecciona automático con GPT |
-| **Etiqueta de volumen** | Ubuntu Server | Opcional, puede dejarse |
-| **Sistema de archivos** | FAT32 | Se pone automático |
-| **Tamaño del clúster** | Predeterminado | No tocar |
+**Para hardware MODERNO (2012+) - GPT + UEFI:**
 
-**Diagrama de Rufus:**
+| Opción | Qué seleccionar |
+|--------|-----------------|
+| **Dispositivo** | Tu USB (ej: "Kingston 8GB") |
+| **Selección de arranque** | `ubuntu-22.04-live-server-amd64.iso` |
+| **Esquema de partición** | **GPT** |
+| **Sistema de destino** | **UEFI (no CSM)** (automático) |
+
 ```
 ┌─────────────────────────────────────────────────────────┐
-│  RUFUS 4.x                                              │
+│  RUFUS 4.x - Hardware Moderno (2012+)                   │
 ├─────────────────────────────────────────────────────────┤
-│                                                         │
 │  Dispositivo:        [Kingston 8GB (F:)]           ▼   │
-│                                                         │
-│  Selección de arranque:                                 │
-│  [ubuntu-24.04-live-server-amd64.iso]      [SELECCIONAR]│
-│                                                         │
-│  Opción de imagen:   [Escribir en modo Imagen ISO] ▼   │
-│                                                         │
-│  Esquema partición:  [GPT]                         ▼   │ ← Clave
-│                                                         │
-│  Sistema de destino: [UEFI (no CSM)]               ▼   │ ← Automático
-│                                                         │
-│  ─────────────────────────────────────────────────────  │
-│                                                         │
-│  Etiqueta volumen:   [Ubuntu Server]                    │
-│  Sistema archivos:   [FAT32]                       ▼   │
-│  Tamaño del clúster: [4096 bytes (Predet.)]        ▼   │
-│                                                         │
+│  Selección arranque: [ubuntu-22.04...iso] [SELECCIONAR]│
+│  Esquema partición:  [GPT]                         ▼   │ ← UEFI
+│  Sistema de destino: [UEFI (no CSM)]               ▼   │
 │                                          [EMPEZAR]      │
 └─────────────────────────────────────────────────────────┘
 ```
 
-**¿GPT o MBR? ¿Cómo saber?**
+**Para hardware ANTIGUO (pre-2012, como HP G42) - MBR + BIOS:**
+
+| Opción | Qué seleccionar |
+|--------|-----------------|
+| **Dispositivo** | Tu USB (ej: "Kingston 8GB") |
+| **Selección de arranque** | `ubuntu-22.04-live-server-amd64.iso` |
+| **Esquema de partición** | **MBR** |
+| **Sistema de destino** | **BIOS (o UEFI-CSM)** (automático) |
+
+```
+┌─────────────────────────────────────────────────────────┐
+│  RUFUS 4.x - Hardware Antiguo (pre-2012)                │
+├─────────────────────────────────────────────────────────┤
+│  Dispositivo:        [Kingston 8GB (F:)]           ▼   │
+│  Selección arranque: [ubuntu-22.04...iso] [SELECCIONAR]│
+│  Esquema partición:  [MBR]                         ▼   │ ← BIOS Legacy
+│  Sistema de destino: [BIOS (o UEFI-CSM)]           ▼   │
+│                                          [EMPEZAR]      │
+└─────────────────────────────────────────────────────────┘
+```
+
+**¿Cómo saber si mi PC es UEFI o BIOS Legacy?**
 
 | Usar GPT + UEFI si... | Usar MBR + BIOS si... |
 |-----------------------|-----------------------|
-| Portátil de 2012 o más reciente | Portátil anterior a 2012 |
+| Portátil de 2012 o más reciente | Portátil anterior a 2012 (HP G42, etc.) |
 | Tenía Windows 8, 10 u 11 | Tenía Windows 7 o XP |
-| BIOS menciona "UEFI" | BIOS no menciona UEFI |
+| BIOS tiene opción "UEFI" | BIOS no menciona UEFI |
 
-> **Consejo:** Si no sabes, prueba primero **GPT + UEFI**. Si no arranca desde la USB, vuelve a crearla con **MBR + BIOS**.
+> **⚠️ Error común:** Si al intentar bootear aparece: *"it can boot in uefi mode only but you are trying to boot it in bios/legacy mode"*, significa que creaste la USB con GPT+UEFI pero tu PC solo soporta BIOS Legacy. Solución: recrear la USB con **MBR + BIOS**.
 
 4. Click en **EMPEZAR**
 5. Si pregunta modo de escritura → "Escribir en modo Imagen ISO" → **OK**
@@ -857,62 +868,182 @@ php artisan serve --port=8080
 lsblk
 
 # Crear booteable (reemplazar /dev/sdX con tu USB)
-sudo dd if=ubuntu-24.04-live-server-amd64.iso of=/dev/sdX bs=4M status=progress
+sudo dd if=ubuntu-22.04-live-server-amd64.iso of=/dev/sdX bs=4M status=progress
 ```
 
 #### 12.3.2 Arrancar desde USB
 
 1. Insertar la USB en el portátil
 2. Encender y entrar al **menú de boot**:
-   - Presionar repetidamente **F12**, **F2**, **Esc** o **Del** (varía según marca)
+   - **HP:** Presionar **Esc** repetidamente al encender, luego **F9** para Boot Menu
+   - **Otras marcas:** F12, F2, o Del (varía según fabricante)
    - Si no funciona, entrar a BIOS y cambiar orden de arranque
 3. Seleccionar la USB como dispositivo de arranque
 
-> **Nota:** Si no arranca, desactivar "Secure Boot" en BIOS
+> **Nota:** Si no arranca, desactivar "Secure Boot" en BIOS (si existe la opción)
 
-#### 12.3.3 Proceso de Instalación
+#### 12.3.3 Menú de Inicio del Instalador
 
-| Pantalla | Configuración |
-|----------|---------------|
-| **1. Idioma** | Español (o English) |
-| **2. Teclado** | Spanish / Spanish (Latin American) |
-| **3. Tipo de instalación** | Ubuntu Server (NO minimized) |
-| **4. Red** | Automático si hay cable. Anotar la IP asignada |
-| **5. Proxy** | Dejar vacío |
-| **6. Mirror** | Dejar predeterminado |
-| **7. Almacenamiento** | "Use an entire disk" → Seleccionar disco de 500GB |
-| **8. Perfil** | Ver configuración abajo |
-| **9. SSH** | ✅ Marcar "Install OpenSSH server" |
-| **10. Snaps** | NO seleccionar nada |
+Al bootear desde la USB aparecerá un menú con varias opciones:
 
-**Configuración del perfil (Pantalla 8):**
 ```
-Tu nombre: David Gonzalez
-Nombre del servidor: finanzas-server
-Nombre de usuario: david
-Contraseña: (una segura)
+┌────────────────────────────────────────────────────────────┐
+│  GNU GRUB                                                   │
+├────────────────────────────────────────────────────────────┤
+│  Try or Install Ubuntu Server                               │
+│  Ubuntu Server with the HWE kernel        ← SELECCIONAR     │
+│  Test memory                                                │
+│  Boot from next volume                                      │
+└────────────────────────────────────────────────────────────┘
 ```
 
-**Almacenamiento (Pantalla 7):**
-- Seleccionar "Use an entire disk"
-- Seleccionar el disco de 500GB
-- NO marcar "Set up this disk as LVM group" (simplifica el manejo)
-- Confirmar que borrará todo el disco
+**Seleccionar:** `Ubuntu Server with the HWE kernel`
+- HWE (Hardware Enablement) = mejor compatibilidad con hardware antiguo
+- Tardará unos segundos en cargar, es normal
 
-#### 12.3.4 Finalizar Instalación
+> **⚠️ Problema conocido:** Si usas Ubuntu 24.04 en hardware antiguo y se queda en "GRUB loading. Welcome to GRUB" sin avanzar, usa Ubuntu 22.04 LTS en su lugar.
+
+#### 12.3.4 Proceso de Instalación Paso a Paso
+
+**Pantalla 1: Idioma**
+- Seleccionar: `English` (recomendado) o `Español`
+- Presionar **Enter**
+
+**Pantalla 2: Teclado**
+- Layout: `Spanish` o `Spanish (Latin American)`
+- Variant: Dejar por defecto
+- Seleccionar **[ Done ]**
+
+**Pantalla 3: Tipo de instalación**
+- Seleccionar: `Ubuntu Server` (NO minimized)
+- **[ Done ]**
+
+**Pantalla 4: Configuración de Red**
+```
+┌─────────────────────────────────────────────────────────────┐
+│  Network connections                                         │
+├─────────────────────────────────────────────────────────────┤
+│  NAME       TYPE      NOTES                                  │
+│  eth0       ethernet  192.168.1.184/24  ← Tu IP asignada     │
+└─────────────────────────────────────────────────────────────┘
+```
+- El sistema detectará automáticamente la red si hay cable conectado
+- **Anotar la IP mostrada** (ej: 192.168.1.184) - la necesitarás para SSH
+- Seleccionar **[ Done ]**
+
+**Pantalla 5: Proxy**
+- Dejar **vacío** (a menos que tu red requiera proxy)
+- **[ Done ]**
+
+**Pantalla 6: Mirror**
+- Dejar el mirror por defecto (se detecta automáticamente)
+- **[ Done ]**
+
+**Pantalla 7: Almacenamiento (Storage configuration)**
+```
+┌─────────────────────────────────────────────────────────────┐
+│  Guided storage configuration                                │
+├─────────────────────────────────────────────────────────────┤
+│  (X) Use an entire disk           ← SELECCIONAR              │
+│  [ ] Set up this disk as an LVM group   ← NO MARCAR          │
+│                                                              │
+│  [ ] Encrypt the LVM group with LUKS    ← NO MARCAR          │
+└─────────────────────────────────────────────────────────────┘
+```
+- Marcar: `Use an entire disk`
+- **NO marcar** "Set up this disk as LVM group" (simplifica el manejo)
+- Seleccionar el disco principal (ej: 500GB)
+- **[ Done ]** → Confirmar que borrará todo el disco
+
+**Pantalla 8: Configuración del Perfil**
+```
+┌─────────────────────────────────────────────────────────────┐
+│  Profile setup                                               │
+├─────────────────────────────────────────────────────────────┤
+│  Your name: servidor                                         │
+│  Your server's name: finanzas-server                         │
+│  Pick a username: servidor                                   │
+│  Choose a password: ********                                 │
+│  Confirm your password: ********                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+| Campo | Qué poner | Notas |
+|-------|-----------|-------|
+| Your name | `servidor` | Nombre descriptivo |
+| Server's name | `finanzas-server` | Hostname del equipo |
+| Username | `servidor` | Usuario para login y SSH |
+| Password | Tu contraseña | Puede ser simple inicialmente, se cambia después con `passwd` |
+
+> **💡 Tip:** El nombre de usuario `servidor` es genérico y útil si planeas hospedar varias apps. Puedes usar otro nombre si prefieres.
+
+**Pantalla 9: Ubuntu Pro**
+- Seleccionar: `Skip for now`
+- **[ Continue ]**
+
+**Pantalla 10: SSH Setup**
+```
+┌─────────────────────────────────────────────────────────────┐
+│  SSH Setup                                                   │
+├─────────────────────────────────────────────────────────────┤
+│  [X] Install OpenSSH server        ← MARCAR                  │
+│  [ ] Import SSH identity           ← Dejar sin marcar        │
+└─────────────────────────────────────────────────────────────┘
+```
+- **Marcar:** `Install OpenSSH server` (esencial para administrar remotamente)
+- Dejar sin marcar: Import SSH identity
+- **[ Done ]**
+
+**Pantalla 11: Featured Server Snaps**
+```
+┌─────────────────────────────────────────────────────────────┐
+│  Featured Server Snaps                                       │
+├─────────────────────────────────────────────────────────────┤
+│  [ ] microk8s                                                │
+│  [ ] nextcloud                                               │
+│  [ ] docker                                                  │
+│  [ ] wekan                                                   │
+│  ...                                                         │
+└─────────────────────────────────────────────────────────────┘
+```
+- **NO seleccionar nada** - instalaremos todo manualmente después
+- Seleccionar **[ Done ]**
+
+#### 12.3.5 Instalación en Progreso
+
+Después de la última pantalla, el sistema comenzará a instalarse:
+- Descargará paquetes de internet
+- Instalará el sistema base
+- Configurará el bootloader
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  Installing system                                           │
+├─────────────────────────────────────────────────────────────┤
+│  ████████████████░░░░░░░░░░░░░░  45%                        │
+│                                                              │
+│  configuring apt...                                          │
+└─────────────────────────────────────────────────────────────┘
+```
+
+Tiempo estimado: 10-20 minutos (depende de velocidad de internet y disco)
+
+#### 12.3.6 Finalizar Instalación
 
 1. Esperar a que termine (~10-20 min)
-2. Cuando diga "Installation complete" → seleccionar **Reboot Now**
-3. Retirar la USB cuando lo indique
+2. Cuando diga "Installation complete" → seleccionar **[ Reboot Now ]**
+3. **IMPORTANTE:** Retirar la USB antes de que reinicie (cuando lo indique o cuando veas la pantalla oscura)
 
-#### 12.3.5 Primer Inicio
+#### 12.3.7 Primer Inicio
 
 Después de reiniciar aparecerá pantalla negra con texto:
 
 ```
-finanzas-server login: david
+finanzas-server login: servidor
 Password: (tu contraseña, no se ve al escribir)
 ```
+
+> **Nota:** La contraseña no muestra caracteres al escribir, es normal. Solo escríbela y presiona Enter.
 
 **Primeros comandos a ejecutar:**
 ```bash
@@ -923,35 +1054,53 @@ sudo apt update && sudo apt upgrade -y
 ip a
 ```
 
-#### 12.3.6 Conectar por SSH (Recomendado)
+#### 12.3.8 Conectar por SSH (Recomendado)
 
 Es más cómodo trabajar desde otro PC, permite copiar/pegar comandos:
 
 **Desde Linux/Mac:**
 ```bash
-ssh david@192.168.1.X  # Reemplazar con la IP del servidor
+ssh servidor@192.168.1.184  # Reemplazar con la IP de tu servidor
 ```
 
 **Desde Windows (PowerShell o Git Bash):**
 ```bash
-ssh david@192.168.1.X
+ssh servidor@192.168.1.184
 ```
 
 **Desde Windows (PuTTY):**
 1. Descargar PuTTY: https://putty.org
-2. Host Name: `192.168.1.X`
+2. Host Name: `192.168.1.184` (tu IP)
 3. Port: `22`
 4. Click en "Open"
 
-#### 12.3.7 Solución de Problemas de Instalación
+#### 12.3.9 Solución de Problemas de Instalación
 
-| Problema | Solución |
-|----------|----------|
-| No arranca desde USB | Desactivar "Secure Boot" en BIOS |
-| No detecta el disco | Cambiar modo SATA de RAID a AHCI en BIOS |
-| Pantalla se apaga/negro | Presionar cualquier tecla (es normal) |
-| Olvidé la IP | En el servidor ejecutar: `ip a` |
-| No conecta SSH | Verificar que están en la misma red |
+| Problema | Causa | Solución |
+|----------|-------|----------|
+| Error "boot in uefi mode only..." | USB creada con GPT+UEFI en PC sin UEFI | Recrear USB con **MBR + BIOS** en Rufus |
+| "GRUB loading" y se queda colgado | Ubuntu 24.04 incompatible con hardware antiguo | Usar **Ubuntu 22.04 LTS** en su lugar |
+| Kernel Panic al iniciar | RAM incompatible (DDR3 mezclada con DDR3L) | Usar solo módulos del mismo tipo |
+| No arranca desde USB | Secure Boot activo | Desactivar "Secure Boot" en BIOS |
+| No detecta el disco duro | Modo SATA incorrecto | Cambiar de RAID a AHCI en BIOS |
+| Pantalla se apaga/negro | Ahorro de energía | Presionar cualquier tecla (es normal) |
+| Olvidé la IP del servidor | - | Ejecutar `ip a` directamente en el servidor |
+| No conecta SSH | Diferentes redes | Verificar que ambos PC están en la misma red WiFi/cable |
+
+**Sobre compatibilidad de RAM (DDR3 vs DDR3L):**
+```
+┌─────────────────────────────────────────────────────────────┐
+│  ⚠️ NO MEZCLAR:                                             │
+│                                                              │
+│  DDR3   = 1.5V  (estándar)                                  │
+│  DDR3L  = 1.35V (low voltage)                               │
+│                                                              │
+│  Mezclarlos causa: Kernel Panic, reinicios aleatorios,      │
+│  errores de memoria, instalación fallida                     │
+│                                                              │
+│  Solución: Usar SOLO un tipo de RAM                         │
+└─────────────────────────────────────────────────────────────┘
+```
 
 ---
 
@@ -984,7 +1133,7 @@ ssh david@192.168.1.X
 
 | Software | Versión | Propósito |
 |----------|---------|-----------|
-| Ubuntu Server | 24.04 LTS | Sistema operativo |
+| Ubuntu Server | 22.04 LTS | Sistema operativo (usar 24.04 solo en hardware moderno) |
 | Nginx | Última | Servidor web (más ligero que Apache) |
 | PHP | 8.3 | Runtime de Laravel |
 | PHP-FPM | 8.3 | Gestor de procesos PHP |
@@ -1404,7 +1553,7 @@ sudo dpkg-reconfigure unattended-upgrades
 ### 12.9 Checklist de Despliegue
 
 #### Pre-instalación
-- [ ] Descargar Ubuntu Server 24.04 LTS
+- [ ] Descargar Ubuntu Server 22.04 LTS (o 24.04 para hardware moderno)
 - [ ] Crear USB booteable
 - [ ] Anotar IP del router (para port forwarding)
 - [ ] Decidir IP estática para el servidor (ej: 192.168.1.100)
