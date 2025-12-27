@@ -20,6 +20,12 @@
 
     --border: #e5e7eb;
     --card-bg: #ffffff;
+
+    /* Safe areas */
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-left: env(safe-area-inset-left, 0px);
+    --safe-right: env(safe-area-inset-right, 0px);
 }
 
 /* Theme Variables - Dark Mode */
@@ -43,12 +49,163 @@
 }
 
 /* Base Styles */
-body {
-    @apply bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100;
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+html {
+    /* Prevent overscroll bounce on iOS */
+    overscroll-behavior: none;
+    /* Smooth scrolling */
+    scroll-behavior: smooth;
+    /* Prevent text size adjustment on orientation change */
+    -webkit-text-size-adjust: 100%;
 }
 
-/* Safe area for mobile */
+body {
+    @apply bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100;
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    /* Prevent pull-to-refresh on mobile */
+    overscroll-behavior-y: contain;
+    /* Better touch handling */
+    -webkit-tap-highlight-color: transparent;
+    /* Prevent text selection on double tap */
+    -webkit-touch-callout: none;
+}
+
+/* Safe areas for iPhone notch and home indicator */
+.safe-top {
+    padding-top: env(safe-area-inset-top, 0px);
+}
+
 .safe-bottom {
-    padding-bottom: env(safe-area-inset-bottom);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.safe-left {
+    padding-left: env(safe-area-inset-left, 0px);
+}
+
+.safe-right {
+    padding-right: env(safe-area-inset-right, 0px);
+}
+
+.safe-x {
+    padding-left: env(safe-area-inset-left, 0px);
+    padding-right: env(safe-area-inset-right, 0px);
+}
+
+/* Bottom navigation height considering safe area */
+.bottom-nav-height {
+    height: calc(4rem + env(safe-area-inset-bottom, 0px));
+}
+
+/* Main content padding to avoid bottom nav overlap */
+.main-content-padding {
+    padding-bottom: calc(5rem + env(safe-area-inset-bottom, 0px));
+}
+
+/* Minimum touch target size (44x44 for iOS) */
+.touch-target {
+    min-height: 44px;
+    min-width: 44px;
+}
+
+/* Better button touch targets */
+button, a, [role="button"] {
+    min-height: 44px;
+}
+
+/* Input fields optimized for mobile */
+input, select, textarea {
+    font-size: 16px !important; /* Prevents iOS zoom on focus */
+    @apply touch-manipulation;
+}
+
+/* Improved focus states for accessibility */
+input:focus, select:focus, textarea:focus, button:focus {
+    @apply outline-none ring-2 ring-primary ring-offset-2;
+}
+
+/* Card styles optimized for mobile */
+.card-mobile {
+    @apply bg-white dark:bg-gray-800 rounded-2xl shadow-sm;
+    @apply mx-4 p-4;
+}
+
+/* Smooth transitions */
+* {
+    @apply transition-colors duration-200;
+}
+
+/* Custom scrollbar for better mobile experience */
+::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+}
+
+::-webkit-scrollbar-track {
+    @apply bg-transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    @apply bg-gray-300 dark:bg-gray-600 rounded-full;
+}
+
+/* Standalone PWA styles (when installed) */
+@media (display-mode: standalone) {
+    body {
+        /* Additional padding for standalone mode */
+        padding-top: env(safe-area-inset-top, 0px);
+    }
+}
+
+/* iPhone 15 Pro Max specific optimizations (430px width) */
+@media screen and (min-width: 414px) and (max-width: 440px) {
+    .card-mobile {
+        @apply mx-4;
+    }
+
+    /* Larger touch targets for bigger screen */
+    button, a, [role="button"] {
+        min-height: 48px;
+    }
+}
+
+/* Large phones (iPhone Plus/Max sizes) */
+@media screen and (min-width: 390px) {
+    /* Slightly larger text for readability */
+    .text-adaptive {
+        @apply text-base;
+    }
+}
+
+/* Landscape mode adjustments */
+@media screen and (orientation: landscape) and (max-height: 500px) {
+    .bottom-nav-height {
+        height: 3.5rem;
+    }
+
+    .main-content-padding {
+        padding-bottom: 4rem;
+    }
+}
+
+/* Reduced motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* Dark mode system preference detection */
+@media (prefers-color-scheme: dark) {
+    :root:not(.light) {
+        color-scheme: dark;
+    }
+}
+
+/* Light mode system preference */
+@media (prefers-color-scheme: light) {
+    :root:not(.dark) {
+        color-scheme: light;
+    }
 }

@@ -1,7 +1,7 @@
 <template>
     <button
         @click="toggleTheme"
-        class="p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+        class="p-2.5 rounded-xl text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors touch-target flex items-center justify-center"
         :title="themeStore.tema === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'"
     >
         <SunIcon v-if="themeStore.temaActivo === 'dark'" class="w-5 h-5" />
