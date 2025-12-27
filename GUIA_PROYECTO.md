@@ -752,3 +752,552 @@ php artisan serve --port=8080
 - [ ] Gráficos de evolución de deuda
 - [ ] Exportación de reportes
 - [ ] Backup automático en la nube
+
+---
+
+## 12. Despliegue en Servidor Casero
+
+### 12.1 Hardware Disponible
+| Componente | Especificación |
+|------------|----------------|
+| Procesador | Intel Core i5 |
+| RAM | 8 GB |
+| Almacenamiento | 500 GB HDD/SSD |
+| Uso | Servidor dedicado para esta aplicación |
+
+> **Nota:** Estas especificaciones son más que suficientes para una aplicación Laravel personal con pocos usuarios.
+
+---
+
+### 12.2 Sistema Operativo
+
+**Recomendado:** Ubuntu Server 24.04 LTS (sin interfaz gráfica)
+
+**¿Por qué Ubuntu Server sin GUI?**
+- Consume ~200MB RAM vs ~2GB con escritorio
+- Más estable para servidores 24/7
+- Actualizaciones de seguridad por 5 años (LTS)
+- Amplia documentación y comunidad
+
+**Descarga:** https://ubuntu.com/download/server
+
+---
+
+### 12.3 Stack de Software
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                    CLIENTE (Navegador)                   │
+└─────────────────────────────────────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────┐
+│                      NGINX (Puerto 80/443)               │
+│                   Servidor web + Proxy reverso           │
+│                   + Certificado SSL (Let's Encrypt)      │
+└─────────────────────────────────────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────┐
+│                      PHP-FPM 8.3                         │
+│                   Procesa peticiones PHP                 │
+└─────────────────────────────────────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────┐
+│                   Laravel 11 + SQLite                    │
+│                   (Tu aplicación)                        │
+└─────────────────────────────────────────────────────────┘
+```
+
+| Software | Versión | Propósito |
+|----------|---------|-----------|
+| Ubuntu Server | 24.04 LTS | Sistema operativo |
+| Nginx | Última | Servidor web (más ligero que Apache) |
+| PHP | 8.3 | Runtime de Laravel |
+| PHP-FPM | 8.3 | Gestor de procesos PHP |
+| Composer | 2.x | Dependencias PHP |
+| Node.js | 20 LTS | Compilar assets Vue |
+| NPM | 10.x | Dependencias JavaScript |
+| Git | Última | Control de versiones y deploy |
+| Certbot | Última | Certificados SSL gratuitos |
+| UFW | Incluido | Firewall |
+| Fail2ban | Última | Protección contra ataques |
+
+---
+
+### 12.4 Configuración de Red
+
+#### 12.4.1 Red Local
+```
+┌──────────────┐      ┌──────────────┐      ┌──────────────┐
+│   Internet   │◄────►│    Router    │◄────►│   Servidor   │
+│              │      │ (Port Fwd)   │      │  192.168.1.X │
+└──────────────┘      └──────────────┘      └──────────────┘
+```
+
+**Configurar IP estática en el servidor:**
+```bash
+# /etc/netplan/00-installer-config.yaml
+network:
+  version: 2
+  ethernets:
+    enp0s3:  # Nombre de tu interfaz (ver con: ip a)
+      dhcp4: no
+      addresses:
+        - 192.168.1.100/24  # IP fija que elijas
+      routes:
+        - to: default
+          via: 192.168.1.1  # IP de tu router
+      nameservers:
+        addresses:
+          - 8.8.8.8
+          - 8.8.4.4
+```
+
+#### 12.4.2 Port Forwarding en Router
+Configurar en tu router (generalmente en 192.168.1.1):
+
+| Puerto Externo | Puerto Interno | Protocolo | Destino |
+|----------------|----------------|-----------|---------|
+| 80 | 80 | TCP | 192.168.1.100 |
+| 443 | 443 | TCP | 192.168.1.100 |
+| 22 | 22 | TCP | 192.168.1.100 (opcional, para SSH remoto) |
+
+#### 12.4.3 DNS Dinámico (Si no tienes IP pública fija)
+
+**Opciones gratuitas:**
+| Servicio | Dominio gratuito | Notas |
+|----------|------------------|-------|
+| DuckDNS | tuapp.duckdns.org | Simple, gratuito |
+| No-IP | tuapp.ddns.net | Popular, requiere confirmar cada 30 días |
+| FreeDNS | tuapp.afraid.org | Muchas opciones de dominio |
+
+**Configurar DuckDNS (recomendado):**
+1. Crear cuenta en https://www.duckdns.org
+2. Crear subdominio (ej: `finanzas-david`)
+3. Instalar cliente en servidor:
+```bash
+# Crear script de actualización
+mkdir -p ~/duckdns
+echo "url=\"https://www.duckdns.org/update?domains=finanzas-david&token=TU_TOKEN&ip=\"" > ~/duckdns/duck.sh
+chmod 700 ~/duckdns/duck.sh
+
+# Programar actualización cada 5 minutos
+crontab -e
+# Añadir línea:
+*/5 * * * * ~/duckdns/duck.sh >/dev/null 2>&1
+```
+
+---
+
+### 12.5 Instalación Paso a Paso
+
+#### Paso 1: Instalar Ubuntu Server
+1. Descargar ISO de Ubuntu Server 24.04 LTS
+2. Crear USB booteable con Rufus o Balena Etcher
+3. Instalar seleccionando:
+   - Instalación mínima
+   - Instalar OpenSSH Server
+   - NO instalar snaps adicionales
+
+#### Paso 2: Configuración inicial del servidor
+```bash
+# Actualizar sistema
+sudo apt update && sudo apt upgrade -y
+
+# Configurar zona horaria
+sudo timedatectl set-timezone America/Bogota
+
+# Crear usuario para la app (opcional pero recomendado)
+sudo adduser finanzas
+sudo usermod -aG sudo finanzas
+```
+
+#### Paso 3: Instalar Nginx
+```bash
+sudo apt install nginx -y
+sudo systemctl enable nginx
+sudo systemctl start nginx
+```
+
+#### Paso 4: Instalar PHP 8.3 y extensiones
+```bash
+# Añadir repositorio de PHP
+sudo add-apt-repository ppa:ondrej/php -y
+sudo apt update
+
+# Instalar PHP y extensiones necesarias para Laravel
+sudo apt install php8.3-fpm php8.3-cli php8.3-common php8.3-mysql \
+    php8.3-xml php8.3-curl php8.3-gd php8.3-mbstring php8.3-zip \
+    php8.3-bcmath php8.3-intl php8.3-sqlite3 -y
+
+# Verificar instalación
+php -v
+```
+
+#### Paso 5: Instalar Composer
+```bash
+cd ~
+curl -sS https://getcomposer.org/installer | php
+sudo mv composer.phar /usr/local/bin/composer
+composer --version
+```
+
+#### Paso 6: Instalar Node.js 20 LTS
+```bash
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt install nodejs -y
+node -v
+npm -v
+```
+
+#### Paso 7: Instalar Git
+```bash
+sudo apt install git -y
+```
+
+#### Paso 8: Configurar Firewall (UFW)
+```bash
+sudo ufw allow OpenSSH
+sudo ufw allow 'Nginx Full'
+sudo ufw enable
+sudo ufw status
+```
+
+#### Paso 9: Instalar Fail2ban
+```bash
+sudo apt install fail2ban -y
+sudo systemctl enable fail2ban
+sudo systemctl start fail2ban
+```
+
+---
+
+### 12.6 Desplegar la Aplicación
+
+#### Paso 1: Crear directorio y clonar repositorio
+```bash
+# Crear directorio para la app
+sudo mkdir -p /var/www/finanzas
+sudo chown -R $USER:$USER /var/www/finanzas
+
+# Clonar repositorio (ajustar URL)
+cd /var/www/finanzas
+git clone https://github.com/tu-usuario/finanzas.git .
+# O copiar archivos manualmente con scp/rsync
+```
+
+#### Paso 2: Instalar dependencias
+```bash
+cd /var/www/finanzas
+
+# Dependencias PHP (producción)
+composer install --optimize-autoloader --no-dev
+
+# Dependencias JS y compilar
+npm install
+npm run build
+```
+
+#### Paso 3: Configurar Laravel
+```bash
+# Copiar archivo de entorno
+cp .env.example .env
+
+# Editar configuración
+nano .env
+```
+
+**Contenido de .env para producción:**
+```env
+APP_NAME="Finanzas Compartidas"
+APP_ENV=production
+APP_DEBUG=false
+APP_URL=https://finanzas-david.duckdns.org
+
+DB_CONNECTION=sqlite
+DB_DATABASE=/var/www/finanzas/database/database.sqlite
+
+SESSION_DRIVER=file
+CACHE_STORE=file
+QUEUE_CONNECTION=sync
+```
+
+```bash
+# Crear base de datos SQLite
+touch database/database.sqlite
+
+# Generar clave de aplicación
+php artisan key:generate
+
+# Ejecutar migraciones
+php artisan migrate --seed
+
+# Optimizar para producción
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+
+# Ajustar permisos
+sudo chown -R www-data:www-data /var/www/finanzas
+sudo chmod -R 755 /var/www/finanzas
+sudo chmod -R 775 /var/www/finanzas/storage
+sudo chmod -R 775 /var/www/finanzas/bootstrap/cache
+```
+
+#### Paso 4: Configurar Nginx
+```bash
+sudo nano /etc/nginx/sites-available/finanzas
+```
+
+**Contenido del archivo:**
+```nginx
+server {
+    listen 80;
+    listen [::]:80;
+    server_name finanzas-david.duckdns.org;  # Tu dominio
+    root /var/www/finanzas/public;
+
+    add_header X-Frame-Options "SAMEORIGIN";
+    add_header X-Content-Type-Options "nosniff";
+
+    index index.php;
+
+    charset utf-8;
+
+    location / {
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+
+    location = /favicon.ico { access_log off; log_not_found off; }
+    location = /robots.txt  { access_log off; log_not_found off; }
+
+    error_page 404 /index.php;
+
+    location ~ \.php$ {
+        fastcgi_pass unix:/var/run/php/php8.3-fpm.sock;
+        fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;
+        include fastcgi_params;
+    }
+
+    location ~ /\.(?!well-known).* {
+        deny all;
+    }
+}
+```
+
+```bash
+# Habilitar sitio
+sudo ln -s /etc/nginx/sites-available/finanzas /etc/nginx/sites-enabled/
+
+# Deshabilitar sitio por defecto
+sudo rm /etc/nginx/sites-enabled/default
+
+# Verificar configuración
+sudo nginx -t
+
+# Reiniciar Nginx
+sudo systemctl restart nginx
+```
+
+#### Paso 5: Instalar certificado SSL (Let's Encrypt)
+```bash
+# Instalar Certbot
+sudo apt install certbot python3-certbot-nginx -y
+
+# Obtener certificado (tu dominio debe estar apuntando al servidor)
+sudo certbot --nginx -d finanzas-david.duckdns.org
+
+# Renovación automática (ya configurada, pero verificar)
+sudo certbot renew --dry-run
+```
+
+---
+
+### 12.7 Configuración del Portátil como Servidor
+
+#### 12.7.1 Evitar suspensión al cerrar tapa
+```bash
+sudo nano /etc/systemd/logind.conf
+```
+Descomentar y modificar:
+```
+HandleLidSwitch=ignore
+HandleLidSwitchExternalPower=ignore
+HandleLidSwitchDocked=ignore
+```
+```bash
+sudo systemctl restart systemd-logind
+```
+
+#### 12.7.2 Configurar arranque automático tras corte de luz
+- Acceder a BIOS (F2, F10 o Del al iniciar)
+- Buscar "Power Management" o "AC Power Recovery"
+- Configurar en "Power On" o "Last State"
+
+#### 12.7.3 Monitoreo de temperatura
+```bash
+# Instalar sensores
+sudo apt install lm-sensors -y
+sudo sensors-detect  # Aceptar todo con Enter
+
+# Ver temperaturas
+sensors
+
+# Monitoreo continuo (opcional)
+watch -n 2 sensors
+```
+
+---
+
+### 12.8 Mantenimiento y Actualizaciones
+
+#### 12.8.1 Script de deploy (actualizar aplicación)
+```bash
+# Crear script: /var/www/finanzas/deploy.sh
+#!/bin/bash
+cd /var/www/finanzas
+
+# Modo mantenimiento
+php artisan down
+
+# Obtener cambios
+git pull origin main
+
+# Actualizar dependencias
+composer install --optimize-autoloader --no-dev
+npm install
+npm run build
+
+# Migraciones
+php artisan migrate --force
+
+# Limpiar y optimizar cachés
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+
+# Ajustar permisos
+sudo chown -R www-data:www-data /var/www/finanzas
+sudo chmod -R 775 storage bootstrap/cache
+
+# Salir de mantenimiento
+php artisan up
+
+echo "Deploy completado!"
+```
+
+```bash
+chmod +x /var/www/finanzas/deploy.sh
+```
+
+#### 12.8.2 Backup automático de base de datos
+```bash
+# Crear directorio de backups
+mkdir -p ~/backups
+
+# Crear script: ~/backups/backup.sh
+#!/bin/bash
+DATE=$(date +%Y%m%d_%H%M%S)
+cp /var/www/finanzas/database/database.sqlite ~/backups/finanzas_$DATE.sqlite
+
+# Mantener solo últimos 30 backups
+cd ~/backups && ls -t *.sqlite | tail -n +31 | xargs -r rm
+
+echo "Backup creado: finanzas_$DATE.sqlite"
+```
+
+```bash
+chmod +x ~/backups/backup.sh
+
+# Programar backup diario a las 3am
+crontab -e
+# Añadir:
+0 3 * * * ~/backups/backup.sh
+```
+
+#### 12.8.3 Actualizaciones del sistema
+```bash
+# Actualizar manualmente
+sudo apt update && sudo apt upgrade -y
+
+# O configurar actualizaciones automáticas de seguridad
+sudo apt install unattended-upgrades -y
+sudo dpkg-reconfigure unattended-upgrades
+```
+
+---
+
+### 12.9 Checklist de Despliegue
+
+#### Pre-instalación
+- [ ] Descargar Ubuntu Server 24.04 LTS
+- [ ] Crear USB booteable
+- [ ] Anotar IP del router (para port forwarding)
+- [ ] Decidir IP estática para el servidor (ej: 192.168.1.100)
+- [ ] Crear cuenta en DuckDNS y subdominio
+
+#### Instalación del Sistema
+- [ ] Instalar Ubuntu Server (sin GUI)
+- [ ] Configurar IP estática
+- [ ] Actualizar sistema (`apt update && apt upgrade`)
+- [ ] Configurar zona horaria
+
+#### Instalación del Stack
+- [ ] Instalar Nginx
+- [ ] Instalar PHP 8.3 + extensiones
+- [ ] Instalar Composer
+- [ ] Instalar Node.js 20
+- [ ] Instalar Git
+- [ ] Configurar UFW (firewall)
+- [ ] Instalar Fail2ban
+
+#### Configuración de Red
+- [ ] Configurar port forwarding en router (80, 443)
+- [ ] Configurar DuckDNS
+- [ ] Verificar acceso desde internet
+
+#### Despliegue de la Aplicación
+- [ ] Clonar/copiar código a `/var/www/finanzas`
+- [ ] Instalar dependencias (composer, npm)
+- [ ] Configurar `.env` de producción
+- [ ] Ejecutar migraciones
+- [ ] Configurar Nginx
+- [ ] Instalar certificado SSL
+
+#### Configuración del Portátil
+- [ ] Deshabilitar suspensión al cerrar tapa
+- [ ] Configurar arranque tras corte de luz (BIOS)
+- [ ] Instalar sensores de temperatura
+
+#### Post-despliegue
+- [ ] Crear script de deploy
+- [ ] Configurar backup automático
+- [ ] Probar acceso desde móvil (red móvil, no WiFi)
+- [ ] Verificar renovación automática de SSL
+
+---
+
+### 12.10 Resolución de Problemas Comunes
+
+| Problema | Solución |
+|----------|----------|
+| Error 502 Bad Gateway | `sudo systemctl restart php8.3-fpm` |
+| Error de permisos en storage | `sudo chmod -R 775 storage bootstrap/cache` |
+| Certificado SSL no funciona | Verificar que el dominio apunta a tu IP pública |
+| No accesible desde internet | Verificar port forwarding en router |
+| Página en blanco | Revisar logs: `tail -f storage/logs/laravel.log` |
+| Assets no cargan (CSS/JS) | Ejecutar `npm run build` y limpiar caché |
+
+**Logs útiles:**
+```bash
+# Laravel
+tail -f /var/www/finanzas/storage/logs/laravel.log
+
+# Nginx
+sudo tail -f /var/log/nginx/error.log
+
+# PHP-FPM
+sudo tail -f /var/log/php8.3-fpm.log
+```
