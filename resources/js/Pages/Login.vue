@@ -110,20 +110,11 @@ onMounted(() => {
 });
 
 const handleLogin = async () => {
-    console.log('Iniciando login...');
-    try {
-        const result = await authStore.login(email.value, password.value);
-        console.log('Resultado login:', result);
+    const result = await authStore.login(email.value, password.value);
 
-        if (result.success) {
-            console.log('Login exitoso, redirigiendo...');
-            await nextTick();
-            window.location.href = '/';
-        } else {
-            console.log('Login fallido:', result.error);
-        }
-    } catch (err) {
-        console.error('Error en login:', err);
+    if (result.success) {
+        await nextTick();
+        window.location.href = '/';
     }
 };
 </script>
