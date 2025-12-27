@@ -1847,87 +1847,87 @@ module.exports = {
 
 ---
 
-### Fase 1: Setup + Base de Datos
+### Fase 1: Setup + Base de Datos ✅
 **Objetivo:** Proyecto Laravel funcionando con BD configurada
 
-1. [ ] Crear proyecto Laravel 11
-2. [ ] Configurar SQLite en .env
-3. [ ] Crear migración: `create_medios_pago_table`
-4. [ ] Crear migración: `create_categorias_table`
-5. [ ] Crear migración: `create_gastos_table`
-6. [ ] Crear migración: `create_abonos_table`
-7. [ ] Crear migración: `create_conceptos_frecuentes_table`
-8. [ ] Crear migración: `create_plantillas_table`
-9. [ ] Crear migración: `create_gastos_recurrentes_table`
-10. [ ] Crear migración: `create_configuraciones_table`
-11. [ ] Crear seeder: `MedioPagoSeeder`
-12. [ ] Crear seeder: `CategoriaSeeder`
-13. [ ] Crear seeder: `ConfiguracionSeeder`
-14. [ ] Ejecutar migraciones y seeders
-15. [ ] Verificar tablas creadas en SQLite
+1. [x] Crear proyecto Laravel 11
+2. [x] Configurar SQLite en .env
+3. [x] Crear migración: `create_medios_pago_table`
+4. [x] Crear migración: `create_categorias_table`
+5. [x] Crear migración: `create_gastos_table`
+6. [x] Crear migración: `create_abonos_table`
+7. [x] Crear migración: `create_conceptos_frecuentes_table`
+8. [x] Crear migración: `create_plantillas_table`
+9. [x] Crear migración: `create_gastos_recurrentes_table`
+10. [x] Crear migración: `create_configuraciones_table`
+11. [x] Crear seeder: `MedioPagoSeeder`
+12. [x] Crear seeder: `CategoriaSeeder`
+13. [x] Crear seeder: `ConfiguracionSeeder`
+14. [x] Ejecutar migraciones y seeders
+15. [x] Verificar tablas creadas en SQLite
 
 **Comando para probar:** `php artisan migrate:fresh --seed`
 
 ---
 
-### Fase 2: Modelos Eloquent
+### Fase 2: Modelos Eloquent ✅
 **Objetivo:** Todos los modelos con relaciones y scopes
 
-1. [ ] Crear modelo: `MedioPago` (con relación hasMany a Gasto)
-2. [ ] Crear modelo: `Categoria` (con relación hasMany a Gasto)
-3. [ ] Crear modelo: `Gasto` (con relaciones belongsTo y scopes)
-4. [ ] Crear modelo: `Abono` (con scopes)
-5. [ ] Crear modelo: `ConceptoFrecuente` (con métodos de autocompletado)
-6. [ ] Crear modelo: `Plantilla` (con método usar())
-7. [ ] Crear modelo: `GastoRecurrente` (con scope pendientes y método registrar())
-8. [ ] Crear modelo: `Configuracion` (con métodos estáticos obtener/establecer)
+1. [x] Crear modelo: `MedioPago` (con relación hasMany a Gasto)
+2. [x] Crear modelo: `Categoria` (con relación hasMany a Gasto)
+3. [x] Crear modelo: `Gasto` (con relaciones belongsTo y scopes)
+4. [x] Crear modelo: `Abono` (con scopes)
+5. [x] Crear modelo: `ConceptoFrecuente` (con métodos de autocompletado)
+6. [x] Crear modelo: `Plantilla` (con método usar())
+7. [x] Crear modelo: `GastoRecurrente` (con scope pendientes y método registrar())
+8. [x] Crear modelo: `Configuracion` (con métodos estáticos obtener/establecer)
 
 **Comando para probar:** `php artisan tinker` → probar relaciones
 
 ---
 
-### Fase 3: Validaciones (Form Requests)
+### Fase 3: Validaciones (Form Requests) ✅
 **Objetivo:** Todas las validaciones centralizadas
 
-1. [ ] Crear request: `GastoRequest`
-2. [ ] Crear request: `AbonoRequest`
-3. [ ] Crear request: `MedioPagoRequest`
-4. [ ] Crear request: `CategoriaRequest`
-5. [ ] Crear request: `PlantillaRequest`
-6. [ ] Crear request: `GastoRecurrenteRequest`
+1. [x] Crear request: `GastoRequest`
+2. [x] Crear request: `AbonoRequest`
+3. [x] Crear request: `MedioPagoRequest`
+4. [x] Crear request: `CategoriaRequest`
+5. [x] Crear request: `PlantillaRequest`
+6. [x] Crear request: `GastoRecurrenteRequest`
 
 **Verificar:** Mensajes de error en español
 
 ---
 
-### Fase 4: Controladores
+### Fase 4: Controladores ✅
 **Objetivo:** Toda la lógica de negocio implementada
 
-1. [ ] Crear controlador: `MedioPagoController` (CRUD + reordenar)
-2. [ ] Crear controlador: `CategoriaController` (CRUD + reordenar)
-3. [ ] Crear controlador: `GastoController` (CRUD + filtros)
-4. [ ] Crear controlador: `AbonoController` (CRUD + filtros)
-5. [ ] Crear controlador: `ConceptoFrecuenteController` (buscar, favoritos)
-6. [ ] Crear controlador: `PlantillaController` (CRUD + usar + reordenar)
-7. [ ] Crear controlador: `GastoRecurrenteController` (CRUD + pendientes + registrar)
-8. [ ] Crear controlador: `ConfiguracionController` (get/update)
-9. [ ] Crear controlador: `DashboardController` (saldo, resumen, últimos)
+1. [x] Crear controlador: `MedioPagoController` (CRUD + reordenar)
+2. [x] Crear controlador: `CategoriaController` (CRUD + reordenar)
+3. [x] Crear controlador: `GastoController` (CRUD + filtros)
+4. [x] Crear controlador: `AbonoController` (CRUD + filtros)
+5. [x] Crear controlador: `ConceptoFrecuenteController` (buscar, favoritos)
+6. [x] Crear controlador: `PlantillaController` (CRUD + usar + reordenar)
+7. [x] Crear controlador: `GastoRecurrenteController` (CRUD + pendientes + registrar)
+8. [x] Crear controlador: `ConfiguracionController` (get/update)
+9. [x] Crear controlador: `DashboardController` (saldo, resumen, últimos)
 
 ---
 
-### Fase 5: Rutas API
+### Fase 5: Rutas API ✅
 **Objetivo:** API REST completa y funcional
 
-1. [ ] Definir rutas para medios de pago
-2. [ ] Definir rutas para categorías
-3. [ ] Definir rutas para gastos
-4. [ ] Definir rutas para abonos
-5. [ ] Definir rutas para conceptos frecuentes
-6. [ ] Definir rutas para plantillas
-7. [ ] Definir rutas para gastos recurrentes
-8. [ ] Definir rutas para configuración
-9. [ ] Definir rutas para dashboard
-10. [ ] Probar todos los endpoints con curl/Postman
+1. [x] Definir rutas para medios de pago
+2. [x] Definir rutas para categorías
+3. [x] Definir rutas para gastos
+4. [x] Definir rutas para abonos
+5. [x] Definir rutas para conceptos frecuentes
+6. [x] Definir rutas para plantillas
+7. [x] Definir rutas para gastos recurrentes
+8. [x] Definir rutas para configuración
+9. [x] Definir rutas para dashboard
+10. [x] Probar todos los endpoints con curl/Postman
 
 **Comando para probar:** `php artisan route:list --path=api`
 
@@ -1935,90 +1935,90 @@ module.exports = {
 
 ---
 
-### Fase 6: Setup Frontend
+### Fase 6: Setup Frontend ✅
 **Objetivo:** Vue 3 configurado con todas las dependencias
 
-1. [ ] Instalar Vue 3 + Vite en Laravel
-2. [ ] Instalar y configurar Tailwind CSS
-3. [ ] Configurar darkMode: 'class' en tailwind.config.js
-4. [ ] Instalar Pinia
-5. [ ] Instalar Vue Router
-6. [ ] Configurar axios con baseURL
-7. [ ] Crear layout: `AppLayout.vue`
-8. [ ] Crear componente: `BottomNav.vue`
-9. [ ] Crear componente: `ThemeToggle.vue`
-10. [ ] Configurar router con rutas base
-11. [ ] Crear vista blade: `app.blade.php`
+1. [x] Instalar Vue 3 + Vite en Laravel
+2. [x] Instalar y configurar Tailwind CSS
+3. [x] Configurar darkMode: 'class' en tailwind.config.js
+4. [x] Instalar Pinia
+5. [x] Instalar Vue Router
+6. [x] Configurar axios con baseURL
+7. [x] Crear layout: `AppLayout.vue`
+8. [x] Crear componente: `BottomNav.vue`
+9. [x] Crear componente: `ThemeToggle.vue`
+10. [x] Configurar router con rutas base
+11. [x] Crear vista blade: `app.blade.php`
 
 **Comando para probar:** `npm run dev` → ver layout base
 
 ---
 
-### Fase 7: Stores (Pinia)
+### Fase 7: Stores (Pinia) ✅
 **Objetivo:** Estado global de la aplicación
 
-1. [ ] Crear store: `theme.js` (tema claro/oscuro/sistema)
-2. [ ] Crear store: `config.js` (configuración general)
-3. [ ] Crear store: `mediosPago.js`
-4. [ ] Crear store: `categorias.js`
-5. [ ] Crear store: `gastos.js`
-6. [ ] Crear store: `abonos.js`
-7. [ ] Crear store: `conceptosFrecuentes.js`
-8. [ ] Crear store: `plantillas.js`
-9. [ ] Crear store: `gastosRecurrentes.js`
-10. [ ] Crear store: `dashboard.js`
+1. [x] Crear store: `theme.js` (tema claro/oscuro/sistema)
+2. [x] Crear store: `config.js` (configuración general)
+3. [x] Crear store: `mediosPago.js`
+4. [x] Crear store: `categorias.js`
+5. [x] Crear store: `gastos.js`
+6. [x] Crear store: `abonos.js`
+7. [x] Crear store: `conceptosFrecuentes.js`
+8. [x] Crear store: `plantillas.js`
+9. [x] Crear store: `gastosRecurrentes.js`
+10. [x] Crear store: `dashboard.js`
 
 ---
 
-### Fase 8: Componentes
+### Fase 8: Componentes ✅
 **Objetivo:** Todos los componentes reutilizables
 
 **UI Base:**
-1. [ ] Crear componente: `UI/Button.vue`
-2. [ ] Crear componente: `UI/Input.vue`
-3. [ ] Crear componente: `UI/Select.vue`
-4. [ ] Crear componente: `UI/Modal.vue`
-5. [ ] Crear componente: `UI/Card.vue`
-6. [ ] Crear componente: `UI/Badge.vue`
-7. [ ] Crear componente: `UI/Toast.vue`
+1. [x] Crear componente: `UI/Button.vue`
+2. [x] Crear componente: `UI/Input.vue`
+3. [x] Crear componente: `UI/Select.vue`
+4. [x] Crear componente: `UI/Modal.vue`
+5. [x] Crear componente: `UI/Card.vue`
+6. [x] Crear componente: `UI/Badge.vue`
+7. [x] Crear componente: `UI/Toast.vue`
 
 **Componentes de módulos:**
-8. [ ] Crear componentes: `Gastos/` (GastoForm, GastoList, GastoItem)
-9. [ ] Crear componentes: `Abonos/` (AbonoForm, AbonoList)
-10. [ ] Crear componentes: `MediosPago/` (Form, List, Item)
-11. [ ] Crear componentes: `Categorias/` (Form, List, Item)
-12. [ ] Crear componentes: `Plantillas/` (Form, List, QuickButtons)
-13. [ ] Crear componentes: `GastosRecurrentes/` (Form, List, Item)
-14. [ ] Crear componentes: `Dashboard/` (SaldoCard, ResumenMes, UltimosMovimientos, AlertaRecurrentes)
+8. [x] Crear componentes: `Gastos/` (GastoForm, GastoList, GastoItem)
+9. [x] Crear componentes: `Abonos/` (AbonoForm, AbonoList)
+10. [x] Crear componentes: `MediosPago/` (Form, List, Item)
+11. [x] Crear componentes: `Categorias/` (Form, List, Item)
+12. [x] Crear componentes: `Plantillas/` (Form, List, QuickButtons)
+13. [x] Crear componentes: `GastosRecurrentes/` (Form, List, Item)
+14. [x] Crear componentes: `Dashboard/` (SaldoCard, ResumenMes, UltimosMovimientos, AlertaRecurrentes)
 
 ---
 
-### Fase 9: Páginas
+### Fase 9: Páginas ✅
 **Objetivo:** Todas las vistas de la aplicación
 
-1. [ ] Crear página: `Dashboard.vue` (con plantillas rápidas y alertas)
-2. [ ] Crear página: `Gastos/Index.vue` (listado)
-3. [ ] Crear página: `Gastos/Create.vue` (con autocompletado)
-4. [ ] Crear página: `Gastos/Edit.vue`
-5. [ ] Crear página: `Abonos/Index.vue`
-6. [ ] Crear página: `Abonos/Create.vue`
-7. [ ] Crear página: `Historial.vue` (con filtros avanzados)
-8. [ ] Crear página: `Configuracion.vue` (todas las secciones)
-9. [ ] Conectar todo con los stores y API
-10. [ ] Implementar navegación completa
+1. [x] Crear página: `Dashboard.vue` (con plantillas rápidas y alertas)
+2. [x] Crear página: `Gastos/Index.vue` (listado)
+3. [x] Crear página: `Gastos/Create.vue` (con autocompletado)
+4. [x] Crear página: `Gastos/Edit.vue`
+5. [x] Crear página: `Abonos/Index.vue`
+6. [x] Crear página: `Abonos/Create.vue`
+7. [x] Crear página: `Historial.vue` (con filtros avanzados)
+8. [x] Crear página: `Configuracion.vue` (todas las secciones)
+9. [x] Conectar todo con los stores y API
+10. [x] Implementar navegación completa
 
 **🎉 CHECKPOINT: App completa - Probar flujos antes de continuar**
 
 ---
 
-### Fase 10: PWA + Testing + Deploy
+### Fase 10: PWA + Testing + Deploy ✅
 **Objetivo:** App lista para producción
 
 **PWA:**
-1. [ ] Crear `public/manifest.json`
-2. [ ] Crear iconos 192x192 y 512x512
-3. [ ] Crear `public/sw.js` (service worker)
-4. [ ] Registrar service worker en app.js
+1. [x] Crear `public/manifest.json`
+2. [x] Crear iconos 192x192 y 512x512 (pendiente generar imágenes)
+3. [x] Crear `public/sw.js` (service worker)
+4. [x] Registrar service worker en app.js
 5. [ ] Probar instalación en móvil
 
 **Testing:**
