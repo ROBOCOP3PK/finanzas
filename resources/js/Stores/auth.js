@@ -10,6 +10,9 @@ export const useAuthStore = defineStore('auth', {
         token: localStorage.getItem(TOKEN_KEY) || null,
         loading: false,
         error: null,
+        // Estado para verificacion de email
+        verificationEmail: null,
+        isEmailVerified: false,
     }),
 
     getters: {
@@ -48,29 +51,86 @@ export const useAuthStore = defineStore('auth', {
 
                 const { user, token } = response.data;
 
-                // Guardar en state
                 this.user = user;
                 this.token = token;
 
-                // Persistir en localStorage
                 localStorage.setItem(TOKEN_KEY, token);
                 localStorage.setItem(USER_KEY, JSON.stringify(user));
 
-                // Configurar axios
                 this.setAxiosToken(token);
 
                 return { success: true };
             } catch (error) {
                 this.error = error.response?.data?.message ||
                              error.response?.data?.errors?.email?.[0] ||
-                             'Error al iniciar sesión';
+                             'Error al iniciar sesion';
                 return { success: false, error: this.error };
             } finally {
                 this.loading = false;
             }
         },
 
-        // Registro
+        // Paso 1: Enviar codigo de verificacion
+        async sendVerificationCode(email) {
+            this.loading = true;
+            this.error = null;
+
+            try {
+                await axios.post('/api/auth/send-code', { email });
+
+                this.verificationEmail = email;
+                this.isEmailVerified = false;
+
+                return { success: true };
+            } catch (error) {
+                this.error = error.response?.data?.message ||
+                             error.response?.data?.errors?.email?.[0] ||
+                             'Error al enviar el codigo';
+                return { success: false, error: this.error };
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        // Paso 2: Verificar codigo
+        async verifyCode(email, code) {
+            this.loading = true;
+            this.error = null;
+
+            try {
+                await axios.post('/api/auth/verify-code', { email, code });
+
+                this.isEmailVerified = true;
+
+                return { success: true };
+            } catch (error) {
+                this.error = error.response?.data?.message ||
+                             error.response?.data?.errors?.code?.[0] ||
+                             'Codigo invalido';
+                return { success: false, error: this.error };
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        // Reenviar codigo
+        async resendCode(email) {
+            this.loading = true;
+            this.error = null;
+
+            try {
+                await axios.post('/api/auth/resend-code', { email });
+                return { success: true };
+            } catch (error) {
+                this.error = error.response?.data?.message ||
+                             'Error al reenviar el codigo';
+                return { success: false, error: this.error };
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        // Paso 3: Completar registro
         async register(name, email, password, passwordConfirmation) {
             this.loading = true;
             this.error = null;
@@ -94,6 +154,10 @@ export const useAuthStore = defineStore('auth', {
 
                 this.setAxiosToken(token);
 
+                // Limpiar estado de verificacion
+                this.verificationEmail = null;
+                this.isEmailVerified = false;
+
                 return { success: true };
             } catch (error) {
                 const errors = error.response?.data?.errors;
@@ -115,18 +179,19 @@ export const useAuthStore = defineStore('auth', {
                     await axios.post('/api/auth/logout');
                 }
             } catch (error) {
-                // Ignorar errores de logout (token inválido, etc.)
                 console.warn('Error en logout:', error);
             } finally {
                 this.clearAuth();
             }
         },
 
-        // Limpiar autenticación
+        // Limpiar autenticacion
         clearAuth() {
             this.user = null;
             this.token = null;
             this.error = null;
+            this.verificationEmail = null;
+            this.isEmailVerified = false;
 
             localStorage.removeItem(TOKEN_KEY);
             localStorage.removeItem(USER_KEY);
@@ -134,7 +199,7 @@ export const useAuthStore = defineStore('auth', {
             this.setAxiosToken(null);
         },
 
-        // Verificar token (obtener usuario actual)
+        // Verificar token
         async checkAuth() {
             if (!this.token) {
                 return false;
@@ -148,10 +213,21 @@ export const useAuthStore = defineStore('auth', {
                 localStorage.setItem(USER_KEY, JSON.stringify(this.user));
                 return true;
             } catch (error) {
-                // Token inválido o expirado
                 this.clearAuth();
                 return false;
             }
+        },
+
+        // Limpiar error
+        clearError() {
+            this.error = null;
+        },
+
+        // Reset estado de verificacion (para volver atras)
+        resetVerification() {
+            this.verificationEmail = null;
+            this.isEmailVerified = false;
+            this.error = null;
         },
     },
 });

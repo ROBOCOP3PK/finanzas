@@ -5,15 +5,18 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use App\Models\Categoria;
 use App\Models\MedioPago;
+use App\Models\VerificationCode;
+use App\Mail\VerificationCodeMail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
     /**
-     * Iniciar sesión y obtener token
+     * Iniciar sesion y obtener token
      */
     public function login(Request $request)
     {
@@ -23,8 +26,8 @@ class AuthController extends Controller
             'device_name' => 'nullable|string',
         ], [
             'email.required' => 'El correo es requerido',
-            'email.email' => 'Ingresa un correo válido',
-            'password.required' => 'La contraseña es requerida',
+            'email.email' => 'Ingresa un correo valido',
+            'password.required' => 'La contrasena es requerida',
         ]);
 
         $user = User::where('email', $request->email)->first();
@@ -35,10 +38,7 @@ class AuthController extends Controller
             ]);
         }
 
-        // Nombre del dispositivo para identificar el token
         $deviceName = $request->device_name ?? $request->userAgent() ?? 'unknown';
-
-        // Crear token que no expira (para persistencia en dispositivo)
         $token = $user->createToken($deviceName)->plainTextToken;
 
         return response()->json([
@@ -52,7 +52,74 @@ class AuthController extends Controller
     }
 
     /**
-     * Registrar nuevo usuario
+     * Paso 1: Enviar codigo de verificacion al email
+     */
+    public function sendVerificationCode(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email',
+        ], [
+            'email.required' => 'El correo es requerido',
+            'email.email' => 'Ingresa un correo valido',
+        ]);
+
+        // Verificar si el email ya esta registrado
+        if (User::where('email', $request->email)->exists()) {
+            throw ValidationException::withMessages([
+                'email' => ['Este correo ya esta registrado'],
+            ]);
+        }
+
+        // Generar y enviar codigo
+        $verification = VerificationCode::generateFor($request->email, 'register', 10);
+
+        try {
+            Mail::to($request->email)->send(new VerificationCodeMail($verification->code, 10));
+        } catch (\Exception $e) {
+            // Log del error para debugging
+            \Log::error('Error enviando email de verificacion: ' . $e->getMessage());
+
+            throw ValidationException::withMessages([
+                'email' => ['Error al enviar el codigo. Intenta de nuevo.'],
+            ]);
+        }
+
+        return response()->json([
+            'message' => 'Codigo enviado correctamente',
+            'expires_in' => 10, // minutos
+        ]);
+    }
+
+    /**
+     * Paso 2: Verificar el codigo
+     */
+    public function verifyCode(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email',
+            'code' => 'required|string|size:6',
+        ], [
+            'email.required' => 'El correo es requerido',
+            'code.required' => 'El codigo es requerido',
+            'code.size' => 'El codigo debe tener 6 digitos',
+        ]);
+
+        $verification = VerificationCode::verify($request->email, $request->code, 'register');
+
+        if (!$verification) {
+            throw ValidationException::withMessages([
+                'code' => ['Codigo invalido o expirado'],
+            ]);
+        }
+
+        return response()->json([
+            'message' => 'Codigo verificado correctamente',
+            'verified' => true,
+        ]);
+    }
+
+    /**
+     * Paso 3: Completar registro (despues de verificar codigo)
      */
     public function register(Request $request)
     {
@@ -70,6 +137,13 @@ class AuthController extends Controller
             'password.confirmed' => 'Las contrasenas no coinciden',
         ]);
 
+        // Verificar que el email haya sido verificado
+        if (!VerificationCode::isVerified($request->email, 'register')) {
+            throw ValidationException::withMessages([
+                'email' => ['Debes verificar tu correo primero'],
+            ]);
+        }
+
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
@@ -78,6 +152,9 @@ class AuthController extends Controller
 
         // Crear datos por defecto para el nuevo usuario
         $this->crearDatosPorDefecto($user);
+
+        // Limpiar codigos de verificacion usados
+        VerificationCode::where('email', $request->email)->delete();
 
         $deviceName = $request->device_name ?? $request->userAgent() ?? 'unknown';
         $token = $user->createToken($deviceName)->plainTextToken;
@@ -90,6 +167,41 @@ class AuthController extends Controller
             ],
             'token' => $token,
         ], 201);
+    }
+
+    /**
+     * Reenviar codigo de verificacion
+     */
+    public function resendVerificationCode(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email',
+        ]);
+
+        // Verificar si el email ya esta registrado
+        if (User::where('email', $request->email)->exists()) {
+            throw ValidationException::withMessages([
+                'email' => ['Este correo ya esta registrado'],
+            ]);
+        }
+
+        // Generar y enviar nuevo codigo
+        $verification = VerificationCode::generateFor($request->email, 'register', 10);
+
+        try {
+            Mail::to($request->email)->send(new VerificationCodeMail($verification->code, 10));
+        } catch (\Exception $e) {
+            \Log::error('Error reenviando email de verificacion: ' . $e->getMessage());
+
+            throw ValidationException::withMessages([
+                'email' => ['Error al enviar el codigo. Intenta de nuevo.'],
+            ]);
+        }
+
+        return response()->json([
+            'message' => 'Codigo reenviado correctamente',
+            'expires_in' => 10,
+        ]);
     }
 
     /**
@@ -135,15 +247,14 @@ class AuthController extends Controller
     }
 
     /**
-     * Cerrar sesión (revocar token actual)
+     * Cerrar sesion (revocar token actual)
      */
     public function logout(Request $request)
     {
-        // Revocar el token actual
         $request->user()->currentAccessToken()->delete();
 
         return response()->json([
-            'message' => 'Sesión cerrada correctamente',
+            'message' => 'Sesion cerrada correctamente',
         ]);
     }
 
@@ -152,7 +263,6 @@ class AuthController extends Controller
      */
     public function logoutAll(Request $request)
     {
-        // Revocar todos los tokens del usuario
         $request->user()->tokens()->delete();
 
         return response()->json([
