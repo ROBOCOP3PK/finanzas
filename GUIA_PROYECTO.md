@@ -1841,92 +1841,219 @@ module.exports = {
 
 ---
 
-## 13. Plan de Implementación
+## 13. Plan de Implementación (10 Fases)
 
-### Fase 1: Backend Laravel - Base
-1. [ ] Crear proyecto Laravel
-2. [ ] Configurar SQLite
-3. [ ] Crear migraciones (medios_pago, categorias, gastos, abonos, configuraciones)
-4. [ ] Crear seeders (medios de pago, categorías, configuración inicial)
-5. [ ] Crear modelos base (MedioPago, Categoria, Gasto, Abono, Configuracion)
-6. [ ] Crear Form Requests (validaciones)
-7. [ ] Crear controladores CRUD básicos
-8. [ ] Definir rutas API base
-9. [ ] Probar endpoints con Postman/curl
+> **Nota:** Cada fase es independiente y testeable. Al completar cada fase, marcar las tareas con [x].
 
-### Fase 2: Backend Laravel - Funcionalidades Avanzadas
-1. [ ] Crear migraciones (conceptos_frecuentes, plantillas, gastos_recurrentes)
-2. [ ] Crear modelos (ConceptoFrecuente, Plantilla, GastoRecurrente)
-3. [ ] Crear controladores avanzados
-4. [ ] Implementar lógica de conceptos frecuentes (autocompletado, favoritos)
-5. [ ] Implementar lógica de plantillas rápidas
-6. [ ] Implementar lógica de gastos recurrentes (detección pendientes, registro automático)
-7. [ ] Endpoints API para todos los módulos
-8. [ ] Probar flujos completos
+---
 
-### Fase 3: Frontend Vue - Base
-1. [ ] Configurar Vue 3 + Vite
-2. [ ] Instalar y configurar Tailwind CSS (con darkMode: 'class')
-3. [ ] Instalar Pinia (stores)
-4. [ ] Instalar Vue Router
-5. [ ] Crear layout base (AppLayout, BottomNav)
-6. [ ] Implementar sistema de temas (theme.js store)
-7. [ ] Crear componentes UI reutilizables (Button, Input, Select, Modal)
-8. [ ] Crear stores base (config, gastos, abonos, mediosPago, categorias)
+### Fase 1: Setup + Base de Datos
+**Objetivo:** Proyecto Laravel funcionando con BD configurada
 
-### Fase 4: Frontend Vue - Páginas y Componentes
-1. [ ] Crear Dashboard con:
-   - SaldoCard
-   - PlantillasRapidas (botones acceso rápido)
-   - AlertaRecurrentes (banner pendientes)
-   - ResumenMes
-   - UltimosMovimientos
-2. [ ] Crear formulario de gastos con:
-   - Autocompletado de conceptos
-   - Selector de categoría con colores
-   - Selector de medio de pago con iconos
-3. [ ] Crear página de Historial con filtros avanzados
-4. [ ] Crear página de Configuración con todas las secciones:
-   - Toggle de tema
-   - Personas y porcentajes
-   - Gestión de medios de pago
-   - Gestión de categorías
-   - Gestión de plantillas rápidas
-   - Gestión de gastos recurrentes
+1. [ ] Crear proyecto Laravel 11
+2. [ ] Configurar SQLite en .env
+3. [ ] Crear migración: `create_medios_pago_table`
+4. [ ] Crear migración: `create_categorias_table`
+5. [ ] Crear migración: `create_gastos_table`
+6. [ ] Crear migración: `create_abonos_table`
+7. [ ] Crear migración: `create_conceptos_frecuentes_table`
+8. [ ] Crear migración: `create_plantillas_table`
+9. [ ] Crear migración: `create_gastos_recurrentes_table`
+10. [ ] Crear migración: `create_configuraciones_table`
+11. [ ] Crear seeder: `MedioPagoSeeder`
+12. [ ] Crear seeder: `CategoriaSeeder`
+13. [ ] Crear seeder: `ConfiguracionSeeder`
+14. [ ] Ejecutar migraciones y seeders
+15. [ ] Verificar tablas creadas en SQLite
 
-### Fase 5: Frontend Vue - Funcionalidades Avanzadas
-1. [ ] Implementar autocompletado de conceptos
-2. [ ] Implementar sistema de favoritos
-3. [ ] Implementar plantillas rápidas con modal de confirmación
-4. [ ] Implementar notificación de gastos recurrentes pendientes
-5. [ ] Implementar drag & drop para reordenar items
-6. [ ] Conectar todas las funcionalidades con API
+**Comando para probar:** `php artisan migrate:fresh --seed`
 
-### Fase 6: PWA
-1. [ ] Crear manifest.json
-2. [ ] Crear iconos (192px, 512px) - versiones clara y oscura
-3. [ ] Crear service worker básico
-4. [ ] Probar instalación en iOS y Android
-5. [ ] Verificar que el tema se respeta en la PWA
+---
 
-### Fase 7: Testing local
-1. [ ] Probar flujo completo de gastos (con categoría y autocompletado)
-2. [ ] Probar flujo de abonos
-3. [ ] Probar plantillas rápidas
-4. [ ] Probar gastos recurrentes
-5. [ ] Verificar cálculo de saldo
-6. [ ] Probar modo oscuro en todos los componentes
-7. [ ] Probar en diferentes dispositivos (móvil, tablet)
+### Fase 2: Modelos Eloquent
+**Objetivo:** Todos los modelos con relaciones y scopes
 
-### Fase 8: Deploy (Servidor)
-1. [ ] Instalar Ubuntu Server en portátil
-2. [ ] Configurar red (IP fija, port forwarding)
-3. [ ] Instalar stack (Nginx, PHP, etc.)
-4. [ ] Configurar DuckDNS
-5. [ ] Configurar HTTPS con Certbot
-6. [ ] Deploy de la aplicación
-7. [ ] Configurar backups automáticos
-8. [ ] Probar acceso externo
+1. [ ] Crear modelo: `MedioPago` (con relación hasMany a Gasto)
+2. [ ] Crear modelo: `Categoria` (con relación hasMany a Gasto)
+3. [ ] Crear modelo: `Gasto` (con relaciones belongsTo y scopes)
+4. [ ] Crear modelo: `Abono` (con scopes)
+5. [ ] Crear modelo: `ConceptoFrecuente` (con métodos de autocompletado)
+6. [ ] Crear modelo: `Plantilla` (con método usar())
+7. [ ] Crear modelo: `GastoRecurrente` (con scope pendientes y método registrar())
+8. [ ] Crear modelo: `Configuracion` (con métodos estáticos obtener/establecer)
+
+**Comando para probar:** `php artisan tinker` → probar relaciones
+
+---
+
+### Fase 3: Validaciones (Form Requests)
+**Objetivo:** Todas las validaciones centralizadas
+
+1. [ ] Crear request: `GastoRequest`
+2. [ ] Crear request: `AbonoRequest`
+3. [ ] Crear request: `MedioPagoRequest`
+4. [ ] Crear request: `CategoriaRequest`
+5. [ ] Crear request: `PlantillaRequest`
+6. [ ] Crear request: `GastoRecurrenteRequest`
+
+**Verificar:** Mensajes de error en español
+
+---
+
+### Fase 4: Controladores
+**Objetivo:** Toda la lógica de negocio implementada
+
+1. [ ] Crear controlador: `MedioPagoController` (CRUD + reordenar)
+2. [ ] Crear controlador: `CategoriaController` (CRUD + reordenar)
+3. [ ] Crear controlador: `GastoController` (CRUD + filtros)
+4. [ ] Crear controlador: `AbonoController` (CRUD + filtros)
+5. [ ] Crear controlador: `ConceptoFrecuenteController` (buscar, favoritos)
+6. [ ] Crear controlador: `PlantillaController` (CRUD + usar + reordenar)
+7. [ ] Crear controlador: `GastoRecurrenteController` (CRUD + pendientes + registrar)
+8. [ ] Crear controlador: `ConfiguracionController` (get/update)
+9. [ ] Crear controlador: `DashboardController` (saldo, resumen, últimos)
+
+---
+
+### Fase 5: Rutas API
+**Objetivo:** API REST completa y funcional
+
+1. [ ] Definir rutas para medios de pago
+2. [ ] Definir rutas para categorías
+3. [ ] Definir rutas para gastos
+4. [ ] Definir rutas para abonos
+5. [ ] Definir rutas para conceptos frecuentes
+6. [ ] Definir rutas para plantillas
+7. [ ] Definir rutas para gastos recurrentes
+8. [ ] Definir rutas para configuración
+9. [ ] Definir rutas para dashboard
+10. [ ] Probar todos los endpoints con curl/Postman
+
+**Comando para probar:** `php artisan route:list --path=api`
+
+**🎉 CHECKPOINT: Backend completo - Probar API antes de continuar**
+
+---
+
+### Fase 6: Setup Frontend
+**Objetivo:** Vue 3 configurado con todas las dependencias
+
+1. [ ] Instalar Vue 3 + Vite en Laravel
+2. [ ] Instalar y configurar Tailwind CSS
+3. [ ] Configurar darkMode: 'class' en tailwind.config.js
+4. [ ] Instalar Pinia
+5. [ ] Instalar Vue Router
+6. [ ] Configurar axios con baseURL
+7. [ ] Crear layout: `AppLayout.vue`
+8. [ ] Crear componente: `BottomNav.vue`
+9. [ ] Crear componente: `ThemeToggle.vue`
+10. [ ] Configurar router con rutas base
+11. [ ] Crear vista blade: `app.blade.php`
+
+**Comando para probar:** `npm run dev` → ver layout base
+
+---
+
+### Fase 7: Stores (Pinia)
+**Objetivo:** Estado global de la aplicación
+
+1. [ ] Crear store: `theme.js` (tema claro/oscuro/sistema)
+2. [ ] Crear store: `config.js` (configuración general)
+3. [ ] Crear store: `mediosPago.js`
+4. [ ] Crear store: `categorias.js`
+5. [ ] Crear store: `gastos.js`
+6. [ ] Crear store: `abonos.js`
+7. [ ] Crear store: `conceptosFrecuentes.js`
+8. [ ] Crear store: `plantillas.js`
+9. [ ] Crear store: `gastosRecurrentes.js`
+10. [ ] Crear store: `dashboard.js`
+
+---
+
+### Fase 8: Componentes
+**Objetivo:** Todos los componentes reutilizables
+
+**UI Base:**
+1. [ ] Crear componente: `UI/Button.vue`
+2. [ ] Crear componente: `UI/Input.vue`
+3. [ ] Crear componente: `UI/Select.vue`
+4. [ ] Crear componente: `UI/Modal.vue`
+5. [ ] Crear componente: `UI/Card.vue`
+6. [ ] Crear componente: `UI/Badge.vue`
+7. [ ] Crear componente: `UI/Toast.vue`
+
+**Componentes de módulos:**
+8. [ ] Crear componentes: `Gastos/` (GastoForm, GastoList, GastoItem)
+9. [ ] Crear componentes: `Abonos/` (AbonoForm, AbonoList)
+10. [ ] Crear componentes: `MediosPago/` (Form, List, Item)
+11. [ ] Crear componentes: `Categorias/` (Form, List, Item)
+12. [ ] Crear componentes: `Plantillas/` (Form, List, QuickButtons)
+13. [ ] Crear componentes: `GastosRecurrentes/` (Form, List, Item)
+14. [ ] Crear componentes: `Dashboard/` (SaldoCard, ResumenMes, UltimosMovimientos, AlertaRecurrentes)
+
+---
+
+### Fase 9: Páginas
+**Objetivo:** Todas las vistas de la aplicación
+
+1. [ ] Crear página: `Dashboard.vue` (con plantillas rápidas y alertas)
+2. [ ] Crear página: `Gastos/Index.vue` (listado)
+3. [ ] Crear página: `Gastos/Create.vue` (con autocompletado)
+4. [ ] Crear página: `Gastos/Edit.vue`
+5. [ ] Crear página: `Abonos/Index.vue`
+6. [ ] Crear página: `Abonos/Create.vue`
+7. [ ] Crear página: `Historial.vue` (con filtros avanzados)
+8. [ ] Crear página: `Configuracion.vue` (todas las secciones)
+9. [ ] Conectar todo con los stores y API
+10. [ ] Implementar navegación completa
+
+**🎉 CHECKPOINT: App completa - Probar flujos antes de continuar**
+
+---
+
+### Fase 10: PWA + Testing + Deploy
+**Objetivo:** App lista para producción
+
+**PWA:**
+1. [ ] Crear `public/manifest.json`
+2. [ ] Crear iconos 192x192 y 512x512
+3. [ ] Crear `public/sw.js` (service worker)
+4. [ ] Registrar service worker en app.js
+5. [ ] Probar instalación en móvil
+
+**Testing:**
+6. [ ] Probar flujo completo de gastos
+7. [ ] Probar plantillas rápidas
+8. [ ] Probar gastos recurrentes
+9. [ ] Probar modo oscuro
+10. [ ] Probar en diferentes dispositivos
+
+**Deploy (cuando tengas el servidor):**
+11. [ ] Configurar servidor Ubuntu
+12. [ ] Instalar Nginx + PHP + SQLite
+13. [ ] Configurar dominio con DuckDNS
+14. [ ] Configurar HTTPS con Certbot
+15. [ ] Deploy de la aplicación
+16. [ ] Configurar backups automáticos
+
+---
+
+### Resumen de Fases
+
+| Fase | Descripción | Archivos aprox. |
+|------|-------------|-----------------|
+| 1 | Setup + BD | 12 archivos |
+| 2 | Modelos | 8 archivos |
+| 3 | Validaciones | 6 archivos |
+| 4 | Controladores | 9 archivos |
+| 5 | Rutas API | 1 archivo |
+| 6 | Setup Frontend | 5 archivos |
+| 7 | Stores | 10 archivos |
+| 8 | Componentes | ~25 archivos |
+| 9 | Páginas | 8 archivos |
+| 10 | PWA + Deploy | 5 archivos |
+
+**Total aproximado:** ~90 archivos
 
 ---
 
@@ -1970,17 +2097,26 @@ npm run build
 
 ### Rendimiento
 - SQLite es suficiente para este volumen de datos
-- Índices en columnas de filtro (fecha, tipo, medio_pago)
+- Índices en columnas de filtro (fecha, tipo, medio_pago, categoria_id)
 - Paginación en listados largos
+- Autocompletado con debounce para evitar llamadas excesivas
 
 ### Mantenimiento
 - Backup diario de database.sqlite
 - Logs de Laravel para debugging
 - Monitorear espacio en disco
 
+### Experiencia de Usuario
+- Modo oscuro respeta preferencia del sistema
+- Plantillas rápidas para registro en 2-3 taps
+- Autocompletado de conceptos para escritura rápida
+- Gastos recurrentes se registran automáticamente
+- Interfaz optimizada para uso con una mano
+
 ### Futuras mejoras (opcionales)
-- Categorías de gasto personalizables
 - Gráficos y estadísticas avanzadas
 - Notificaciones de saldo alto
 - Múltiples cuentas/períodos
 - Exportación a PDF
+- Sincronización con Google Sheets
+- Widgets para pantalla de inicio
