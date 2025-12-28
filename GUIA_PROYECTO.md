@@ -1102,6 +1102,77 @@ ssh servidor@192.168.1.184
 └─────────────────────────────────────────────────────────────┘
 ```
 
+#### 12.3.10 Configuración de WiFi (Opcional)
+
+Si prefieres usar WiFi en lugar de cable ethernet:
+
+**1. Instalar NetworkManager (requiere conexión temporal por ethernet):**
+```bash
+sudo apt install network-manager -y
+```
+
+**2. Ver redes WiFi disponibles:**
+```bash
+sudo nmcli dev wifi list
+```
+
+**3. Conectar a WiFi:**
+```bash
+# Crear conexión WiFi (reemplazar SSID y contraseña)
+sudo nmcli connection add type wifi con-name "MiWifi" ifname wlp2s0b1 ssid "NOMBRE_DE_TU_RED" wifi-sec.key-mgmt wpa-psk wifi-sec.psk "TU_CONTRASEÑA"
+
+# Activar conexión
+sudo nmcli connection up "MiWifi"
+```
+
+> **Nota:** El nombre de interfaz (`wlp2s0b1`) puede variar. Ver con `ip a`.
+
+**4. Configurar DNS (si hay problemas de resolución):**
+```bash
+sudo nmcli connection modify "MiWifi" ipv4.dns "8.8.8.8 8.8.4.4"
+sudo nmcli connection down "MiWifi" && sudo nmcli connection up "MiWifi"
+```
+
+**5. Verificar conexión:**
+```bash
+ping -c 3 google.com
+```
+
+**Conmutación automática Ethernet/WiFi:**
+- NetworkManager prioriza ethernet automáticamente
+- Al desconectar el cable, cambia a WiFi
+- Al reconectar el cable, vuelve a ethernet
+- No requiere configuración adicional
+
+**Solución de problemas WiFi:**
+
+| Error | Causa | Solución |
+|-------|-------|----------|
+| "Secrets were required, but not provided" | Password o SSID incorrecto | Usar `nmcli connection add` con todos los parámetros |
+| "Temporary failure in name resolution" | DNS no configurado | Agregar DNS con `nmcli connection modify` |
+| Interfaz en estado DOWN | Interfaz no activada | `sudo ip link set wlp2s0b1 up` |
+
+#### 12.3.11 Configuración del Teclado
+
+**Cambio temporal (solo sesión actual):**
+```bash
+sudo loadkeys es
+```
+
+**Cambio permanente:**
+```bash
+sudo dpkg-reconfigure keyboard-configuration
+```
+Seleccionar:
+1. Generic 105-key PC
+2. Spanish (o Spanish - Latin American)
+3. Aceptar valores por defecto
+
+Aplicar cambios:
+```bash
+sudo setupcon
+```
+
 ---
 
 ### 12.4 Stack de Software
@@ -1513,29 +1584,72 @@ echo "Deploy completado!"
 chmod +x /var/www/finanzas/deploy.sh
 ```
 
-#### 12.8.2 Backup automático de base de datos
+#### 12.8.2 Backup automático de base de datos (GitHub)
+
+El backup se sube automáticamente a un repositorio privado de GitHub, así si el disco del servidor se daña, los datos están seguros en la nube.
+
+**Configuración inicial (una sola vez):**
 ```bash
-# Crear directorio de backups
-mkdir -p ~/backups
+# 1. Crear repositorio privado en GitHub (ej: finanzas-backups)
 
-# Crear script: ~/backups/backup.sh
+# 2. Clonar el repositorio en el servidor
+cd ~
+git clone https://github.com/TU_USUARIO/finanzas-backups.git
+
+# 3. Configurar git en el servidor
+git config --global user.email "tu-email@ejemplo.com"
+git config --global user.name "Tu Nombre"
+
+# 4. Guardar credenciales (para que no pida password cada vez)
+git config --global credential.helper store
+# La primera vez que hagas push te pedirá usuario y token de GitHub
+# Después de eso, las credenciales quedan guardadas
+```
+
+**Script de backup: `~/backup-db.sh`**
+```bash
 #!/bin/bash
-DATE=$(date +%Y%m%d_%H%M%S)
-cp /var/www/finanzas/database/database.sqlite ~/backups/finanzas_$DATE.sqlite
+FECHA=$(date +%Y-%m-%d_%H-%M-%S)
+BACKUP_DIR=~/finanzas-backups
+DB_PATH=/var/www/finanzas/database/database.sqlite
 
-# Mantener solo últimos 30 backups
-cd ~/backups && ls -t *.sqlite | tail -n +31 | xargs -r rm
+cd $BACKUP_DIR
+cp $DB_PATH database_$FECHA.sqlite
+cp $DB_PATH database_latest.sqlite
 
-echo "Backup creado: finanzas_$DATE.sqlite"
+git add .
+git commit -m "Backup $FECHA"
+git push origin main
+
+# Mantener solo los últimos 30 backups locales
+ls -t database_2*.sqlite | tail -n +31 | xargs -r rm
+
+echo "✅ Backup completado: $FECHA"
 ```
 
 ```bash
-chmod +x ~/backups/backup.sh
+# Dar permisos de ejecución
+chmod +x ~/backup-db.sh
 
 # Programar backup diario a las 3am
 crontab -e
-# Añadir:
-0 3 * * * ~/backups/backup.sh
+# Añadir esta línea:
+0 3 * * * /home/david/backup-db.sh >> /home/david/backup.log 2>&1
+```
+
+**Verificar que funciona:**
+```bash
+# Ejecutar manualmente
+~/backup-db.sh
+
+# Verificar en GitHub que aparece el archivo
+```
+
+**Restaurar backup (si el servidor se daña):**
+```bash
+# En el nuevo servidor:
+git clone https://github.com/TU_USUARIO/finanzas-backups.git
+cp finanzas-backups/database_latest.sqlite /var/www/finanzas/database/database.sqlite
 ```
 
 #### 12.8.3 Actualizaciones del sistema
@@ -1550,57 +1664,225 @@ sudo dpkg-reconfigure unattended-upgrades
 
 ---
 
-### 12.9 Checklist de Despliegue
+### 12.9 Datos del Servidor Actual
 
-#### Pre-instalación
-- [ ] Descargar Ubuntu Server 22.04 LTS (o 24.04 para hardware moderno)
-- [ ] Crear USB booteable
-- [ ] Anotar IP del router (para port forwarding)
-- [ ] Decidir IP estática para el servidor (ej: 192.168.1.100)
-- [ ] Crear cuenta en DuckDNS y subdominio
-
-#### Instalación del Sistema
-- [ ] Instalar Ubuntu Server (sin GUI)
-- [ ] Configurar IP estática
-- [ ] Actualizar sistema (`apt update && apt upgrade`)
-- [ ] Configurar zona horaria
-
-#### Instalación del Stack
-- [ ] Instalar Nginx
-- [ ] Instalar PHP 8.3 + extensiones
-- [ ] Instalar Composer
-- [ ] Instalar Node.js 20
-- [ ] Instalar Git
-- [ ] Configurar UFW (firewall)
-- [ ] Instalar Fail2ban
-
-#### Configuración de Red
-- [ ] Configurar port forwarding en router (80, 443)
-- [ ] Configurar DuckDNS
-- [ ] Verificar acceso desde internet
-
-#### Despliegue de la Aplicación
-- [ ] Clonar/copiar código a `/var/www/finanzas`
-- [ ] Instalar dependencias (composer, npm)
-- [ ] Configurar `.env` de producción
-- [ ] Ejecutar migraciones
-- [ ] Configurar Nginx
-- [ ] Instalar certificado SSL
-
-#### Configuración del Portátil
-- [ ] Deshabilitar suspensión al cerrar tapa
-- [ ] Configurar arranque tras corte de luz (BIOS)
-- [ ] Instalar sensores de temperatura
-
-#### Post-despliegue
-- [ ] Crear script de deploy
-- [ ] Configurar backup automático
-- [ ] Probar acceso desde móvil (red móvil, no WiFi)
-- [ ] Verificar renovación automática de SSL
+| Dato | Valor |
+|------|-------|
+| **Usuario** | `david` |
+| **Hostname** | `homeserver` |
+| **IP Local** | `192.168.1.182` |
+| **Dominio DuckDNS** | `finanzas-david.duckdns.org` |
+| **Conexión SSH** | `ssh david@192.168.1.182` |
+| **Router** | TP-Link Archer C7 v5.0 |
 
 ---
 
-### 12.10 Resolución de Problemas Comunes
+### 12.10 Checklist de Despliegue
+
+#### Pre-instalación
+- [x] Descargar Ubuntu Server 22.04 LTS (o 24.04 para hardware moderno)
+- [x] Crear USB booteable (MBR + BIOS para HP G42)
+- [x] Anotar IP del router (para port forwarding) → `192.168.1.1`
+- [x] Decidir IP estática para el servidor → `192.168.1.182`
+- [x] Crear cuenta en DuckDNS y subdominio → `finanzas-david.duckdns.org`
+
+#### Instalación del Sistema
+- [x] Instalar Ubuntu Server (sin GUI)
+- [x] Configurar WiFi (ver sección 12.3.10)
+- [x] Configurar IP estática → `192.168.1.182`
+- [x] Actualizar sistema (`apt update && apt upgrade`)
+- [x] Configurar zona horaria → America/Bogota (por defecto en instalación)
+
+#### Instalación del Stack ✅ (verificado 2025-12-28)
+- [x] Instalar Nginx → `nginx/1.18.0`
+- [x] Instalar PHP 8.3 + extensiones → `PHP 8.3.29`
+- [x] Instalar Composer → `2.9.2`
+- [x] Instalar Node.js 20 → `v20.19.6`
+- [x] Instalar NPM → `10.8.2`
+- [x] Instalar Git → `2.34.1`
+- [x] Configurar UFW (firewall) → Activo (OpenSSH + Nginx Full)
+- [x] Instalar Fail2ban → Activo y corriendo
+
+#### Configuración de Red
+- [x] Configurar port forwarding en router (80, 443) → TP-Link Archer C7
+- [x] Configurar DuckDNS → Script en `~/duckdns/duck.sh` + crontab cada 5 min
+- [x] ~~Verificar acceso desde internet~~ → ISP bloquea puertos 80/443, usar Cloudflare Tunnel
+
+#### Despliegue de la Aplicación
+- [x] Clonar/copiar código a `/var/www/finanzas`
+- [x] Instalar dependencias (composer, npm) ✅ `composer install --no-dev && npm install && npm run build`
+- [x] Configurar `.env` de producción
+- [x] Ejecutar migraciones ✅ 14 migraciones ya ejecutadas
+- [x] Configurar Nginx para el dominio ✅ `/etc/nginx/sites-available/finanzas`
+- [x] Habilitar sitio Nginx y reiniciar ✅
+- [x] Arreglar permisos (`chown david:www-data`, `chmod 775 storage`)
+- [x] Cambiar SESSION_DRIVER a file (corregir error 500)
+
+#### Acceso desde Internet (Cloudflare Tunnel) ✅
+- [x] Comprar dominio → `davidhub.space` en Hostinger ($4,900 COP/año)
+- [x] Agregar dominio a Cloudflare (plan Free)
+- [x] Cambiar nameservers en Hostinger → `chuck.ns.cloudflare.com`, `gwen.ns.cloudflare.com`
+- [x] Dominio activo en Cloudflare ✅
+- [x] Instalar cloudflared en servidor
+- [x] Autenticar cloudflared (`cloudflared tunnel login`)
+- [x] Crear túnel → `cloudflared tunnel create finanzas` (ID: 490bf84b-45b4-47af-bc64-f750b6372f88)
+- [x] Configurar ruta DNS → `cloudflared tunnel route dns finanzas finanzas.davidhub.space`
+- [x] Crear config.yml en `~/.cloudflared/` y `/etc/cloudflared/`
+- [x] Ejecutar túnel como servicio (systemd) → `sudo cloudflared service install`
+- [x] Actualizar APP_URL a `https://finanzas.davidhub.space`
+- [x] **App accesible desde internet** → https://finanzas.davidhub.space ✅
+
+#### Configuración del Portátil
+- [x] Deshabilitar suspensión al cerrar tapa → `/etc/systemd/logind.conf` (HandleLidSwitch=ignore)
+- [ ] Configurar arranque tras corte de luz (BIOS) → Opcional, hacer manualmente en BIOS
+- [x] Instalar sensores de temperatura → `lm-sensors` (Core 0: 31°C, Core 2: 39°C)
+
+#### Post-despliegue ✅
+- [x] Crear script de deploy → `/var/www/finanzas/deploy.sh`
+- [x] Configurar backup automático → GitHub (`finanzas-backups` repo) + crontab 3am
+- [x] Probar acceso desde móvil (red móvil, no WiFi) ✅
+- [x] Documentar proceso de Cloudflare Tunnel ✅
+
+---
+
+### 12.11 Cloudflare Tunnel - Guía Completa
+
+Cloudflare Tunnel permite exponer tu servidor a internet **sin abrir puertos en el router**. Ideal cuando el ISP bloquea puertos 80/443.
+
+#### ¿Por qué Cloudflare Tunnel?
+- ISP bloquea puertos 80 y 443 (común en Colombia/Latinoamérica)
+- No requiere IP pública fija
+- SSL/HTTPS automático y gratuito
+- Protección DDoS incluida
+- El túnel sale desde tu servidor → Cloudflare (conexión saliente, no entrante)
+
+#### Requisitos
+1. Un dominio propio (puede ser barato, ej: `.space` por ~$5.000 COP/año en Hostinger)
+2. Cuenta gratuita en Cloudflare
+3. Servidor con acceso a internet
+
+#### Paso 1: Comprar dominio y agregar a Cloudflare
+```
+1. Comprar dominio en cualquier registrador (Hostinger, Namecheap, GoDaddy, etc.)
+2. Crear cuenta en https://dash.cloudflare.com (plan Free)
+3. Agregar dominio a Cloudflare → te dará 2 nameservers
+4. Cambiar nameservers en el registrador por los de Cloudflare
+5. Esperar activación (~5-30 minutos)
+```
+
+#### Paso 2: Instalar cloudflared en el servidor
+```bash
+# Descargar e instalar cloudflared
+curl -L --output cloudflared.deb https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
+sudo dpkg -i cloudflared.deb
+
+# Verificar instalación
+cloudflared --version
+```
+
+#### Paso 3: Autenticar con Cloudflare
+```bash
+cloudflared tunnel login
+# Se abre URL en el navegador → seleccionar el dominio → Authorize
+# Esto crea ~/.cloudflared/cert.pem
+```
+
+#### Paso 4: Crear el túnel
+```bash
+# Crear túnel (guarda el ID que te da)
+cloudflared tunnel create finanzas
+# Output: Created tunnel finanzas with id XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
+
+# Configurar DNS (subdominio que quieras usar)
+cloudflared tunnel route dns finanzas finanzas.tudominio.com
+```
+
+#### Paso 5: Crear archivo de configuración
+```bash
+nano ~/.cloudflared/config.yml
+```
+
+Contenido:
+```yaml
+tunnel: XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX  # Tu ID del túnel
+credentials-file: /home/TU_USUARIO/.cloudflared/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX.json
+
+ingress:
+  - hostname: finanzas.tudominio.com
+    service: http://localhost:80
+  - service: http_status:404
+```
+
+#### Paso 6: Probar el túnel
+```bash
+cloudflared tunnel run finanzas
+# Debería conectar y mostrar logs
+# Probar acceso en https://finanzas.tudominio.com
+```
+
+#### Paso 7: Configurar como servicio (arranque automático)
+```bash
+# Copiar archivos a /etc/cloudflared/
+sudo mkdir -p /etc/cloudflared
+sudo cp ~/.cloudflared/config.yml /etc/cloudflared/
+sudo cp ~/.cloudflared/*.json /etc/cloudflared/
+
+# Actualizar rutas en config.yml de /etc/cloudflared/
+sudo nano /etc/cloudflared/config.yml
+# Cambiar credentials-file a: /etc/cloudflared/XXXXX.json
+
+# Instalar servicio
+sudo cloudflared service install
+
+# Verificar que está corriendo
+sudo systemctl status cloudflared
+```
+
+#### Paso 8: Actualizar APP_URL en Laravel
+```bash
+# Editar .env
+nano /var/www/finanzas/.env
+# Cambiar: APP_URL=https://finanzas.tudominio.com
+
+# Limpiar caché
+cd /var/www/finanzas
+php artisan config:clear
+php artisan cache:clear
+```
+
+#### Comandos útiles de cloudflared
+```bash
+# Ver túneles existentes
+cloudflared tunnel list
+
+# Ver estado del servicio
+sudo systemctl status cloudflared
+
+# Ver logs del túnel
+sudo journalctl -u cloudflared -f
+
+# Reiniciar túnel
+sudo systemctl restart cloudflared
+
+# Eliminar un túnel (si necesitas recrearlo)
+cloudflared tunnel delete nombre-del-tunel
+```
+
+#### Datos del túnel actual
+| Dato | Valor |
+|------|-------|
+| **Túnel ID** | `490bf84b-45b4-47af-bc64-f750b6372f88` |
+| **Nombre** | `finanzas` |
+| **Dominio** | `davidhub.space` |
+| **Subdominio** | `finanzas.davidhub.space` |
+| **URL de la app** | `https://finanzas.davidhub.space` |
+| **Registrador** | Hostinger |
+| **Costo dominio** | $4,900 COP/año |
+| **Nameservers** | `chuck.ns.cloudflare.com`, `gwen.ns.cloudflare.com` |
+
+---
+
+### 12.12 Resolución de Problemas Comunes
 
 | Problema | Solución |
 |----------|----------|
@@ -1622,3 +1904,147 @@ sudo tail -f /var/log/nginx/error.log
 # PHP-FPM
 sudo tail -f /var/log/php8.3-fpm.log
 ```
+
+---
+
+## 13. Glosario y Resumen del Despliegue
+
+### Herramientas Instaladas
+
+| Herramienta | ¿Qué es? | ¿Para qué la usamos? |
+|-------------|----------|----------------------|
+| **Ubuntu Server** | Sistema operativo Linux sin interfaz gráfica | Base del servidor, consume poca RAM |
+| **Nginx** | Servidor web | Recibe peticiones HTTP/HTTPS y las envía a PHP |
+| **PHP-FPM** | Procesador de PHP | Ejecuta el código Laravel |
+| **Composer** | Gestor de dependencias PHP | Instala librerías de Laravel |
+| **Node.js/NPM** | Runtime JavaScript | Compila los assets de Vue (CSS, JS) |
+| **Git** | Control de versiones | Clona y actualiza el código desde GitHub |
+| **UFW** | Firewall | Bloquea puertos no autorizados (solo permite 22, 80, 443) |
+| **Fail2ban** | Protección anti-ataques | Bloquea IPs que intentan acceso por fuerza bruta |
+| **Certbot** | Cliente SSL | Genera certificados HTTPS gratuitos de Let's Encrypt |
+| **DuckDNS** | DNS dinámico | Asocia un dominio gratuito a tu IP pública |
+| **Cloudflare** | CDN y DNS | Gestiona el dominio, SSL automático, protección DDoS |
+| **cloudflared** | Cliente de Cloudflare Tunnel | Crea túnel seguro servidor→Cloudflare (evita abrir puertos) |
+| **Crontab** | Programador de tareas | Ejecuta scripts automáticamente (backups, DuckDNS) |
+| **systemd** | Gestor de servicios | Mantiene servicios corriendo y los reinicia si fallan |
+| **lm-sensors** | Monitor de hardware | Muestra temperaturas del CPU y otros sensores |
+
+### Procesos Ejecutados
+
+| Proceso | ¿Qué hace? | ¿Por qué? |
+|---------|------------|-----------|
+| `apt update && upgrade` | Actualiza paquetes del sistema | Seguridad y estabilidad |
+| `composer install --no-dev` | Instala dependencias PHP de producción | Laravel necesita sus librerías |
+| `npm install && npm run build` | Compila Vue/CSS/JS | Genera archivos optimizados para producción |
+| `php artisan migrate` | Crea tablas en la base de datos | La app necesita estructura de datos |
+| `php artisan config:cache` | Cachea configuración | Mejora rendimiento en producción |
+| `chown www-data:www-data` | Cambia propietario de archivos | Nginx/PHP necesitan acceso a los archivos |
+| `chmod 775 storage` | Ajusta permisos | Laravel necesita escribir logs y caché |
+| Configurar Nginx | Crea virtual host | Conecta el dominio con la carpeta de la app |
+| Port forwarding en router | Redirige puertos 80/443 | Permite acceso desde internet |
+| Crontab DuckDNS | Actualiza IP cada 5 min | Mantiene el dominio apuntando a tu IP |
+
+### Flujo de una Petición (con Cloudflare Tunnel)
+
+```
+Usuario escribe finanzas.davidhub.space
+              ↓
+    DNS de Cloudflare resuelve el dominio
+              ↓
+    Cloudflare recibe la petición (HTTPS automático)
+              ↓
+    Cloudflare envía por el túnel al servidor
+              ↓
+    cloudflared (en el servidor) recibe y pasa a Nginx
+              ↓
+    Nginx procesa y envía a PHP-FPM
+              ↓
+    PHP-FPM ejecuta Laravel
+              ↓
+    Laravel consulta SQLite y devuelve respuesta
+              ↓
+    Respuesta viaja de vuelta por el túnel
+              ↓
+    Usuario ve la página
+```
+
+**Ventaja del túnel:** No necesitas abrir puertos en el router. El servidor inicia la conexión hacia Cloudflare (saliente), no al revés.
+
+### Archivos Clave
+
+| Archivo/Directorio | Propósito |
+|--------------------|-----------|
+| `/var/www/finanzas/` | Código de la aplicación |
+| `/var/www/finanzas/.env` | Configuración (BD, claves, APP_URL, etc.) |
+| `/var/www/finanzas/database/database.sqlite` | Base de datos SQLite |
+| `/var/www/finanzas/deploy.sh` | Script para actualizar la app |
+| `/etc/nginx/sites-available/finanzas` | Configuración de Nginx |
+| `/etc/cloudflared/config.yml` | Configuración del túnel Cloudflare |
+| `/etc/cloudflared/*.json` | Credenciales del túnel |
+| `~/backup-db.sh` | Script de backup a GitHub |
+| `~/finanzas-backups/` | Repositorio local de backups |
+| `~/duckdns/duck.sh` | Script que actualiza DuckDNS (legacy) |
+| `/etc/systemd/logind.conf` | Configuración para no suspender al cerrar tapa |
+
+### Comandos Útiles de Mantenimiento
+
+```bash
+# Conectar al servidor
+ssh david@192.168.1.182
+
+# Ver estado de servicios
+sudo systemctl status nginx php8.3-fpm cloudflared fail2ban
+
+# Actualizar la aplicación (método rápido)
+cd /var/www/finanzas && ./deploy.sh
+
+# Actualizar manualmente (si deploy.sh no existe)
+cd /var/www/finanzas && git pull && composer install --no-dev && npm run build
+
+# Ver logs de errores de Laravel
+tail -f /var/www/finanzas/storage/logs/laravel.log
+
+# Ver logs del túnel Cloudflare
+sudo journalctl -u cloudflared -f
+
+# Reiniciar servicios si hay problemas
+sudo systemctl restart nginx php8.3-fpm cloudflared
+
+# Ejecutar backup manualmente
+~/backup-db.sh
+
+# Ver tareas programadas (crontab)
+crontab -l
+```
+
+### Glosario de Términos
+
+| Término | Significado |
+|---------|-------------|
+| **SSH** | Secure Shell - conexión remota segura al servidor |
+| **DNS** | Domain Name System - traduce nombres de dominio a IPs |
+| **Nameservers** | Servidores que responden consultas DNS de tu dominio |
+| **Túnel** | Conexión encriptada que pasa tráfico a través de Cloudflare |
+| **SSL/HTTPS** | Cifrado de la conexión (candadito verde en el navegador) |
+| **Crontab** | Archivo que define tareas programadas en Linux |
+| **systemd** | Sistema que gestiona servicios en Linux moderno |
+| **FPM** | FastCGI Process Manager - ejecuta PHP eficientemente |
+| **Token** | Clave secreta para autenticación (GitHub, API, etc.) |
+| **Repositorio** | Carpeta versionada con Git (local o en GitHub) |
+| **ISP** | Internet Service Provider - tu proveedor de internet |
+| **Port Forwarding** | Redirigir puertos del router a un dispositivo interno |
+| **CDN** | Content Delivery Network - red que distribuye contenido |
+
+### Resumen en Una Frase
+
+> **Convertimos un portátil viejo en un servidor web que ejecuta una aplicación Laravel accesible desde internet mediante Cloudflare Tunnel (sin abrir puertos), con dominio propio, backup automático a GitHub, y protegido con firewall.**
+
+### URLs Importantes
+
+| Recurso | URL |
+|---------|-----|
+| **La App** | https://finanzas.davidhub.space |
+| **Dashboard Cloudflare** | https://dash.cloudflare.com |
+| **Repo de la App** | https://github.com/TU_USUARIO/finanzas |
+| **Repo de Backups** | https://github.com/ROBOCOP3PK/finanzas-backups |
+| **Hostinger (dominio)** | https://hpanel.hostinger.com |
