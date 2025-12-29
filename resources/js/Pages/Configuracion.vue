@@ -121,10 +121,13 @@
                         class="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-700 last:border-0"
                     >
                         <div class="flex items-center gap-3">
-                            <span
-                                class="w-4 h-4 rounded"
-                                :style="{ backgroundColor: cat.color }"
-                            ></span>
+                            <div
+                                class="w-8 h-8 rounded-lg flex items-center justify-center"
+                                :style="{ backgroundColor: cat.color + '20' }"
+                            >
+                                <i v-if="cat.icono" :class="cat.icono" :style="{ color: cat.color }"></i>
+                                <span v-else class="w-3 h-3 rounded" :style="{ backgroundColor: cat.color }"></span>
+                            </div>
                             <span :class="['text-gray-900 dark:text-white', !cat.activo && 'opacity-50']">
                                 {{ cat.nombre }}
                             </span>
@@ -175,6 +178,12 @@
                 />
             </button>
             <div v-show="seccionesAbiertas.mediosPago" class="px-4 pb-4 border-t border-gray-100 dark:border-gray-700">
+                <div class="pt-3 flex justify-end">
+                    <Button size="sm" @click="abrirModalMedioPago()">
+                        <PlusIcon class="w-4 h-4 mr-1" />
+                        Nuevo
+                    </Button>
+                </div>
                 <div class="mt-3 space-y-2">
                     <div
                         v-for="mp in mediosPagoStore.mediosPago"
@@ -183,16 +192,32 @@
                     >
                         <div class="flex items-center gap-3">
                             <span :class="['w-2 h-2 rounded-full', mp.activo ? 'bg-green-500' : 'bg-gray-400']"></span>
-                            <span class="text-gray-900 dark:text-white">{{ mp.nombre }}</span>
+                            <span :class="['text-gray-900 dark:text-white', !mp.activo && 'opacity-50']">
+                                {{ mp.nombre }}
+                            </span>
+                            <span v-if="!mp.activo" class="text-xs text-gray-400">(inactivo)</span>
                         </div>
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            @click="toggleMedioPago(mp)"
-                        >
-                            {{ mp.activo ? 'Desactivar' : 'Activar' }}
-                        </Button>
+                        <div class="flex items-center gap-1">
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                @click="abrirModalMedioPago(mp)"
+                            >
+                                <PencilIcon class="w-4 h-4" />
+                            </Button>
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                @click="confirmarEliminarMedioPago(mp)"
+                                class="text-red-500 hover:text-red-600"
+                            >
+                                <TrashIcon class="w-4 h-4" />
+                            </Button>
+                        </div>
                     </div>
+                    <p v-if="mediosPagoStore.mediosPago.length === 0" class="text-gray-500 dark:text-gray-400 text-center py-4">
+                        No hay medios de pago configurados
+                    </p>
                 </div>
             </div>
         </div>
@@ -250,6 +275,27 @@
                 />
                 <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Icono
+                    </label>
+                    <div class="flex flex-wrap gap-2 max-h-32 overflow-y-auto p-2 border border-gray-200 dark:border-gray-700 rounded-lg">
+                        <button
+                            v-for="icono in iconosDisponibles"
+                            :key="icono"
+                            type="button"
+                            @click="formCategoria.icono = icono"
+                            :class="[
+                                'w-9 h-9 flex items-center justify-center rounded-lg border-2 transition-all',
+                                formCategoria.icono === icono
+                                    ? 'border-primary bg-primary/10 dark:bg-primary/20'
+                                    : 'border-transparent hover:bg-gray-100 dark:hover:bg-gray-700'
+                            ]"
+                        >
+                            <i :class="['text-lg', icono]" :style="{ color: formCategoria.color }"></i>
+                        </button>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Color
                     </label>
                     <div class="flex flex-wrap gap-2">
@@ -300,6 +346,55 @@
                 <div class="flex gap-2 justify-end">
                     <Button variant="secondary" @click="showModalEliminar = false">Cancelar</Button>
                     <Button variant="danger" @click="eliminarCategoria" :loading="eliminandoCategoria">
+                        Eliminar
+                    </Button>
+                </div>
+            </template>
+        </Modal>
+
+        <!-- Modal Medio de Pago -->
+        <Modal :show="showModalMedioPago" :title="medioPagoEditando ? 'Editar Medio de Pago' : 'Nuevo Medio de Pago'" @close="cerrarModalMedioPago">
+            <div class="space-y-4">
+                <Input
+                    v-model="formMedioPago.nombre"
+                    label="Nombre"
+                    placeholder="Ej: Efectivo, Tarjeta Debito..."
+                    :error="erroresMedioPago.nombre"
+                />
+                <div class="flex items-center gap-2">
+                    <input
+                        type="checkbox"
+                        id="medioPagoActivo"
+                        v-model="formMedioPago.activo"
+                        class="rounded border-gray-300 text-primary focus:ring-primary"
+                    />
+                    <label for="medioPagoActivo" class="text-sm text-gray-700 dark:text-gray-300">
+                        Medio de pago activo
+                    </label>
+                </div>
+            </div>
+            <template #footer>
+                <div class="flex gap-2 justify-end">
+                    <Button variant="secondary" @click="cerrarModalMedioPago">Cancelar</Button>
+                    <Button @click="guardarMedioPago" :loading="guardandoMedioPago">
+                        {{ medioPagoEditando ? 'Actualizar' : 'Crear' }}
+                    </Button>
+                </div>
+            </template>
+        </Modal>
+
+        <!-- Modal Confirmar Eliminar Medio de Pago -->
+        <Modal :show="showModalEliminarMedioPago" title="Eliminar Medio de Pago" @close="showModalEliminarMedioPago = false">
+            <p class="text-gray-600 dark:text-gray-400">
+                Estas seguro de eliminar el medio de pago <strong>{{ medioPagoEliminar?.nombre }}</strong>?
+            </p>
+            <p class="text-sm text-gray-500 dark:text-gray-500 mt-2">
+                Solo se puede eliminar si no tiene gastos asociados.
+            </p>
+            <template #footer>
+                <div class="flex gap-2 justify-end">
+                    <Button variant="secondary" @click="showModalEliminarMedioPago = false">Cancelar</Button>
+                    <Button variant="danger" @click="eliminarMedioPago" :loading="eliminandoMedioPago">
                         Eliminar
                     </Button>
                 </div>
@@ -416,6 +511,60 @@ const coloresDisponibles = [
     '#EC4899', // pink
 ];
 
+// Iconos de PrimeIcons para categorias de gastos
+const iconosDisponibles = [
+    'pi pi-shopping-cart',
+    'pi pi-shopping-bag',
+    'pi pi-car',
+    'pi pi-home',
+    'pi pi-bolt',
+    'pi pi-phone',
+    'pi pi-wifi',
+    'pi pi-heart',
+    'pi pi-gift',
+    'pi pi-ticket',
+    'pi pi-wallet',
+    'pi pi-credit-card',
+    'pi pi-money-bill',
+    'pi pi-building',
+    'pi pi-briefcase',
+    'pi pi-book',
+    'pi pi-graduation-cap',
+    'pi pi-users',
+    'pi pi-user',
+    'pi pi-wrench',
+    'pi pi-cog',
+    'pi pi-desktop',
+    'pi pi-mobile',
+    'pi pi-tablet',
+    'pi pi-camera',
+    'pi pi-video',
+    'pi pi-headphones',
+    'pi pi-microphone',
+    'pi pi-sun',
+    'pi pi-cloud',
+    'pi pi-star',
+    'pi pi-flag',
+    'pi pi-map-marker',
+    'pi pi-globe',
+    'pi pi-compass',
+    'pi pi-send',
+    'pi pi-inbox',
+    'pi pi-tag',
+    'pi pi-tags',
+    'pi pi-percentage',
+    'pi pi-chart-bar',
+    'pi pi-chart-line',
+    'pi pi-clock',
+    'pi pi-calendar',
+    'pi pi-trophy',
+    'pi pi-sparkles',
+    'pi pi-face-smile',
+    'pi pi-palette',
+    'pi pi-scissors',
+    'pi pi-hammer',
+];
+
 // Toast
 const showToast = ref(false);
 const toastMessage = ref('');
@@ -435,6 +584,7 @@ const erroresCategoria = reactive({});
 
 const formCategoria = reactive({
     nombre: '',
+    icono: 'pi pi-tag',
     color: '#3B82F6',
     activo: true
 });
@@ -443,10 +593,12 @@ const abrirModalCategoria = (categoria = null) => {
     categoriaEditando.value = categoria;
     if (categoria) {
         formCategoria.nombre = categoria.nombre;
+        formCategoria.icono = categoria.icono || 'pi pi-tag';
         formCategoria.color = categoria.color;
         formCategoria.activo = categoria.activo;
     } else {
         formCategoria.nombre = '';
+        formCategoria.icono = 'pi pi-tag';
         formCategoria.color = '#3B82F6';
         formCategoria.activo = true;
     }
@@ -472,6 +624,7 @@ const guardarCategoria = async () => {
         if (categoriaEditando.value) {
             await categoriasStore.actualizarCategoria(categoriaEditando.value.id, {
                 nombre: formCategoria.nombre,
+                icono: formCategoria.icono,
                 color: formCategoria.color,
                 activo: formCategoria.activo
             });
@@ -479,6 +632,7 @@ const guardarCategoria = async () => {
         } else {
             await categoriasStore.crearCategoria({
                 nombre: formCategoria.nombre,
+                icono: formCategoria.icono,
                 color: formCategoria.color,
                 activo: formCategoria.activo
             });
@@ -520,11 +674,89 @@ const eliminarCategoria = async () => {
 };
 
 // Medios de Pago
-const toggleMedioPago = async (mp) => {
+const showModalMedioPago = ref(false);
+const medioPagoEditando = ref(null);
+const guardandoMedioPago = ref(false);
+const erroresMedioPago = reactive({});
+
+const formMedioPago = reactive({
+    nombre: '',
+    activo: true
+});
+
+const abrirModalMedioPago = (medioPago = null) => {
+    medioPagoEditando.value = medioPago;
+    if (medioPago) {
+        formMedioPago.nombre = medioPago.nombre;
+        formMedioPago.activo = medioPago.activo;
+    } else {
+        formMedioPago.nombre = '';
+        formMedioPago.activo = true;
+    }
+    Object.keys(erroresMedioPago).forEach(key => delete erroresMedioPago[key]);
+    showModalMedioPago.value = true;
+};
+
+const cerrarModalMedioPago = () => {
+    showModalMedioPago.value = false;
+    medioPagoEditando.value = null;
+};
+
+const guardarMedioPago = async () => {
+    Object.keys(erroresMedioPago).forEach(key => delete erroresMedioPago[key]);
+
+    if (!formMedioPago.nombre.trim()) {
+        erroresMedioPago.nombre = 'El nombre es requerido';
+        return;
+    }
+
+    guardandoMedioPago.value = true;
     try {
-        await mediosPagoStore.actualizarMedioPago(mp.id, { ...mp, activo: !mp.activo });
+        if (medioPagoEditando.value) {
+            await mediosPagoStore.actualizarMedioPago(medioPagoEditando.value.id, {
+                nombre: formMedioPago.nombre,
+                activo: formMedioPago.activo
+            });
+            mostrarToast('Medio de pago actualizado');
+        } else {
+            await mediosPagoStore.crearMedioPago({
+                nombre: formMedioPago.nombre,
+                activo: formMedioPago.activo
+            });
+            mostrarToast('Medio de pago creado');
+        }
+        cerrarModalMedioPago();
     } catch (error) {
-        mostrarToast('Error al actualizar', 'error');
+        const mensaje = error.response?.data?.message || 'Error al guardar';
+        mostrarToast(mensaje, 'error');
+    } finally {
+        guardandoMedioPago.value = false;
+    }
+};
+
+// Eliminar Medio de Pago
+const showModalEliminarMedioPago = ref(false);
+const medioPagoEliminar = ref(null);
+const eliminandoMedioPago = ref(false);
+
+const confirmarEliminarMedioPago = (medioPago) => {
+    medioPagoEliminar.value = medioPago;
+    showModalEliminarMedioPago.value = true;
+};
+
+const eliminarMedioPago = async () => {
+    if (!medioPagoEliminar.value) return;
+
+    eliminandoMedioPago.value = true;
+    try {
+        await mediosPagoStore.eliminarMedioPago(medioPagoEliminar.value.id);
+        mostrarToast('Medio de pago eliminado');
+        showModalEliminarMedioPago.value = false;
+    } catch (error) {
+        const mensaje = error.response?.data?.message || 'Error al eliminar';
+        mostrarToast(mensaje, 'error');
+    } finally {
+        eliminandoMedioPago.value = false;
     }
 };
 

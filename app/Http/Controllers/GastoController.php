@@ -63,6 +63,16 @@ class GastoController extends Controller
         $data['user_id'] = $user->id;
         $data['registrado_por'] = $user->id;
 
+        // Si no se proporciona fecha, usar la fecha actual
+        if (empty($data['fecha'])) {
+            $data['fecha'] = now()->toDateString();
+        }
+
+        // Si no se proporciona tipo, usar 'personal' por defecto
+        if (empty($data['tipo'])) {
+            $data['tipo'] = 'personal';
+        }
+
         $gasto = Gasto::create($data);
 
         // Registrar concepto frecuente
