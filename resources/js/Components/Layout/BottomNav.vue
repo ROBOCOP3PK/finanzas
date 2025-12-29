@@ -29,16 +29,13 @@ import { HomeIcon, PlusCircleIcon, ClockIcon, Cog6ToothIcon } from '@heroicons/v
 const route = useRoute();
 
 const navItems = [
-    { to: '/', label: 'Inicio', icon: HomeIcon },
     { to: '/gastos/nuevo', label: 'Nuevo', icon: PlusCircleIcon },
+    { to: '/dashboard', label: 'Resumen', icon: HomeIcon },
     { to: '/historial', label: 'Historial', icon: ClockIcon },
     { to: '/configuracion', label: 'Config', icon: Cog6ToothIcon },
 ];
 
 const isActive = (path) => {
-    if (path === '/') {
-        return route.path === '/';
-    }
     return route.path.startsWith(path);
 };
 </script>
