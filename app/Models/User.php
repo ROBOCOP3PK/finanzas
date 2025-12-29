@@ -77,6 +77,18 @@ class User extends Authenticatable
         return $this->hasMany(Plantilla::class);
     }
 
+    // Mis gastos recurrentes
+    public function gastosRecurrentes(): HasMany
+    {
+        return $this->hasMany(GastoRecurrente::class);
+    }
+
+    // Mis conceptos frecuentes
+    public function conceptosFrecuentes(): HasMany
+    {
+        return $this->hasMany(ConceptoFrecuente::class);
+    }
+
     // Calcular deuda de persona secundaria
     public function calcularDeudaPersona2(): float
     {

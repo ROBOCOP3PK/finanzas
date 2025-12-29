@@ -376,4 +376,28 @@ class AuthController extends Controller
             ],
         ]);
     }
+
+    /**
+     * Restablecer todos los datos del usuario (borron y cuenta nueva)
+     */
+    public function resetUserData(Request $request)
+    {
+        $user = $request->user();
+
+        // Eliminar todos los datos relacionados al usuario
+        $user->gastos()->delete();
+        $user->abonos()->delete();
+        $user->plantillas()->delete();
+        $user->gastosRecurrentes()->delete();
+        $user->conceptosFrecuentes()->delete();
+        $user->categorias()->delete();
+        $user->mediosPago()->delete();
+
+        // Recrear datos por defecto
+        $this->crearDatosPorDefecto($user);
+
+        return response()->json([
+            'message' => 'Todos los datos han sido restablecidos correctamente',
+        ]);
+    }
 }

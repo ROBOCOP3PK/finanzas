@@ -1,140 +1,243 @@
 <template>
-    <div class="p-4 space-y-4">
+    <div class="p-4 space-y-3">
         <h1 class="text-xl font-bold text-gray-900 dark:text-white">Configuracion</h1>
 
-        <!-- Tema -->
-        <Card title="Apariencia">
-            <div class="flex gap-2">
-                <button
-                    v-for="tema in temas"
-                    :key="tema.value"
-                    @click="cambiarTema(tema.value)"
-                    :class="[
-                        'flex-1 py-3 px-4 rounded-lg font-medium text-sm transition-colors',
-                        themeStore.tema === tema.value
-                            ? 'bg-primary text-white dark:bg-indigo-500'
-                            : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
-                    ]"
-                >
-                    {{ tema.label }}
-                </button>
-            </div>
-        </Card>
-
-        <!-- Divisa -->
-        <Card title="Divisa">
-            <div class="flex gap-2">
-                <button
-                    v-for="div in configStore.divisasDisponibles"
-                    :key="div.value"
-                    @click="cambiarDivisa(div.value)"
-                    :class="[
-                        'flex-1 py-3 px-4 rounded-lg font-medium text-sm transition-colors',
-                        configStore.divisa === div.value
-                            ? 'bg-primary text-white dark:bg-indigo-500'
-                            : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
-                    ]"
-                >
-                    {{ div.value }}
-                </button>
-            </div>
-            <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                Selecciona la moneda para mostrar los valores
-            </p>
-        </Card>
-
-        <!-- Formato de Divisa -->
-        <Card title="Formato de divisa">
-            <div class="flex gap-2">
-                <button
-                    v-for="formato in configStore.formatosDivisaDisponibles"
-                    :key="formato.value"
-                    @click="cambiarFormatoDivisa(formato.value)"
-                    :class="[
-                        'flex-1 py-3 px-4 rounded-lg font-medium text-sm transition-colors',
-                        configStore.formato_divisa === formato.value
-                            ? 'bg-primary text-white dark:bg-indigo-500'
-                            : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
-                    ]"
-                >
-                    {{ formato.label }}
-                </button>
-            </div>
-            <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                Selecciona el separador de miles para los valores
-            </p>
-        </Card>
-
-        <!-- Categorias -->
-        <Card title="Categorias">
-            <template #action>
-                <Button size="sm" @click="abrirModalCategoria()">
-                    <PlusIcon class="w-4 h-4 mr-1" />
-                    Nueva
-                </Button>
-            </template>
-            <div class="space-y-2">
-                <div
-                    v-for="cat in categoriasStore.categorias"
-                    :key="cat.id"
-                    class="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-700 last:border-0"
-                >
-                    <div class="flex items-center gap-3">
-                        <span
-                            class="w-4 h-4 rounded"
-                            :style="{ backgroundColor: cat.color }"
-                        ></span>
-                        <span :class="['text-gray-900 dark:text-white', !cat.activo && 'opacity-50']">
-                            {{ cat.nombre }}
-                        </span>
-                        <span v-if="!cat.activo" class="text-xs text-gray-400">(inactiva)</span>
+        <!-- Seccion: Apariencia -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+            <button
+                @click="toggleSeccion('apariencia')"
+                class="w-full flex items-center justify-between p-4 text-left"
+            >
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center">
+                        <PaintBrushIcon class="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
                     </div>
-                    <div class="flex items-center gap-1">
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            @click="abrirModalCategoria(cat)"
+                    <span class="font-medium text-gray-900 dark:text-white">Apariencia</span>
+                </div>
+                <ChevronDownIcon
+                    :class="[
+                        'w-5 h-5 text-gray-500 transition-transform duration-200',
+                        seccionesAbiertas.apariencia ? 'rotate-180' : ''
+                    ]"
+                />
+            </button>
+            <div v-show="seccionesAbiertas.apariencia" class="px-4 pb-4 space-y-4 border-t border-gray-100 dark:border-gray-700">
+                <!-- Tema -->
+                <div class="pt-4">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tema</label>
+                    <div class="flex gap-2">
+                        <button
+                            v-for="tema in temas"
+                            :key="tema.value"
+                            @click="cambiarTema(tema.value)"
+                            :class="[
+                                'flex-1 py-2 px-3 rounded-lg font-medium text-sm transition-colors',
+                                themeStore.tema === tema.value
+                                    ? 'bg-primary text-white dark:bg-indigo-500'
+                                    : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
+                            ]"
                         >
-                            <PencilIcon class="w-4 h-4" />
-                        </Button>
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            @click="confirmarEliminarCategoria(cat)"
-                            class="text-red-500 hover:text-red-600"
-                        >
-                            <TrashIcon class="w-4 h-4" />
-                        </Button>
+                            {{ tema.label }}
+                        </button>
                     </div>
                 </div>
-                <p v-if="categoriasStore.categorias.length === 0" class="text-gray-500 dark:text-gray-400 text-center py-4">
-                    No hay categorias configuradas
-                </p>
-            </div>
-        </Card>
-
-        <!-- Medios de Pago -->
-        <Card title="Medios de Pago">
-            <div class="space-y-2">
-                <div
-                    v-for="mp in mediosPagoStore.mediosPago"
-                    :key="mp.id"
-                    class="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-700 last:border-0"
-                >
-                    <div class="flex items-center gap-3">
-                        <span :class="['w-2 h-2 rounded-full', mp.activo ? 'bg-green-500' : 'bg-gray-400']"></span>
-                        <span class="text-gray-900 dark:text-white">{{ mp.nombre }}</span>
+                <!-- Divisa -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Divisa</label>
+                    <div class="flex gap-2">
+                        <button
+                            v-for="div in configStore.divisasDisponibles"
+                            :key="div.value"
+                            @click="cambiarDivisa(div.value)"
+                            :class="[
+                                'flex-1 py-2 px-3 rounded-lg font-medium text-sm transition-colors',
+                                configStore.divisa === div.value
+                                    ? 'bg-primary text-white dark:bg-indigo-500'
+                                    : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
+                            ]"
+                        >
+                            {{ div.value }}
+                        </button>
                     </div>
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        @click="toggleMedioPago(mp)"
-                    >
-                        {{ mp.activo ? 'Desactivar' : 'Activar' }}
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        Selecciona la moneda para mostrar los valores
+                    </p>
+                </div>
+                <!-- Formato de Divisa -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Formato de divisa</label>
+                    <div class="flex gap-2">
+                        <button
+                            v-for="formato in configStore.formatosDivisaDisponibles"
+                            :key="formato.value"
+                            @click="cambiarFormatoDivisa(formato.value)"
+                            :class="[
+                                'flex-1 py-2 px-3 rounded-lg font-medium text-sm transition-colors',
+                                configStore.formato_divisa === formato.value
+                                    ? 'bg-primary text-white dark:bg-indigo-500'
+                                    : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
+                            ]"
+                        >
+                            {{ formato.label }}
+                        </button>
+                    </div>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        Selecciona el separador de miles para los valores
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Seccion: Categorias -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+            <button
+                @click="toggleSeccion('categorias')"
+                class="w-full flex items-center justify-between p-4 text-left"
+            >
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-900 flex items-center justify-center">
+                        <TagIcon class="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                    </div>
+                    <span class="font-medium text-gray-900 dark:text-white">Categorias</span>
+                </div>
+                <ChevronDownIcon
+                    :class="[
+                        'w-5 h-5 text-gray-500 transition-transform duration-200',
+                        seccionesAbiertas.categorias ? 'rotate-180' : ''
+                    ]"
+                />
+            </button>
+            <div v-show="seccionesAbiertas.categorias" class="px-4 pb-4 border-t border-gray-100 dark:border-gray-700">
+                <div class="pt-3 flex justify-end">
+                    <Button size="sm" @click="abrirModalCategoria()">
+                        <PlusIcon class="w-4 h-4 mr-1" />
+                        Nueva
                     </Button>
                 </div>
+                <div class="mt-3 space-y-2">
+                    <div
+                        v-for="cat in categoriasStore.categorias"
+                        :key="cat.id"
+                        class="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-700 last:border-0"
+                    >
+                        <div class="flex items-center gap-3">
+                            <span
+                                class="w-4 h-4 rounded"
+                                :style="{ backgroundColor: cat.color }"
+                            ></span>
+                            <span :class="['text-gray-900 dark:text-white', !cat.activo && 'opacity-50']">
+                                {{ cat.nombre }}
+                            </span>
+                            <span v-if="!cat.activo" class="text-xs text-gray-400">(inactiva)</span>
+                        </div>
+                        <div class="flex items-center gap-1">
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                @click="abrirModalCategoria(cat)"
+                            >
+                                <PencilIcon class="w-4 h-4" />
+                            </Button>
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                @click="confirmarEliminarCategoria(cat)"
+                                class="text-red-500 hover:text-red-600"
+                            >
+                                <TrashIcon class="w-4 h-4" />
+                            </Button>
+                        </div>
+                    </div>
+                    <p v-if="categoriasStore.categorias.length === 0" class="text-gray-500 dark:text-gray-400 text-center py-4">
+                        No hay categorias configuradas
+                    </p>
+                </div>
             </div>
-        </Card>
+        </div>
+
+        <!-- Seccion: Medios de Pago -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+            <button
+                @click="toggleSeccion('mediosPago')"
+                class="w-full flex items-center justify-between p-4 text-left"
+            >
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-full bg-amber-100 dark:bg-amber-900 flex items-center justify-center">
+                        <CreditCardIcon class="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                    </div>
+                    <span class="font-medium text-gray-900 dark:text-white">Medios de Pago</span>
+                </div>
+                <ChevronDownIcon
+                    :class="[
+                        'w-5 h-5 text-gray-500 transition-transform duration-200',
+                        seccionesAbiertas.mediosPago ? 'rotate-180' : ''
+                    ]"
+                />
+            </button>
+            <div v-show="seccionesAbiertas.mediosPago" class="px-4 pb-4 border-t border-gray-100 dark:border-gray-700">
+                <div class="mt-3 space-y-2">
+                    <div
+                        v-for="mp in mediosPagoStore.mediosPago"
+                        :key="mp.id"
+                        class="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-700 last:border-0"
+                    >
+                        <div class="flex items-center gap-3">
+                            <span :class="['w-2 h-2 rounded-full', mp.activo ? 'bg-green-500' : 'bg-gray-400']"></span>
+                            <span class="text-gray-900 dark:text-white">{{ mp.nombre }}</span>
+                        </div>
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            @click="toggleMedioPago(mp)"
+                        >
+                            {{ mp.activo ? 'Desactivar' : 'Activar' }}
+                        </Button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Seccion: Cuenta -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+            <button
+                @click="toggleSeccion('cuenta')"
+                class="w-full flex items-center justify-between p-4 text-left"
+            >
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-full bg-red-100 dark:bg-red-900 flex items-center justify-center">
+                        <UserIcon class="w-4 h-4 text-red-600 dark:text-red-400" />
+                    </div>
+                    <span class="font-medium text-gray-900 dark:text-white">Cuenta</span>
+                </div>
+                <ChevronDownIcon
+                    :class="[
+                        'w-5 h-5 text-gray-500 transition-transform duration-200',
+                        seccionesAbiertas.cuenta ? 'rotate-180' : ''
+                    ]"
+                />
+            </button>
+            <div v-show="seccionesAbiertas.cuenta" class="px-4 pb-4 border-t border-gray-100 dark:border-gray-700">
+                <div class="mt-4 space-y-4">
+                    <!-- Restablecer datos -->
+                    <div class="p-4 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
+                        <h4 class="font-medium text-red-800 dark:text-red-300">Restablecer datos</h4>
+                        <p class="text-sm text-red-600 dark:text-red-400 mt-1">
+                            Elimina todos tus gastos, abonos, categorias, medios de pago y plantillas.
+                            Se restauraran las categorias y medios de pago por defecto.
+                        </p>
+                        <Button
+                            variant="danger"
+                            size="sm"
+                            class="mt-3"
+                            @click="showModalRestablecer = true"
+                        >
+                            <ArrowPathIcon class="w-4 h-4 mr-1" />
+                            Restablecer todo
+                        </Button>
+                    </div>
+                </div>
+            </div>
+        </div>
 
         <!-- Modal Categoria -->
         <Modal :show="showModalCategoria" :title="categoriaEditando ? 'Editar Categoria' : 'Nueva Categoria'" @close="cerrarModalCategoria">
@@ -185,7 +288,7 @@
             </template>
         </Modal>
 
-        <!-- Modal Confirmar Eliminar -->
+        <!-- Modal Confirmar Eliminar Categoria -->
         <Modal :show="showModalEliminar" title="Eliminar Categoria" @close="showModalEliminar = false">
             <p class="text-gray-600 dark:text-gray-400">
                 Estas seguro de eliminar la categoria <strong>{{ categoriaEliminar?.nombre }}</strong>?
@@ -203,6 +306,40 @@
             </template>
         </Modal>
 
+        <!-- Modal Confirmar Restablecer Datos -->
+        <Modal :show="showModalRestablecer" title="Restablecer todos los datos" @close="showModalRestablecer = false">
+            <div class="space-y-3">
+                <div class="flex items-center justify-center w-12 h-12 mx-auto bg-red-100 dark:bg-red-900/30 rounded-full">
+                    <ExclamationTriangleIcon class="w-6 h-6 text-red-600 dark:text-red-400" />
+                </div>
+                <p class="text-center text-gray-600 dark:text-gray-400">
+                    Esta accion eliminara <strong>permanentemente</strong> todos tus datos:
+                </p>
+                <ul class="text-sm text-gray-500 dark:text-gray-400 space-y-1 list-disc list-inside">
+                    <li>Todos los gastos registrados</li>
+                    <li>Todos los abonos</li>
+                    <li>Todas las categorias personalizadas</li>
+                    <li>Todos los medios de pago personalizados</li>
+                    <li>Todas las plantillas</li>
+                    <li>Todos los gastos recurrentes</li>
+                </ul>
+                <p class="text-sm text-gray-500 dark:text-gray-400 text-center">
+                    Se restauraran las categorias y medios de pago por defecto.
+                </p>
+                <p class="text-sm font-medium text-red-600 dark:text-red-400 text-center">
+                    Esta accion no se puede deshacer.
+                </p>
+            </div>
+            <template #footer>
+                <div class="flex gap-2 justify-end">
+                    <Button variant="secondary" @click="showModalRestablecer = false">Cancelar</Button>
+                    <Button variant="danger" @click="restablecerDatos" :loading="restableciendo">
+                        Si, restablecer todo
+                    </Button>
+                </div>
+            </template>
+        </Modal>
+
         <Toast
             :show="showToast"
             :message="toastMessage"
@@ -214,7 +351,18 @@
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue';
-import { PlusIcon, PencilIcon, TrashIcon } from '@heroicons/vue/24/outline';
+import {
+    PlusIcon,
+    PencilIcon,
+    TrashIcon,
+    ChevronDownIcon,
+    PaintBrushIcon,
+    TagIcon,
+    CreditCardIcon,
+    UserIcon,
+    ArrowPathIcon,
+    ExclamationTriangleIcon
+} from '@heroicons/vue/24/outline';
 import Card from '../Components/UI/Card.vue';
 import Input from '../Components/UI/Input.vue';
 import Button from '../Components/UI/Button.vue';
@@ -224,11 +372,24 @@ import { useThemeStore } from '../Stores/theme';
 import { useMediosPagoStore } from '../Stores/mediosPago';
 import { useCategoriasStore } from '../Stores/categorias';
 import { useConfigStore } from '../Stores/config';
+import axios from 'axios';
 
 const themeStore = useThemeStore();
 const mediosPagoStore = useMediosPagoStore();
 const categoriasStore = useCategoriasStore();
 const configStore = useConfigStore();
+
+// Secciones del acordeon
+const seccionesAbiertas = reactive({
+    apariencia: false,
+    categorias: false,
+    mediosPago: false,
+    cuenta: false
+});
+
+const toggleSeccion = (seccion) => {
+    seccionesAbiertas[seccion] = !seccionesAbiertas[seccion];
+};
 
 const temas = [
     { value: 'light', label: 'Claro' },
@@ -389,6 +550,31 @@ const cambiarFormatoDivisa = async (formato) => {
         mostrarToast('Formato de divisa actualizado');
     } catch (error) {
         mostrarToast('Error al actualizar formato', 'error');
+    }
+};
+
+// Restablecer datos
+const showModalRestablecer = ref(false);
+const restableciendo = ref(false);
+
+const restablecerDatos = async () => {
+    restableciendo.value = true;
+    try {
+        await axios.post('/api/auth/reset-user-data');
+
+        // Recargar los stores con los nuevos datos por defecto
+        await Promise.all([
+            mediosPagoStore.cargarMediosPago(),
+            categoriasStore.cargarCategorias()
+        ]);
+
+        showModalRestablecer.value = false;
+        mostrarToast('Todos los datos han sido restablecidos');
+    } catch (error) {
+        const mensaje = error.response?.data?.message || 'Error al restablecer datos';
+        mostrarToast(mensaje, 'error');
+    } finally {
+        restableciendo.value = false;
     }
 };
 

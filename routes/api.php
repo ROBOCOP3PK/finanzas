@@ -27,6 +27,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/auth/logout', [AuthController::class, 'logout']);
     Route::post('/auth/logout-all', [AuthController::class, 'logoutAll']);
     Route::get('/auth/me', [AuthController::class, 'me']);
+    Route::post('/auth/reset-user-data', [AuthController::class, 'resetUserData']);
 
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index']);
