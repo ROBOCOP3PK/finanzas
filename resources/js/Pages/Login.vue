@@ -77,6 +77,13 @@
                     </button>
                 </form>
 
+                <!-- Link a Recuperar Contrasena -->
+                <div class="mt-4 text-center">
+                    <router-link to="/forgot-password" class="text-sm text-gray-600 dark:text-gray-400 hover:text-primary dark:hover:text-indigo-400 hover:underline">
+                        Olvidaste tu contrasena?
+                    </router-link>
+                </div>
+
                 <!-- Link a Registro -->
                 <div class="mt-6 text-center">
                     <p class="text-sm text-gray-600 dark:text-gray-400">

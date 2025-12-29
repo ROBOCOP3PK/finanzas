@@ -229,5 +229,49 @@ export const useAuthStore = defineStore('auth', {
             this.isEmailVerified = false;
             this.error = null;
         },
+
+        // Solicitar recuperacion de contrasena
+        async forgotPassword(email) {
+            this.loading = true;
+            this.error = null;
+
+            try {
+                await axios.post('/api/auth/forgot-password', { email });
+                return { success: true };
+            } catch (error) {
+                this.error = error.response?.data?.message ||
+                             error.response?.data?.errors?.email?.[0] ||
+                             'Error al enviar el codigo';
+                return { success: false, error: this.error };
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        // Restablecer contrasena
+        async resetPassword(email, code, password, passwordConfirmation) {
+            this.loading = true;
+            this.error = null;
+
+            try {
+                await axios.post('/api/auth/reset-password', {
+                    email,
+                    code,
+                    password,
+                    password_confirmation: passwordConfirmation,
+                });
+                return { success: true };
+            } catch (error) {
+                const errors = error.response?.data?.errors;
+                if (errors) {
+                    this.error = Object.values(errors).flat()[0];
+                } else {
+                    this.error = error.response?.data?.message || 'Error al restablecer contrasena';
+                }
+                return { success: false, error: this.error };
+            } finally {
+                this.loading = false;
+            }
+        },
     },
 });

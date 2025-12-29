@@ -15,6 +15,12 @@ const routes = [
         meta: { guest: true }
     },
     {
+        path: '/forgot-password',
+        name: 'forgot-password',
+        component: () => import('./Pages/ForgotPassword.vue'),
+        meta: { guest: true }
+    },
+    {
         path: '/',
         redirect: '/gastos/nuevo'
     },

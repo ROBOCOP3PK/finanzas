@@ -205,6 +205,99 @@ class AuthController extends Controller
     }
 
     /**
+     * Solicitar recuperacion de contrasena
+     */
+    public function forgotPassword(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email',
+        ], [
+            'email.required' => 'El correo es requerido',
+            'email.email' => 'Ingresa un correo valido',
+        ]);
+
+        // Verificar si el email existe
+        $user = User::where('email', $request->email)->first();
+
+        if (!$user) {
+            throw ValidationException::withMessages([
+                'email' => ['No existe una cuenta con este correo'],
+            ]);
+        }
+
+        // Generar y enviar codigo
+        $verification = VerificationCode::generateFor($request->email, 'password_reset', 10);
+
+        try {
+            Mail::to($request->email)->send(new \App\Mail\PasswordResetMail($verification->code, 10));
+        } catch (\Exception $e) {
+            \Log::error('Error enviando email de recuperacion: ' . $e->getMessage());
+
+            throw ValidationException::withMessages([
+                'email' => ['Error al enviar el codigo. Intenta de nuevo.'],
+            ]);
+        }
+
+        return response()->json([
+            'message' => 'Codigo enviado correctamente',
+            'expires_in' => 10,
+        ]);
+    }
+
+    /**
+     * Restablecer contrasena con codigo
+     */
+    public function resetPassword(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email',
+            'code' => 'required|string|size:6',
+            'password' => 'required|min:6|confirmed',
+        ], [
+            'email.required' => 'El correo es requerido',
+            'email.email' => 'Ingresa un correo valido',
+            'code.required' => 'El codigo es requerido',
+            'code.size' => 'El codigo debe tener 6 digitos',
+            'password.required' => 'La contrasena es requerida',
+            'password.min' => 'La contrasena debe tener al menos 6 caracteres',
+            'password.confirmed' => 'Las contrasenas no coinciden',
+        ]);
+
+        // Verificar el codigo
+        $verification = VerificationCode::verify($request->email, $request->code, 'password_reset');
+
+        if (!$verification) {
+            throw ValidationException::withMessages([
+                'code' => ['Codigo invalido o expirado'],
+            ]);
+        }
+
+        // Buscar usuario y actualizar contrasena
+        $user = User::where('email', $request->email)->first();
+
+        if (!$user) {
+            throw ValidationException::withMessages([
+                'email' => ['No existe una cuenta con este correo'],
+            ]);
+        }
+
+        $user->password = Hash::make($request->password);
+        $user->save();
+
+        // Revocar todos los tokens existentes por seguridad
+        $user->tokens()->delete();
+
+        // Limpiar codigos de verificacion usados
+        VerificationCode::where('email', $request->email)
+            ->where('type', 'password_reset')
+            ->delete();
+
+        return response()->json([
+            'message' => 'Contrasena actualizada correctamente',
+        ]);
+    }
+
+    /**
      * Crear categorias y medios de pago por defecto para un nuevo usuario
      */
     private function crearDatosPorDefecto(User $user): void

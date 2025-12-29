@@ -18,6 +18,8 @@ Route::post('/auth/register', [AuthController::class, 'register']);
 Route::post('/auth/send-code', [AuthController::class, 'sendVerificationCode']);
 Route::post('/auth/verify-code', [AuthController::class, 'verifyCode']);
 Route::post('/auth/resend-code', [AuthController::class, 'resendVerificationCode']);
+Route::post('/auth/forgot-password', [AuthController::class, 'forgotPassword']);
+Route::post('/auth/reset-password', [AuthController::class, 'resetPassword']);
 
 // Rutas protegidas
 Route::middleware('auth:sanctum')->group(function () {
