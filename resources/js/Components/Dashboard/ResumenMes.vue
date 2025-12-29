@@ -30,6 +30,7 @@
 <script setup>
 import { computed } from 'vue';
 import Card from '../UI/Card.vue';
+import { useCurrency } from '../../Composables/useCurrency';
 
 const props = defineProps({
     gastosPersonal: { type: Number, default: 0 },
@@ -39,13 +40,7 @@ const props = defineProps({
     porcentajePersona2: { type: Number, default: 40 }
 });
 
-const totalGastos = computed(() => props.gastosPersonal + props.gastosPareja + props.gastosCompartido);
+const { formatCurrency } = useCurrency();
 
-const formatCurrency = (value) => {
-    return new Intl.NumberFormat('es-CO', {
-        style: 'currency',
-        currency: 'COP',
-        minimumFractionDigits: 0
-    }).format(value);
-};
+const totalGastos = computed(() => props.gastosPersonal + props.gastosPareja + props.gastosCompartido);
 </script>

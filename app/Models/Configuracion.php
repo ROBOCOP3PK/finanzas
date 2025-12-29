@@ -64,4 +64,16 @@ class Configuracion extends Model
     {
         return self::obtener('tema', 'system');
     }
+
+    // Obtener divisa
+    public static function divisa(): string
+    {
+        return self::obtener('divisa', 'COP');
+    }
+
+    // Obtener formato de divisa (punto o coma como separador de miles)
+    public static function formatoDivisa(): string
+    {
+        return self::obtener('formato_divisa', 'punto');
+    }
 }

@@ -23,7 +23,9 @@ class ConfiguracionController extends Controller
             'nombre_persona_2' => 'sometimes|string|max:50',
             'porcentaje_persona_1' => 'sometimes|numeric|min:0|max:100',
             'porcentaje_persona_2' => 'sometimes|numeric|min:0|max:100',
-            'tema' => 'sometimes|in:light,dark,system'
+            'tema' => 'sometimes|in:light,dark,system',
+            'divisa' => 'sometimes|in:COP,USD,EUR,MXN',
+            'formato_divisa' => 'sometimes|in:punto,coma'
         ]);
 
         $configuraciones = $request->only([
@@ -31,7 +33,9 @@ class ConfiguracionController extends Controller
             'nombre_persona_2',
             'porcentaje_persona_1',
             'porcentaje_persona_2',
-            'tema'
+            'tema',
+            'divisa',
+            'formato_divisa'
         ]);
 
         // Validar que los porcentajes sumen 100

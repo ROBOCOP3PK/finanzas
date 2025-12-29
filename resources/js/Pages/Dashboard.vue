@@ -6,14 +6,14 @@
             <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-4">
                 <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Te debe</p>
                 <p class="text-xl font-bold" :class="dashboardStore.deudaPersona2 > 0 ? 'text-red-500' : 'text-green-500'">
-                    {{ dashboardStore.deudaFormateada }}
+                    {{ formatCurrency(dashboardStore.deudaPersona2) }}
                 </p>
             </div>
             <!-- Card Gasto Mes -->
             <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-4">
                 <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Gasto este mes</p>
                 <p class="text-xl font-bold text-gray-900 dark:text-white">
-                    {{ dashboardStore.gastoMesFormateado }}
+                    {{ formatCurrency(dashboardStore.gastoMesActual) }}
                 </p>
             </div>
         </div>
@@ -91,10 +91,12 @@ import Toast from '../Components/UI/Toast.vue';
 import { useDashboardStore } from '../Stores/dashboard';
 import { usePlantillasStore } from '../Stores/plantillas';
 import { useGastosRecurrentesStore } from '../Stores/gastosRecurrentes';
+import { useCurrency } from '../Composables/useCurrency';
 
 const dashboardStore = useDashboardStore();
 const plantillasStore = usePlantillasStore();
 const gastosRecurrentesStore = useGastosRecurrentesStore();
+const { formatCurrency } = useCurrency();
 
 const showPlantillaModal = ref(false);
 const plantillaSeleccionada = ref(null);

@@ -28,6 +28,7 @@
 <script setup>
 import Badge from '../UI/Badge.vue';
 import { useConfigStore } from '../../Stores/config';
+import { useCurrency } from '../../Composables/useCurrency';
 
 const props = defineProps({
     gasto: {
@@ -37,14 +38,7 @@ const props = defineProps({
 });
 
 const configStore = useConfigStore();
-
-const formatCurrency = (value) => {
-    return new Intl.NumberFormat('es-CO', {
-        style: 'currency',
-        currency: 'COP',
-        minimumFractionDigits: 0
-    }).format(value);
-};
+const { formatCurrency } = useCurrency();
 
 const formatDate = (date) => {
     return new Date(date).toLocaleDateString('es-CO', {

@@ -23,22 +23,7 @@ export const useDashboardStore = defineStore('dashboard', {
         error: null
     }),
 
-    getters: {
-        deudaFormateada: (state) => {
-            return new Intl.NumberFormat('es-CO', {
-                style: 'currency',
-                currency: 'COP',
-                minimumFractionDigits: 0
-            }).format(state.deudaPersona2);
-        },
-        gastoMesFormateado: (state) => {
-            return new Intl.NumberFormat('es-CO', {
-                style: 'currency',
-                currency: 'COP',
-                minimumFractionDigits: 0
-            }).format(state.gastoMesActual);
-        }
-    },
+    getters: {},
 
     actions: {
         async cargarDashboard() {

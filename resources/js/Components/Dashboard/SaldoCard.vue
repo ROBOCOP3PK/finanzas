@@ -11,6 +11,7 @@
 <script setup>
 import { computed } from 'vue';
 import Card from '../UI/Card.vue';
+import { useCurrency } from '../../Composables/useCurrency';
 
 const props = defineProps({
     saldo: {
@@ -23,11 +24,7 @@ const props = defineProps({
     }
 });
 
-const saldoFormateado = computed(() => {
-    return new Intl.NumberFormat('es-CO', {
-        style: 'currency',
-        currency: 'COP',
-        minimumFractionDigits: 0
-    }).format(props.saldo);
-});
+const { formatCurrency } = useCurrency();
+
+const saldoFormateado = computed(() => formatCurrency(props.saldo));
 </script>

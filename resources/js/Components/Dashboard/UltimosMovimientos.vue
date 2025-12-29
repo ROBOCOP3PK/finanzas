@@ -56,6 +56,7 @@ import { ArrowUpIcon, ArrowDownIcon } from '@heroicons/vue/24/outline';
 import Card from '../UI/Card.vue';
 import Badge from '../UI/Badge.vue';
 import { useConfigStore } from '../../Stores/config';
+import { useCurrency } from '../../Composables/useCurrency';
 
 const props = defineProps({
     movimientos: {
@@ -65,14 +66,7 @@ const props = defineProps({
 });
 
 const configStore = useConfigStore();
-
-const formatCurrency = (value) => {
-    return new Intl.NumberFormat('es-CO', {
-        style: 'currency',
-        currency: 'COP',
-        minimumFractionDigits: 0
-    }).format(value);
-};
+const { formatCurrency } = useCurrency();
 
 const formatDate = (date) => {
     return new Date(date).toLocaleDateString('es-CO', {

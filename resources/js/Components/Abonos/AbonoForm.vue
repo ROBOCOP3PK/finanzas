@@ -8,16 +8,26 @@
             :error="errors.fecha"
         />
 
-        <Input
-            v-model="form.valor"
-            type="number"
-            label="Valor"
-            placeholder="0"
-            :min="1"
-            :step="100"
-            required
-            :error="errors.valor"
-        />
+        <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Valor ({{ divisaInfo.codigo }})
+            </label>
+            <div class="relative">
+                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400">
+                    {{ divisaInfo.simbolo }}
+                </span>
+                <input
+                    type="text"
+                    :value="valorFormateado"
+                    @input="onValorInput"
+                    placeholder="0"
+                    inputmode="numeric"
+                    class="w-full pl-8 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent"
+                    :class="{ 'border-red-500': errors.valor }"
+                />
+            </div>
+            <p v-if="errors.valor" class="mt-1 text-sm text-red-500">{{ errors.valor }}</p>
+        </div>
 
         <Input
             v-model="form.nota"
@@ -36,6 +46,7 @@
 import { ref, computed, onMounted } from 'vue';
 import Input from '../UI/Input.vue';
 import Button from '../UI/Button.vue';
+import { useCurrency } from '../../Composables/useCurrency';
 
 const props = defineProps({
     abono: Object,
@@ -51,6 +62,27 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['submit']);
+const { formatInputValue, parseFormattedValue, divisaInfo } = useCurrency();
+
+// Valor formateado para mostrar en el input
+const valorFormateado = ref('');
+
+// Actualizar valor formateado cuando cambia el valor numérico
+const actualizarValorFormateado = (valorNumerico) => {
+    if (valorNumerico) {
+        valorFormateado.value = formatInputValue(valorNumerico);
+    } else {
+        valorFormateado.value = '';
+    }
+};
+
+// Manejar input del usuario en el campo de valor
+const onValorInput = (event) => {
+    const inputValue = event.target.value;
+    const valorNumerico = parseFormattedValue(inputValue);
+    form.value.valor = valorNumerico;
+    valorFormateado.value = formatInputValue(valorNumerico);
+};
 
 const form = ref({
     fecha: new Date().toISOString().split('T')[0],
@@ -61,6 +93,7 @@ const form = ref({
 onMounted(() => {
     if (props.abono) {
         form.value = { ...props.abono };
+        actualizarValorFormateado(props.abono.valor);
     }
 });
 

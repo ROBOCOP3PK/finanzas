@@ -21,6 +21,50 @@
             </div>
         </Card>
 
+        <!-- Divisa -->
+        <Card title="Divisa">
+            <div class="flex gap-2">
+                <button
+                    v-for="div in configStore.divisasDisponibles"
+                    :key="div.value"
+                    @click="cambiarDivisa(div.value)"
+                    :class="[
+                        'flex-1 py-3 px-4 rounded-lg font-medium text-sm transition-colors',
+                        configStore.divisa === div.value
+                            ? 'bg-primary text-white dark:bg-indigo-500'
+                            : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
+                    ]"
+                >
+                    {{ div.value }}
+                </button>
+            </div>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                Selecciona la moneda para mostrar los valores
+            </p>
+        </Card>
+
+        <!-- Formato de Divisa -->
+        <Card title="Formato de divisa">
+            <div class="flex gap-2">
+                <button
+                    v-for="formato in configStore.formatosDivisaDisponibles"
+                    :key="formato.value"
+                    @click="cambiarFormatoDivisa(formato.value)"
+                    :class="[
+                        'flex-1 py-3 px-4 rounded-lg font-medium text-sm transition-colors',
+                        configStore.formato_divisa === formato.value
+                            ? 'bg-primary text-white dark:bg-indigo-500'
+                            : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
+                    ]"
+                >
+                    {{ formato.label }}
+                </button>
+            </div>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                Selecciona el separador de miles para los valores
+            </p>
+        </Card>
+
         <!-- Categorias -->
         <Card title="Categorias">
             <template #action>
@@ -179,10 +223,12 @@ import Toast from '../Components/UI/Toast.vue';
 import { useThemeStore } from '../Stores/theme';
 import { useMediosPagoStore } from '../Stores/mediosPago';
 import { useCategoriasStore } from '../Stores/categorias';
+import { useConfigStore } from '../Stores/config';
 
 const themeStore = useThemeStore();
 const mediosPagoStore = useMediosPagoStore();
 const categoriasStore = useCategoriasStore();
+const configStore = useConfigStore();
 
 const temas = [
     { value: 'light', label: 'Claro' },
@@ -324,6 +370,26 @@ const toggleMedioPago = async (mp) => {
 // Theme
 const cambiarTema = (tema) => {
     themeStore.setTema(tema);
+};
+
+// Divisa
+const cambiarDivisa = async (divisa) => {
+    try {
+        await configStore.actualizarDivisa(divisa);
+        mostrarToast('Divisa actualizada');
+    } catch (error) {
+        mostrarToast('Error al actualizar divisa', 'error');
+    }
+};
+
+// Formato de Divisa
+const cambiarFormatoDivisa = async (formato) => {
+    try {
+        await configStore.actualizarFormatoDivisa(formato);
+        mostrarToast('Formato de divisa actualizado');
+    } catch (error) {
+        mostrarToast('Error al actualizar formato', 'error');
+    }
 };
 
 // Cargar datos

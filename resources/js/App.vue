@@ -15,14 +15,17 @@ import { computed, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import AppLayout from './Components/Layout/AppLayout.vue';
 import { useThemeStore } from './Stores/theme';
+import { useConfigStore } from './Stores/config';
 
 const route = useRoute();
 const themeStore = useThemeStore();
+const configStore = useConfigStore();
 
 // Verificar si es una ruta de invitados (login, register)
 const isGuestRoute = computed(() => route.meta?.guest === true);
 
 onMounted(() => {
     themeStore.inicializar();
+    configStore.cargarConfiguracion();
 });
 </script>

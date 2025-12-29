@@ -53,16 +53,26 @@
             :error="errors.categoria_id"
         />
 
-        <Input
-            v-model="form.valor"
-            type="number"
-            label="Valor"
-            placeholder="0"
-            :min="1"
-            :step="100"
-            required
-            :error="errors.valor"
-        />
+        <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Valor ({{ divisaInfo.codigo }})
+            </label>
+            <div class="relative">
+                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400">
+                    {{ divisaInfo.simbolo }}
+                </span>
+                <input
+                    type="text"
+                    :value="valorFormateado"
+                    @input="onValorInput"
+                    placeholder="0"
+                    inputmode="numeric"
+                    class="w-full pl-8 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent"
+                    :class="{ 'border-red-500': errors.valor }"
+                />
+            </div>
+            <p v-if="errors.valor" class="mt-1 text-sm text-red-500">{{ errors.valor }}</p>
+        </div>
 
         <div>
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -103,6 +113,7 @@ import { useMediosPagoStore } from '../../Stores/mediosPago';
 import { useCategoriasStore } from '../../Stores/categorias';
 import { useConfigStore } from '../../Stores/config';
 import { useConceptosFrecuentesStore } from '../../Stores/conceptosFrecuentes';
+import { useCurrency } from '../../Composables/useCurrency';
 
 const props = defineProps({
     gasto: Object,
@@ -123,9 +134,30 @@ const mediosPagoStore = useMediosPagoStore();
 const categoriasStore = useCategoriasStore();
 const configStore = useConfigStore();
 const conceptosStore = useConceptosFrecuentesStore();
+const { formatInputValue, parseFormattedValue, divisaInfo } = useCurrency();
 
 const showSugerencias = ref(false);
 const sugerencias = computed(() => conceptosStore.sugerencias);
+
+// Valor formateado para mostrar en el input
+const valorFormateado = ref('');
+
+// Actualizar valor formateado cuando cambia el valor numérico
+const actualizarValorFormateado = (valorNumerico) => {
+    if (valorNumerico) {
+        valorFormateado.value = formatInputValue(valorNumerico);
+    } else {
+        valorFormateado.value = '';
+    }
+};
+
+// Manejar input del usuario en el campo de valor
+const onValorInput = (event) => {
+    const inputValue = event.target.value;
+    const valorNumerico = parseFormattedValue(inputValue);
+    form.value.valor = valorNumerico;
+    valorFormateado.value = formatInputValue(valorNumerico);
+};
 
 const form = ref({
     fecha: new Date().toISOString().split('T')[0],
@@ -148,6 +180,7 @@ onMounted(async () => {
     // Si hay gasto para editar, cargar datos
     if (props.gasto) {
         form.value = { ...props.gasto };
+        actualizarValorFormateado(props.gasto.valor);
     }
 });
 

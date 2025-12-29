@@ -27,6 +27,7 @@
 
 <script setup>
 import Card from '../UI/Card.vue';
+import { useCurrency } from '../../Composables/useCurrency';
 
 defineProps({
     plantillas: {
@@ -37,14 +38,7 @@ defineProps({
 
 defineEmits(['usar']);
 
-const formatCurrency = (value) => {
-    return new Intl.NumberFormat('es-CO', {
-        style: 'currency',
-        currency: 'COP',
-        minimumFractionDigits: 0,
-        notation: 'compact'
-    }).format(value);
-};
+const { formatCurrencyCompact: formatCurrency } = useCurrency();
 
 const getEmoji = (icono) => {
     const emojis = {

@@ -41,20 +41,14 @@ import { onMounted } from 'vue';
 import { PlusIcon } from '@heroicons/vue/24/outline';
 import Button from '../../Components/UI/Button.vue';
 import { useAbonosStore } from '../../Stores/abonos';
+import { useCurrency } from '../../Composables/useCurrency';
 
 const abonosStore = useAbonosStore();
+const { formatCurrency } = useCurrency();
 
 onMounted(() => {
     abonosStore.cargarAbonos();
 });
-
-const formatCurrency = (value) => {
-    return new Intl.NumberFormat('es-CO', {
-        style: 'currency',
-        currency: 'COP',
-        minimumFractionDigits: 0
-    }).format(value);
-};
 
 const formatDate = (date) => {
     return new Date(date).toLocaleDateString('es-CO', {
