@@ -66,7 +66,7 @@
                     :value="valorFormateado"
                     @input="onValorInput"
                     placeholder="0"
-                    inputmode="numeric"
+                    inputmode="decimal"
                     class="w-full pl-8 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent"
                     :class="{ 'border-red-500': errors.valor }"
                 />
@@ -154,9 +154,10 @@ const actualizarValorFormateado = (valorNumerico) => {
 // Manejar input del usuario en el campo de valor
 const onValorInput = (event) => {
     const inputValue = event.target.value;
-    const valorNumerico = parseFormattedValue(inputValue);
-    form.value.valor = valorNumerico;
-    valorFormateado.value = formatInputValue(valorNumerico);
+    // Formatear el input mientras el usuario escribe (preserva decimales)
+    valorFormateado.value = formatInputValue(inputValue);
+    // Parsear el valor numérico para el formulario
+    form.value.valor = parseFormattedValue(inputValue);
 };
 
 const form = ref({
