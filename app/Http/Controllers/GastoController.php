@@ -7,6 +7,7 @@ use App\Models\ConceptoFrecuente;
 use App\Models\Gasto;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class GastoController extends Controller
 {
@@ -140,6 +141,73 @@ class GastoController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Gasto eliminado correctamente'
+        ]);
+    }
+
+    public function exportar(Request $request): StreamedResponse
+    {
+        $user = $request->user();
+        $exportarTodos = $request->boolean('exportar_todos', false);
+
+        $query = $user->gastos()
+            ->with(['medioPago', 'categoria'])
+            ->orderByDesc('fecha')
+            ->orderByDesc('created_at');
+
+        // Solo aplicar filtros de fecha si no se exportan todos
+        if (!$exportarTodos) {
+            if ($request->filled('desde') && $request->filled('hasta')) {
+                $query->fecha($request->desde, $request->hasta);
+            }
+        }
+
+        // Filtro por tipo
+        if ($request->filled('tipo')) {
+            $query->tipo($request->tipo);
+        }
+
+        // Filtro por categoría
+        if ($request->filled('categoria_id')) {
+            $query->categoria($request->categoria_id);
+        }
+
+        $gastos = $query->get();
+
+        $filename = 'gastos_' . now()->format('Y-m-d_His') . '.csv';
+
+        return response()->streamDownload(function () use ($gastos) {
+            $handle = fopen('php://output', 'w');
+
+            // BOM para UTF-8 (Excel compatibility)
+            fprintf($handle, chr(0xEF).chr(0xBB).chr(0xBF));
+
+            // Header
+            fputcsv($handle, [
+                'Fecha',
+                'Concepto',
+                'Valor',
+                'Tipo',
+                'Categoría',
+                'Medio de Pago',
+                'Creado'
+            ]);
+
+            // Data
+            foreach ($gastos as $gasto) {
+                fputcsv($handle, [
+                    $gasto->fecha,
+                    $gasto->concepto,
+                    $gasto->valor,
+                    $gasto->tipo,
+                    $gasto->categoria?->nombre ?? '',
+                    $gasto->medioPago?->nombre ?? '',
+                    $gasto->created_at->format('Y-m-d H:i:s')
+                ]);
+            }
+
+            fclose($handle);
+        }, $filename, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
         ]);
     }
 }

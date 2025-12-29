@@ -49,6 +49,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('categorias', CategoriaController::class);
 
     // Gastos
+    Route::get('/gastos/exportar', [GastoController::class, 'exportar']);
     Route::apiResource('gastos', GastoController::class);
 
     // Abonos

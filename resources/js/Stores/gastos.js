@@ -85,6 +85,44 @@ export const useGastosStore = defineStore('gastos', {
                 medio_pago_id: null,
                 categoria_id: null
             };
+        },
+
+        async exportarGastos(filtrosExport) {
+            const params = new URLSearchParams();
+
+            if (filtrosExport.exportar_todos) {
+                params.append('exportar_todos', '1');
+            } else {
+                if (filtrosExport.desde) params.append('desde', filtrosExport.desde);
+                if (filtrosExport.hasta) params.append('hasta', filtrosExport.hasta);
+            }
+
+            if (filtrosExport.tipo) params.append('tipo', filtrosExport.tipo);
+            if (filtrosExport.categoria_id) params.append('categoria_id', filtrosExport.categoria_id);
+
+            const response = await api.get('/gastos/exportar', {
+                params,
+                responseType: 'blob'
+            });
+
+            // Crear descarga
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+
+            // Obtener nombre del archivo del header o usar uno por defecto
+            const contentDisposition = response.headers['content-disposition'];
+            let filename = 'gastos.csv';
+            if (contentDisposition) {
+                const match = contentDisposition.match(/filename="(.+)"/);
+                if (match) filename = match[1];
+            }
+
+            link.setAttribute('download', filename);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(url);
         }
     }
 });

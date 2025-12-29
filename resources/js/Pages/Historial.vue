@@ -1,6 +1,78 @@
 <template>
     <div class="p-4">
-        <h1 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Historial</h1>
+        <div class="flex justify-between items-center mb-4">
+            <h1 class="text-xl font-bold text-gray-900 dark:text-white">Historial</h1>
+            <Button variant="secondary" size="sm" @click="abrirModalExportar">
+                Exportar
+            </Button>
+        </div>
+
+        <!-- Modal Exportar -->
+        <div v-if="mostrarModalExportar" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <Card class="w-full max-w-md">
+                <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Exportar Gastos</h2>
+
+                <div class="space-y-4">
+                    <!-- Checkbox exportar todos -->
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input
+                            type="checkbox"
+                            v-model="filtrosExport.exportar_todos"
+                            class="w-4 h-4 text-primary rounded border-gray-300 focus:ring-primary"
+                        />
+                        <span class="text-sm text-gray-700 dark:text-gray-300">
+                            Exportar todos los registros (desde siempre)
+                        </span>
+                    </label>
+
+                    <!-- Rango de fechas (deshabilitado si exportar_todos está activo) -->
+                    <div :class="{ 'opacity-50 pointer-events-none': filtrosExport.exportar_todos }">
+                        <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">O selecciona un rango de fechas:</p>
+                        <div class="grid grid-cols-2 gap-3">
+                            <Input
+                                v-model="filtrosExport.desde"
+                                type="date"
+                                label="Desde"
+                                :disabled="filtrosExport.exportar_todos"
+                            />
+                            <Input
+                                v-model="filtrosExport.hasta"
+                                type="date"
+                                label="Hasta"
+                                :disabled="filtrosExport.exportar_todos"
+                            />
+                        </div>
+                    </div>
+
+                    <!-- Filtros adicionales opcionales -->
+                    <div class="grid grid-cols-2 gap-3">
+                        <Select
+                            v-model="filtrosExport.tipo"
+                            label="Tipo"
+                            :options="tiposOptions"
+                        />
+                        <Select
+                            v-model="filtrosExport.categoria_id"
+                            label="Categoría"
+                            :options="categoriasOptions"
+                        />
+                    </div>
+                </div>
+
+                <div class="flex gap-2 mt-6">
+                    <Button variant="ghost" class="flex-1" @click="cerrarModalExportar">
+                        Cancelar
+                    </Button>
+                    <Button
+                        class="flex-1"
+                        @click="exportar"
+                        :disabled="exportando || (!filtrosExport.exportar_todos && !filtrosExport.desde && !filtrosExport.hasta)"
+                    >
+                        {{ exportando ? 'Exportando...' : 'Descargar CSV' }}
+                    </Button>
+                </div>
+            </Card>
+        </div>
 
         <!-- Filtros -->
         <Card class="mb-4">
@@ -106,6 +178,17 @@ const filtros = ref({
     categoria_id: ''
 });
 
+// Estado para modal de exportación
+const mostrarModalExportar = ref(false);
+const exportando = ref(false);
+const filtrosExport = ref({
+    desde: '',
+    hasta: '',
+    tipo: '',
+    categoria_id: '',
+    exportar_todos: false
+});
+
 onMounted(async () => {
     await Promise.all([
         gastosStore.cargarGastos(),
@@ -141,5 +224,35 @@ const cargarPagina = (page) => {
 
 const editarGasto = (id) => {
     router.push(`/gastos/${id}/editar`);
+};
+
+// Funciones de exportación
+const abrirModalExportar = () => {
+    // Inicializar con los filtros actuales de la vista
+    filtrosExport.value = {
+        desde: filtros.value.desde || '',
+        hasta: filtros.value.hasta || '',
+        tipo: filtros.value.tipo || '',
+        categoria_id: filtros.value.categoria_id || '',
+        exportar_todos: false
+    };
+    mostrarModalExportar.value = true;
+};
+
+const cerrarModalExportar = () => {
+    mostrarModalExportar.value = false;
+};
+
+const exportar = async () => {
+    exportando.value = true;
+    try {
+        await gastosStore.exportarGastos(filtrosExport.value);
+        cerrarModalExportar();
+    } catch (error) {
+        console.error('Error exportando:', error);
+        alert('Error al exportar los gastos');
+    } finally {
+        exportando.value = false;
+    }
 };
 </script>
