@@ -317,6 +317,132 @@
             </div>
         </div>
 
+        <!-- Seccion: Gastos Compartidos -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+            <button
+                @click="toggleSeccion('compartidos')"
+                class="w-full flex items-center justify-between p-4 text-left"
+            >
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-900 flex items-center justify-center">
+                        <UsersIcon class="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                    </div>
+                    <span class="font-medium text-gray-900 dark:text-white">Gastos Compartidos</span>
+                </div>
+                <ChevronDownIcon
+                    :class="[
+                        'w-5 h-5 text-gray-500 transition-transform duration-200',
+                        seccionesAbiertas.compartidos ? 'rotate-180' : ''
+                    ]"
+                />
+            </button>
+            <div v-show="seccionesAbiertas.compartidos" class="px-4 pb-4 space-y-4 border-t border-gray-100 dark:border-gray-700">
+                <div class="pt-4">
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                        Configura como se dividen los gastos compartidos entre tu y otra persona.
+                    </p>
+
+                    <!-- Nombres -->
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                Tu nombre
+                            </label>
+                            <input
+                                type="text"
+                                v-model="formCompartidos.nombre_persona_1"
+                                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent"
+                                placeholder="Yo"
+                            />
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                Nombre pareja
+                            </label>
+                            <input
+                                type="text"
+                                v-model="formCompartidos.nombre_persona_2"
+                                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent"
+                                placeholder="Pareja"
+                            />
+                        </div>
+                    </div>
+
+                    <!-- Porcentajes -->
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Porcentajes de division
+                        </label>
+                        <div class="flex items-center gap-4">
+                            <div class="flex-1">
+                                <div class="flex items-center justify-between mb-1">
+                                    <span class="text-sm text-gray-600 dark:text-gray-400">{{ formCompartidos.nombre_persona_1 || 'Yo' }}</span>
+                                    <span class="text-sm font-medium text-gray-900 dark:text-white">{{ formCompartidos.porcentaje_persona_1 }}%</span>
+                                </div>
+                                <input
+                                    type="range"
+                                    v-model.number="formCompartidos.porcentaje_persona_1"
+                                    @input="ajustarPorcentaje1"
+                                    min="0"
+                                    max="100"
+                                    step="5"
+                                    class="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-primary"
+                                />
+                            </div>
+                            <div class="flex-1">
+                                <div class="flex items-center justify-between mb-1">
+                                    <span class="text-sm text-gray-600 dark:text-gray-400">{{ formCompartidos.nombre_persona_2 || 'Pareja' }}</span>
+                                    <span class="text-sm font-medium text-gray-900 dark:text-white">{{ formCompartidos.porcentaje_persona_2 }}%</span>
+                                </div>
+                                <input
+                                    type="range"
+                                    v-model.number="formCompartidos.porcentaje_persona_2"
+                                    @input="ajustarPorcentaje2"
+                                    min="0"
+                                    max="100"
+                                    step="5"
+                                    class="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-primary"
+                                />
+                            </div>
+                        </div>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-2 text-center">
+                            Total: {{ formCompartidos.porcentaje_persona_1 + formCompartidos.porcentaje_persona_2 }}%
+                            <span v-if="formCompartidos.porcentaje_persona_1 + formCompartidos.porcentaje_persona_2 !== 100" class="text-red-500">
+                                (debe sumar 100%)
+                            </span>
+                        </p>
+                    </div>
+
+                    <!-- Vista previa -->
+                    <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 mb-4">
+                        <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">Vista previa:</p>
+                        <p class="text-sm text-gray-900 dark:text-white">
+                            Si registras un gasto compartido de <strong>$100.000</strong>:
+                        </p>
+                        <ul class="text-sm mt-1 space-y-1">
+                            <li class="text-gray-700 dark:text-gray-300">
+                                <span class="font-medium">{{ formCompartidos.nombre_persona_1 || 'Yo' }}</span> asume
+                                <span class="font-medium text-primary">${{ (100000 * formCompartidos.porcentaje_persona_1 / 100).toLocaleString() }}</span>
+                            </li>
+                            <li class="text-gray-700 dark:text-gray-300">
+                                <span class="font-medium">{{ formCompartidos.nombre_persona_2 || 'Pareja' }}</span> debe
+                                <span class="font-medium text-purple-600 dark:text-purple-400">${{ (100000 * formCompartidos.porcentaje_persona_2 / 100).toLocaleString() }}</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <Button
+                        @click="guardarGastosCompartidos"
+                        :loading="guardandoCompartidos"
+                        :disabled="formCompartidos.porcentaje_persona_1 + formCompartidos.porcentaje_persona_2 !== 100"
+                        class="w-full"
+                    >
+                        Guardar configuracion
+                    </Button>
+                </div>
+            </div>
+        </div>
+
         <!-- Seccion: Cuenta -->
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
             <button
@@ -667,6 +793,7 @@ import {
     TagIcon,
     CreditCardIcon,
     UserIcon,
+    UsersIcon,
     ArrowPathIcon,
     ExclamationTriangleIcon,
     XCircleIcon
@@ -700,6 +827,7 @@ const seccionesAbiertas = reactive({
     categorias: false,
     mediosPago: false,
     servicios: false,
+    compartidos: false,
     cuenta: false
 });
 
@@ -1173,6 +1301,46 @@ const guardarDiaRestablecimiento = async () => {
     }
 };
 
+// Gastos Compartidos
+const formCompartidos = reactive({
+    nombre_persona_1: 'Yo',
+    nombre_persona_2: 'Pareja',
+    porcentaje_persona_1: 50,
+    porcentaje_persona_2: 50
+});
+const guardandoCompartidos = ref(false);
+
+const ajustarPorcentaje1 = () => {
+    formCompartidos.porcentaje_persona_2 = 100 - formCompartidos.porcentaje_persona_1;
+};
+
+const ajustarPorcentaje2 = () => {
+    formCompartidos.porcentaje_persona_1 = 100 - formCompartidos.porcentaje_persona_2;
+};
+
+const guardarGastosCompartidos = async () => {
+    if (formCompartidos.porcentaje_persona_1 + formCompartidos.porcentaje_persona_2 !== 100) {
+        mostrarToast('Los porcentajes deben sumar 100%', 'error');
+        return;
+    }
+
+    guardandoCompartidos.value = true;
+    try {
+        await configStore.actualizarGastosCompartidos({
+            nombre_persona_1: formCompartidos.nombre_persona_1,
+            nombre_persona_2: formCompartidos.nombre_persona_2,
+            porcentaje_persona_1: formCompartidos.porcentaje_persona_1,
+            porcentaje_persona_2: formCompartidos.porcentaje_persona_2
+        });
+        mostrarToast('Configuracion de gastos compartidos actualizada');
+    } catch (error) {
+        const mensaje = error.response?.data?.message || 'Error al guardar';
+        mostrarToast(mensaje, 'error');
+    } finally {
+        guardandoCompartidos.value = false;
+    }
+};
+
 // Restablecer datos
 const showModalRestablecer = ref(false);
 const restableciendo = ref(false);
@@ -1203,12 +1371,19 @@ onMounted(async () => {
     await Promise.all([
         mediosPagoStore.cargarMediosPago(),
         categoriasStore.cargarCategorias(),
-        serviciosStore.cargarServicios()
+        serviciosStore.cargarServicios(),
+        configStore.cargarConfiguracion()
     ]);
 
     // Cargar dia de restablecimiento del usuario
     if (authStore.user?.dia_restablecimiento_servicios) {
         diaRestablecimiento.value = authStore.user.dia_restablecimiento_servicios;
     }
+
+    // Cargar configuracion de gastos compartidos
+    formCompartidos.nombre_persona_1 = configStore.nombre_persona_1;
+    formCompartidos.nombre_persona_2 = configStore.nombre_persona_2;
+    formCompartidos.porcentaje_persona_1 = configStore.porcentaje_persona_1;
+    formCompartidos.porcentaje_persona_2 = configStore.porcentaje_persona_2;
 });
 </script>

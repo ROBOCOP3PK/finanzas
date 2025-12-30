@@ -5,21 +5,25 @@ export const useConfigStore = defineStore('config', {
     state: () => ({
         loaded: false,
         divisa: 'COP',
-        formato_divisa: 'punto'
+        formato_divisa: 'punto',
+        nombre_persona_1: 'Yo',
+        nombre_persona_2: 'Pareja',
+        porcentaje_persona_1: 50,
+        porcentaje_persona_2: 50
     }),
 
     getters: {
-        tiposGasto: () => [
+        tiposGasto: (state) => [
             { value: 'personal', label: 'Mío' },
-            { value: 'pareja', label: 'Pareja' },
-            { value: 'compartido', label: '50/50' }
+            { value: 'pareja', label: state.nombre_persona_2 },
+            { value: 'compartido', label: `${state.porcentaje_persona_1}/${state.porcentaje_persona_2}` }
         ],
 
-        getNombreTipo: () => (tipo) => {
+        getNombreTipo: (state) => (tipo) => {
             const tipos = {
                 'personal': 'Personal',
-                'pareja': 'Pareja',
-                'compartido': 'Compartido'
+                'pareja': state.nombre_persona_2,
+                'compartido': `Compartido (${state.porcentaje_persona_1}/${state.porcentaje_persona_2})`
             };
             return tipos[tipo] || tipo;
         },
@@ -46,6 +50,10 @@ export const useConfigStore = defineStore('config', {
                 if (data.success && data.data) {
                     this.divisa = data.data.divisa || 'COP';
                     this.formato_divisa = data.data.formato_divisa || 'punto';
+                    this.nombre_persona_1 = data.data.nombre_persona_1 || 'Yo';
+                    this.nombre_persona_2 = data.data.nombre_persona_2 || 'Pareja';
+                    this.porcentaje_persona_1 = parseFloat(data.data.porcentaje_persona_1) || 50;
+                    this.porcentaje_persona_2 = parseFloat(data.data.porcentaje_persona_2) || 50;
                 }
                 this.loaded = true;
             } catch (error) {
@@ -71,6 +79,26 @@ export const useConfigStore = defineStore('config', {
                 const { data } = await axios.put('/api/configuracion', { formato_divisa });
                 if (data.success) {
                     this.formato_divisa = formato_divisa;
+                }
+                return data;
+            } catch (error) {
+                throw error;
+            }
+        },
+
+        async actualizarGastosCompartidos(config) {
+            try {
+                const { data } = await axios.put('/api/configuracion', {
+                    nombre_persona_1: config.nombre_persona_1,
+                    nombre_persona_2: config.nombre_persona_2,
+                    porcentaje_persona_1: config.porcentaje_persona_1,
+                    porcentaje_persona_2: config.porcentaje_persona_2
+                });
+                if (data.success) {
+                    this.nombre_persona_1 = config.nombre_persona_1;
+                    this.nombre_persona_2 = config.nombre_persona_2;
+                    this.porcentaje_persona_1 = config.porcentaje_persona_1;
+                    this.porcentaje_persona_2 = config.porcentaje_persona_2;
                 }
                 return data;
             } catch (error) {
