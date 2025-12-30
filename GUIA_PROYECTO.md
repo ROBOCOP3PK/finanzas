@@ -3,9 +3,9 @@
 ## 1. Descripción General
 
 **Nombre del proyecto:** Finanzas Compartidas
-**Tecnologías:** Laravel 11 + Vue 3 + Tailwind CSS + SQLite + Laravel Sanctum
+**Tecnologías:** Laravel 12 + Vue 3 + Pinia + Tailwind CSS + SQLite + Laravel Sanctum
 **Tipo:** PWA (Progressive Web App)
-**Propósito:** Gestionar gastos personales y compartidos, calculando automáticamente la deuda que una persona secundaria (pareja) tiene con el usuario principal.
+**Propósito:** Gestionar gastos personales y compartidos, calculando automáticamente la deuda que una persona secundaria (pareja) tiene con el usuario principal. Incluye sistema de compartición de datos con otros usuarios y gestión de servicios/recibos.
 
 ---
 
@@ -107,6 +107,54 @@ Para gastos que se repiten mensualmente:
 - El usuario configura: concepto, medio de pago, tipo, categoría, valor, día del mes
 - Notificación visual cuando hay gastos recurrentes pendientes de confirmar
 
+### 2.12 Servicios (Recibos)
+Sistema para gestionar pagos de servicios mensuales:
+- Cada usuario tiene su lista de servicios (luz, agua, internet, etc.)
+- Cada servicio tiene: nombre, icono, color, valor estimado, categoría
+- Estado de pago por mes/año (pagado/pendiente)
+- Alerta visual cuando hay servicios pendientes de pagar
+- Al marcar como pagado, se crea automáticamente un gasto asociado
+- Día de restablecimiento configurable (día del mes en que se resetean los estados)
+
+### 2.13 Sistema de Compartición de Datos
+Permite compartir datos financieros con otra persona registrada:
+
+**Como Propietario:**
+- Invitar a una persona por email (debe estar registrada)
+- Ver solicitudes de gastos pendientes de aprobación
+- Aprobar o rechazar gastos propuestos por el invitado
+- Revocar acceso en cualquier momento
+- Solo puede compartir con 1 persona a la vez
+
+**Como Invitado:**
+- Aceptar o rechazar invitaciones
+- Ver dashboard y historial del propietario
+- Proponer gastos (quedan pendientes de aprobación)
+- Ver estado de sus propias solicitudes
+- NO puede eliminar ni editar gastos, ni acceder a configuración
+
+**Flujo de Aprobación:**
+1. Invitado propone un gasto → Crea `PendingExpense` con status "pending"
+2. Propietario recibe notificación
+3. Propietario aprueba → Se crea `Gasto` real, invitado notificado
+4. O propietario rechaza → Con razón opcional, invitado notificado
+
+### 2.14 Sistema de Notificaciones
+Notificaciones persistentes para el sistema de compartición:
+- **Tipos:**
+  - `expense_request` - Solicitud de gasto recibida
+  - `expense_approved` - Gasto aprobado
+  - `expense_rejected` - Gasto rechazado
+  - `share_invitation` - Invitación recibida
+  - `share_revoked` - Acceso revocado
+- Badge con contador en el header de la app
+- Marcar como leída individual o todas
+- Historial de notificaciones
+
+### 2.15 Exportación de Datos
+- **CSV**: Exportar gastos con filtros (fecha, tipo, categoría)
+- **PDF**: Exportar dashboard/historial como imagen PDF (usando html2canvas)
+
 ---
 
 ## 3. Autenticación
@@ -115,28 +163,49 @@ Para gastos que se repiten mensualmente:
 - **Laravel Sanctum** para autenticación basada en tokens
 - Tokens persistentes en `localStorage` del navegador
 - No hay expiración de tokens (persisten hasta logout manual)
-- Registro y login desde la aplicación
+- Registro con verificación de email por código de 6 dígitos
+- Recuperación de contraseña por email
 
-### 3.2 Flujo de Autenticación
+### 3.2 Flujo de Registro (3 pasos)
+1. Usuario ingresa email → Sistema envía código de 6 dígitos por email
+2. Usuario ingresa código → Sistema verifica y marca email como válido
+3. Usuario completa registro (nombre, contraseña) → Se crea cuenta y token
+
+### 3.3 Flujo de Login
 1. Usuario accede a la app sin token → Redirigido a `/login`
 2. Usuario ingresa credenciales → API devuelve token
 3. Token guardado en `localStorage`
 4. Todas las peticiones API incluyen el token en headers
 5. Al hacer logout → Token eliminado del servidor y `localStorage`
 
-### 3.3 Endpoints de Autenticación
+### 3.4 Flujo de Recuperación de Contraseña
+1. Usuario solicita recuperación con email
+2. Sistema envía código de 6 dígitos
+3. Usuario ingresa código y nueva contraseña
+4. Contraseña actualizada, puede hacer login
+
+### 3.5 Endpoints de Autenticación
 | Método | Endpoint | Descripción | Autenticación |
 |--------|----------|-------------|---------------|
-| POST | `/api/register` | Registrar nuevo usuario | No |
-| POST | `/api/login` | Iniciar sesión | No |
-| POST | `/api/logout` | Cerrar sesión | Sí |
-| GET | `/api/user` | Obtener usuario actual | Sí |
+| POST | `/api/auth/login` | Iniciar sesión | No |
+| POST | `/api/auth/send-code` | Enviar código de verificación | No |
+| POST | `/api/auth/verify-code` | Verificar código | No |
+| POST | `/api/auth/resend-code` | Reenviar código | No |
+| POST | `/api/auth/register` | Completar registro | No |
+| POST | `/api/auth/forgot-password` | Solicitar recuperación | No |
+| POST | `/api/auth/reset-password` | Resetear contraseña | No |
+| POST | `/api/auth/logout` | Cerrar sesión | Sí |
+| POST | `/api/auth/logout-all` | Cerrar todas las sesiones | Sí |
+| GET | `/api/auth/me` | Obtener usuario actual | Sí |
+| POST | `/api/auth/reset-user-data` | Borrar todos los datos | Sí |
 
-### 3.4 Credenciales por Defecto (Seeder)
-```
-Email: david@example.com
-Password: password
-```
+### 3.6 Modelo VerificationCode
+Almacena códigos de verificación temporales:
+- `email` - Email del usuario
+- `code` - Código de 6 dígitos
+- `type` - Tipo (registration, password_reset)
+- `expires_at` - Expiración (10 minutos)
+- `verified_at` - Marca de verificación
 
 ---
 
@@ -148,77 +217,120 @@ finanzas/
 ├── app/
 │   ├── Http/
 │   │   ├── Controllers/
-│   │   │   ├── AuthController.php          # Login, Register, Logout
-│   │   │   ├── GastoController.php
-│   │   │   ├── AbonoController.php
-│   │   │   ├── MedioPagoController.php
-│   │   │   ├── CategoriaController.php
-│   │   │   ├── ConceptoFrecuenteController.php
-│   │   │   ├── PlantillaController.php
-│   │   │   ├── GastoRecurrenteController.php
-│   │   │   ├── ConfiguracionController.php
-│   │   │   └── DashboardController.php
+│   │   │   ├── AuthController.php              # Login, Register, Verificación email
+│   │   │   ├── GastoController.php             # CRUD gastos + exportar CSV
+│   │   │   ├── AbonoController.php             # CRUD abonos
+│   │   │   ├── MedioPagoController.php         # CRUD medios de pago
+│   │   │   ├── CategoriaController.php         # CRUD categorías
+│   │   │   ├── ConceptoFrecuenteController.php # Búsqueda y favoritos
+│   │   │   ├── PlantillaController.php         # CRUD plantillas rápidas
+│   │   │   ├── GastoRecurrenteController.php   # CRUD gastos recurrentes
+│   │   │   ├── ServicioController.php          # CRUD servicios/recibos
+│   │   │   ├── ConfiguracionController.php     # Configuración global
+│   │   │   ├── DashboardController.php         # Dashboard y resúmenes
+│   │   │   ├── DataShareController.php         # Compartición (propietario)
+│   │   │   ├── SharedDataController.php        # Datos compartidos (invitado)
+│   │   │   ├── PendingExpenseController.php    # Solicitudes de gastos
+│   │   │   └── ShareNotificationController.php # Notificaciones
 │   │   └── Requests/
-│   │       ├── GastoRequest.php
-│   │       ├── AbonoRequest.php
 │   │       └── ...
 │   └── Models/
-│       ├── User.php                        # Con método calcularDeudaPersona2()
-│       ├── Gasto.php
-│       ├── Abono.php
-│       ├── MedioPago.php
-│       ├── Categoria.php
-│       ├── ConceptoFrecuente.php
-│       ├── Plantilla.php
-│       ├── GastoRecurrente.php
-│       └── Configuracion.php
+│       ├── User.php                    # Usuario con calcularDeudaPersona2()
+│       ├── Gasto.php                   # Gastos (personal/pareja/compartido)
+│       ├── Abono.php                   # Abonos/pagos
+│       ├── MedioPago.php               # Medios de pago
+│       ├── Categoria.php               # Categorías de gasto
+│       ├── ConceptoFrecuente.php       # Conceptos frecuentes
+│       ├── Plantilla.php               # Plantillas rápidas
+│       ├── GastoRecurrente.php         # Gastos recurrentes mensuales
+│       ├── Servicio.php                # Servicios/recibos
+│       ├── PagoServicio.php            # Pagos de servicios por mes
+│       ├── Configuracion.php           # Configuración global
+│       ├── VerificationCode.php        # Códigos de verificación email
+│       ├── DataShare.php               # Compartición de datos
+│       ├── PendingExpense.php          # Gastos pendientes de aprobación
+│       └── ShareNotification.php       # Notificaciones del sistema
 ├── database/
 │   ├── migrations/
-│   │   ├── 2014_10_12_000000_create_users_table.php
-│   │   ├── 2019_12_14_000001_create_personal_access_tokens_table.php
-│   │   ├── 2024_01_01_000001_create_medios_pago_table.php
-│   │   ├── 2024_01_01_000002_create_categorias_table.php
-│   │   ├── 2024_01_01_000003_create_gastos_table.php
-│   │   ├── 2024_01_01_000004_create_abonos_table.php
-│   │   ├── 2024_01_01_000005_create_conceptos_frecuentes_table.php
-│   │   ├── 2024_01_01_000006_create_plantillas_table.php
-│   │   ├── 2024_01_01_000007_create_gastos_recurrentes_table.php
-│   │   ├── 2024_01_01_000008_create_configuraciones_table.php
-│   │   └── 2025_12_27_024044_add_multiuser_support.php  # Añade user_id a todas las tablas
+│   │   ├── *_create_users_table.php
+│   │   ├── *_create_personal_access_tokens_table.php
+│   │   ├── *_create_medios_pago_table.php
+│   │   ├── *_create_categorias_table.php
+│   │   ├── *_create_gastos_table.php
+│   │   ├── *_create_abonos_table.php
+│   │   ├── *_create_conceptos_frecuentes_table.php
+│   │   ├── *_create_plantillas_table.php
+│   │   ├── *_create_gastos_recurrentes_table.php
+│   │   ├── *_create_configuraciones_table.php
+│   │   ├── *_create_verification_codes_table.php
+│   │   ├── *_create_servicios_table.php
+│   │   ├── *_create_pagos_servicios_table.php
+│   │   ├── *_create_data_shares_table.php
+│   │   ├── *_create_pending_expenses_table.php
+│   │   └── *_create_share_notifications_table.php
 │   └── seeders/
-│       ├── UserSeeder.php
-│       ├── MedioPagoSeeder.php
-│       ├── CategoriaSeeder.php
-│       └── ConfiguracionSeeder.php
+│       └── ...
 ├── resources/
 │   ├── js/
-│   │   ├── app.js
-│   │   ├── axios.js                        # Con interceptor de auth token
-│   │   ├── router.js                       # Con navigation guards
+│   │   ├── app.js                      # Punto de entrada
+│   │   ├── axios.js                    # Cliente HTTP con interceptor auth
+│   │   ├── router.js                   # Vue Router con guards
 │   │   ├── Components/
 │   │   │   ├── Layout/
-│   │   │   │   ├── AppLayout.vue           # Con botón de logout
-│   │   │   │   └── BottomNav.vue
-│   │   │   ├── Gastos/
-│   │   │   ├── Dashboard/
-│   │   │   └── UI/
+│   │   │   │   ├── AppLayout.vue       # Layout principal con notificaciones
+│   │   │   │   └── BottomNav.vue       # Navegación inferior móvil
+│   │   │   ├── Dashboard/              # Componentes del dashboard
+│   │   │   ├── Gastos/                 # Componentes de gastos
+│   │   │   ├── Shared/                 # Componentes de compartición
+│   │   │   │   ├── SharedDataNav.vue
+│   │   │   │   ├── SharedGastoForm.vue
+│   │   │   │   ├── ShareInviteModal.vue
+│   │   │   │   ├── PendingExpensesList.vue
+│   │   │   │   └── NotificationBell.vue
+│   │   │   └── UI/                     # Componentes reutilizables
+│   │   ├── Composables/
+│   │   │   └── useCurrency.js          # Formateo de moneda
 │   │   ├── Pages/
-│   │   │   ├── Login.vue                   # Página de login
+│   │   │   ├── Login.vue
+│   │   │   ├── Register.vue            # Registro con verificación
+│   │   │   ├── ForgotPassword.vue      # Recuperación de contraseña
 │   │   │   ├── Dashboard.vue
+│   │   │   ├── Historial.vue           # Historial con filtros y exportación
+│   │   │   ├── Configuracion.vue       # Configuración completa
 │   │   │   ├── Gastos/
+│   │   │   │   ├── Index.vue
+│   │   │   │   ├── Create.vue
+│   │   │   │   └── Edit.vue
 │   │   │   ├── Abonos/
-│   │   │   ├── Historial.vue
-│   │   │   └── Configuracion.vue
-│   │   └── Stores/
-│   │       ├── auth.js                     # Store de autenticación
-│   │       ├── gastos.js
-│   │       ├── dashboard.js
-│   │       ├── theme.js
-│   │       └── config.js
+│   │   │   │   ├── Index.vue
+│   │   │   │   └── Create.vue
+│   │   │   └── SharedData/             # Datos compartidos
+│   │   │       ├── List.vue            # Lista de comparticiones
+│   │   │       └── Index.vue           # Vista de datos compartidos
+│   │   └── Stores/                     # Pinia stores
+│   │       ├── auth.js                 # Autenticación
+│   │       ├── gastos.js               # Gastos
+│   │       ├── abonos.js               # Abonos
+│   │       ├── dashboard.js            # Dashboard
+│   │       ├── mediosPago.js           # Medios de pago
+│   │       ├── categorias.js           # Categorías
+│   │       ├── plantillas.js           # Plantillas
+│   │       ├── gastosRecurrentes.js    # Gastos recurrentes
+│   │       ├── conceptosFrecuentes.js  # Conceptos frecuentes
+│   │       ├── servicios.js            # Servicios
+│   │       ├── config.js               # Configuración
+│   │       ├── theme.js                # Tema oscuro/claro
+│   │       ├── dataShare.js            # Compartición de datos
+│   │       ├── sharedDashboard.js      # Dashboard compartido
+│   │       └── shareNotifications.js   # Notificaciones
 │   └── views/
 │       └── app.blade.php
+├── public/
+│   ├── manifest.json                   # PWA manifest
+│   ├── sw.js                           # Service Worker
+│   └── icon-*.png                      # Iconos PWA
 ├── routes/
-│   ├── api.php                             # Rutas protegidas con sanctum
+│   ├── api.php                         # API REST
 │   └── web.php
 └── .env
 ```
@@ -230,60 +342,101 @@ finanzas/
 ### 5.1 Diagrama Entidad-Relación
 
 ```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                                   users                                      │
-├─────────────────────────────────────────────────────────────────────────────┤
-│ id | name | email | password | persona_secundaria_id (FK, nullable) |       │
-│ porcentaje_persona_2 | created_at | updated_at                              │
-└─────────────────────────────────────────────────────────────────────────────┘
-                                      │
-                                      │ user_id (FK)
-                                      ▼
-┌───────────────────────────────────────────────────────────────────────────────┐
-│                                   gastos                                       │
-├───────────────────────────────────────────────────────────────────────────────┤
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                                   users                                       │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ id | name | email | password | persona_secundaria_id (FK, nullable) |        │
+│ porcentaje_persona_2 | dia_restablecimiento_servicios | created_at           │
+└──────────────────────────────────────────────────────────────────────────────┘
+        │
+        │ user_id (FK)
+        ▼
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                                   gastos                                      │
+├──────────────────────────────────────────────────────────────────────────────┤
 │ id | user_id (FK) | fecha | medio_pago_id (FK) | categoria_id (FK, nullable) │
-│ concepto | valor | tipo | registrado_por | created_at | updated_at            │
-└───────────────────────────────────────────────────────────────────────────────┘
+│ concepto | valor | tipo | registrado_por | created_at | updated_at           │
+└──────────────────────────────────────────────────────────────────────────────┘
 
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                                   abonos                                     │
-├─────────────────────────────────────────────────────────────────────────────┤
-│ id | user_id (FK) | fecha | valor | nota | created_at | updated_at          │
-└─────────────────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                                   abonos                                      │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ id | user_id (FK) | fecha | valor | nota | created_at | updated_at           │
+└──────────────────────────────────────────────────────────────────────────────┘
 
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                              medios_pago                                     │
-├─────────────────────────────────────────────────────────────────────────────┤
-│ id | user_id (FK) | nombre | icono | activo | orden | created_at            │
-└─────────────────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                               medios_pago                                     │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ id | user_id (FK) | nombre | icono | activo | orden | created_at             │
+└──────────────────────────────────────────────────────────────────────────────┘
 
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                               categorias                                     │
-├─────────────────────────────────────────────────────────────────────────────┤
-│ id | user_id (FK) | nombre | icono | color | activo | orden | created_at    │
-└─────────────────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                                categorias                                     │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ id | user_id (FK) | nombre | icono | color | activo | orden | created_at     │
+└──────────────────────────────────────────────────────────────────────────────┘
 
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                          conceptos_frecuentes                                │
-├─────────────────────────────────────────────────────────────────────────────┤
-│ id | user_id (FK) | concepto | medio_pago_id | tipo | uso_count |           │
-│ es_favorito | created_at                                                     │
-└─────────────────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                           conceptos_frecuentes                                │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ id | user_id (FK) | concepto | medio_pago_id | tipo | uso_count |            │
+│ es_favorito | created_at                                                      │
+└──────────────────────────────────────────────────────────────────────────────┘
 
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                               plantillas                                     │
-├─────────────────────────────────────────────────────────────────────────────┤
-│ id | user_id (FK) | nombre | concepto | medio_pago_id | categoria_id |      │
-│ tipo | valor | uso_count | activo | orden | created_at                       │
-└─────────────────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                                plantillas                                     │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ id | user_id (FK) | nombre | concepto | medio_pago_id | categoria_id |       │
+│ tipo | valor | uso_count | activo | orden | created_at                        │
+└──────────────────────────────────────────────────────────────────────────────┘
 
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                          gastos_recurrentes                                  │
-├─────────────────────────────────────────────────────────────────────────────┤
-│ id | user_id (FK) | concepto | medio_pago_id | categoria_id | tipo |        │
-│ valor | dia_mes | activo | ultimo_registro | created_at                      │
-└─────────────────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                           gastos_recurrentes                                  │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ id | user_id (FK) | concepto | medio_pago_id | categoria_id | tipo |         │
+│ valor | dia_mes | activo | ultimo_registro | created_at                       │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                                servicios                                      │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ id | user_id (FK) | nombre | icono | color | valor_estimado |                │
+│ categoria_id | activo | orden | created_at                                    │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                             pagos_servicios                                   │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ id | servicio_id (FK) | gasto_id (FK) | mes | anio | fecha_pago              │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                            verification_codes                                 │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ id | email | code | type | expires_at | verified_at | created_at             │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                               data_shares                                     │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ id | owner_id (FK users) | guest_id (FK users, nullable) | guest_email |     │
+│ status (pending/accepted/rejected/revoked) | accepted_at | revoked_at        │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                            pending_expenses                                   │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ id | data_share_id (FK) | created_by (FK users) | owner_id (FK users) |      │
+│ fecha | medio_pago_id | categoria_id | concepto | valor | tipo |             │
+│ status (pending/approved/rejected) | rejection_reason | resulting_gasto_id   │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                          share_notifications                                  │
+├──────────────────────────────────────────────────────────────────────────────┤
+│ id | user_id (FK) | type | notifiable_type | notifiable_id |                 │
+│ title | message | read | read_at | created_at                                 │
+└──────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ### 5.2 Tabla: `users`
@@ -427,40 +580,149 @@ Authorization: Bearer {token}
 #### Autenticación (Sin token)
 | Método | Endpoint | Descripción |
 |--------|----------|-------------|
-| POST | `/api/register` | Registrar nuevo usuario |
-| POST | `/api/login` | Iniciar sesión |
+| POST | `/api/auth/login` | Iniciar sesión |
+| POST | `/api/auth/send-code` | Enviar código de verificación |
+| POST | `/api/auth/verify-code` | Verificar código |
+| POST | `/api/auth/resend-code` | Reenviar código |
+| POST | `/api/auth/register` | Completar registro |
+| POST | `/api/auth/forgot-password` | Solicitar recuperación |
+| POST | `/api/auth/reset-password` | Resetear contraseña |
 
-#### Rutas Protegidas (Con token)
+#### Autenticación (Con token)
 | Método | Endpoint | Descripción |
 |--------|----------|-------------|
-| POST | `/api/logout` | Cerrar sesión |
-| GET | `/api/user` | Obtener usuario actual |
+| POST | `/api/auth/logout` | Cerrar sesión |
+| POST | `/api/auth/logout-all` | Cerrar todas las sesiones |
+| GET | `/api/auth/me` | Obtener usuario actual |
+| POST | `/api/auth/reset-user-data` | Borrar todos los datos del usuario |
 
 #### Dashboard
 | Método | Endpoint | Descripción |
 |--------|----------|-------------|
 | GET | `/api/dashboard` | Datos completos del dashboard |
 | GET | `/api/dashboard/saldo` | Solo deuda y gasto del mes |
-| GET | `/api/dashboard/resumen-mes` | Resumen del mes actual |
+| GET | `/api/dashboard/resumen-mes` | Resumen de cualquier mes (query: mes, anio) |
+
+#### Configuración
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| GET | `/api/configuracion` | Obtener configuración |
+| PUT | `/api/configuracion` | Actualizar configuración |
+
+#### Medios de Pago
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| GET | `/api/medios-pago` | Listar medios de pago |
+| POST | `/api/medios-pago` | Crear medio de pago |
+| PUT | `/api/medios-pago/{id}` | Actualizar |
+| DELETE | `/api/medios-pago/{id}` | Eliminar |
+| POST | `/api/medios-pago/reordenar` | Reordenar (body: ids[]) |
+
+#### Categorías
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| GET | `/api/categorias` | Listar categorías |
+| POST | `/api/categorias` | Crear categoría |
+| PUT | `/api/categorias/{id}` | Actualizar |
+| DELETE | `/api/categorias/{id}` | Eliminar |
+| POST | `/api/categorias/reordenar` | Reordenar |
 
 #### Gastos
 | Método | Endpoint | Descripción |
 |--------|----------|-------------|
-| GET | `/api/gastos` | Listar gastos del usuario |
-| POST | `/api/gastos` | Crear nuevo gasto |
-| GET | `/api/gastos/{id}` | Obtener gasto específico |
-| PUT | `/api/gastos/{id}` | Actualizar gasto |
-| DELETE | `/api/gastos/{id}` | Eliminar gasto |
+| GET | `/api/gastos` | Listar (filtros: desde, hasta, tipo, medio_pago_id, categoria_id) |
+| POST | `/api/gastos` | Crear gasto |
+| GET | `/api/gastos/{id}` | Obtener detalle |
+| PUT | `/api/gastos/{id}` | Actualizar |
+| DELETE | `/api/gastos/{id}` | Eliminar |
+| GET | `/api/gastos/exportar` | Exportar a CSV |
 
 #### Abonos
 | Método | Endpoint | Descripción |
 |--------|----------|-------------|
-| GET | `/api/abonos` | Listar abonos del usuario |
-| POST | `/api/abonos` | Crear nuevo abono |
-| PUT | `/api/abonos/{id}` | Actualizar abono |
-| DELETE | `/api/abonos/{id}` | Eliminar abono |
+| GET | `/api/abonos` | Listar abonos |
+| POST | `/api/abonos` | Crear abono |
+| PUT | `/api/abonos/{id}` | Actualizar |
+| DELETE | `/api/abonos/{id}` | Eliminar |
 
-*(El resto de endpoints siguen el mismo patrón, todos scopeados por user_id)*
+#### Conceptos Frecuentes
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| GET | `/api/conceptos-frecuentes` | Listar |
+| GET | `/api/conceptos-frecuentes/buscar` | Buscar (query: q) |
+| PUT | `/api/conceptos-frecuentes/{id}/favorito` | Toggle favorito |
+| DELETE | `/api/conceptos-frecuentes/{id}` | Eliminar |
+
+#### Plantillas
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| GET | `/api/plantillas` | Listar todas |
+| GET | `/api/plantillas/rapidas` | Listar rápidas (top 6) |
+| POST | `/api/plantillas` | Crear |
+| PUT | `/api/plantillas/{id}` | Actualizar |
+| DELETE | `/api/plantillas/{id}` | Eliminar |
+| POST | `/api/plantillas/reordenar` | Reordenar |
+| POST | `/api/plantillas/{id}/usar` | Usar plantilla (crea gasto) |
+
+#### Gastos Recurrentes
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| GET | `/api/gastos-recurrentes` | Listar |
+| GET | `/api/gastos-recurrentes/pendientes` | Listar pendientes del mes |
+| POST | `/api/gastos-recurrentes` | Crear |
+| PUT | `/api/gastos-recurrentes/{id}` | Actualizar |
+| DELETE | `/api/gastos-recurrentes/{id}` | Eliminar |
+| POST | `/api/gastos-recurrentes/registrar-pendientes` | Registrar todos los pendientes |
+| POST | `/api/gastos-recurrentes/{id}/registrar` | Registrar uno específico |
+
+#### Servicios (Recibos)
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| GET | `/api/servicios` | Listar servicios |
+| GET | `/api/servicios/pendientes` | Listar sin pagar este mes |
+| GET | `/api/servicios/alertas` | Obtener alertas de servicios |
+| POST | `/api/servicios` | Crear servicio |
+| PUT | `/api/servicios/{id}` | Actualizar |
+| DELETE | `/api/servicios/{id}` | Eliminar |
+| POST | `/api/servicios/reordenar` | Reordenar |
+| POST | `/api/servicios/{id}/marcar-pagado` | Marcar como pagado (crea gasto) |
+| DELETE | `/api/servicios/{id}/desmarcar-pagado` | Desmarcar pago |
+
+#### Compartición de Datos (Como Propietario)
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| GET | `/api/data-share/status` | Estado de mi compartición |
+| POST | `/api/data-share/invite` | Invitar usuario por email |
+| POST | `/api/data-share/revoke` | Revocar acceso |
+
+#### Compartición de Datos (Como Invitado)
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| GET | `/api/shared-with-me` | Listar comparticiones activas y pendientes |
+| POST | `/api/shared-with-me/{id}/accept` | Aceptar invitación |
+| POST | `/api/shared-with-me/{id}/reject` | Rechazar invitación |
+| GET | `/api/shared-with-me/{id}/dashboard` | Ver dashboard del propietario |
+| GET | `/api/shared-with-me/{id}/gastos` | Ver gastos del propietario |
+| GET | `/api/shared-with-me/{id}/categorias` | Ver categorías del propietario |
+| GET | `/api/shared-with-me/{id}/medios-pago` | Ver medios de pago del propietario |
+
+#### Gastos Pendientes de Aprobación
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| POST | `/api/pending-expenses/share/{id}` | Crear solicitud (invitado) |
+| GET | `/api/pending-expenses/pending` | Listar pendientes (propietario) |
+| GET | `/api/pending-expenses/history` | Historial de solicitudes |
+| POST | `/api/pending-expenses/{id}/approve` | Aprobar solicitud |
+| POST | `/api/pending-expenses/{id}/reject` | Rechazar solicitud |
+| GET | `/api/pending-expenses/my-requests` | Mis solicitudes (invitado) |
+
+#### Notificaciones
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| GET | `/api/share-notifications` | Listar notificaciones |
+| GET | `/api/share-notifications/unread-count` | Contador de no leídas |
+| POST | `/api/share-notifications/{id}/read` | Marcar como leída |
+| POST | `/api/share-notifications/read-all` | Marcar todas como leídas |
 
 ### 7.3 Respuesta Dashboard
 ```json
@@ -695,35 +957,55 @@ php artisan serve --port=8080
 
 ## 10. Plan de Implementación
 
-### Fases Completadas
+### Funcionalidades Implementadas
 
-| Fase | Descripción | Estado |
-|------|-------------|--------|
-| 1 | Setup + Base de Datos | ✅ |
-| 2 | Modelos Eloquent | ✅ |
-| 3 | Validaciones (Form Requests) | ✅ |
-| 4 | Controladores | ✅ |
-| 5 | Rutas API | ✅ |
-| 6 | Setup Frontend | ✅ |
-| 7 | Stores (Pinia) | ✅ |
-| 8 | Componentes | ✅ |
-| 9 | Páginas | ✅ |
-| 10 | PWA + Testing + Deploy | ✅ (parcial) |
+| Módulo | Descripción | Estado |
+|--------|-------------|--------|
+| Base | Setup Laravel + Vue + SQLite | ✅ |
+| Auth | Registro con verificación email + Login + Recuperación | ✅ |
+| Gastos | CRUD completo con filtros y exportación CSV | ✅ |
+| Abonos | CRUD completo | ✅ |
+| Dashboard | Resumen, deuda, por categoría, últimos movimientos | ✅ |
+| Categorías | CRUD con iconos y colores | ✅ |
+| Medios de Pago | CRUD con iconos | ✅ |
+| Plantillas | Plantillas rápidas para registro en 2-3 taps | ✅ |
+| Gastos Recurrentes | Gastos mensuales automáticos | ✅ |
+| Conceptos Frecuentes | Autocompletado y favoritos | ✅ |
+| Servicios | Gestión de recibos/servicios mensuales | ✅ |
+| Configuración | Porcentajes, moneda, tema, nombres | ✅ |
+| PWA | Manifest, Service Worker, iconos | ✅ |
+| Compartición | Sistema completo de compartir datos | ✅ |
+| Notificaciones | Sistema de notificaciones persistentes | ✅ |
+| Exportación | CSV con filtros | ✅ |
+| PDF | Exportación de historial como PDF | ✅ |
+| Despliegue | Servidor casero + Cloudflare Tunnel | ✅ |
 
-### Fase 11: Autenticación Multi-Usuario ✅
-1. [x] Instalar Laravel Sanctum
-2. [x] Crear migración de users con campos adicionales
-3. [x] Crear migración para añadir user_id a todas las tablas
-4. [x] Actualizar todos los modelos con relación a User
-5. [x] Actualizar todos los controladores para scopear por usuario
-6. [x] Crear AuthController (login, register, logout)
-7. [x] Crear store de autenticación en Vue
-8. [x] Crear página de Login
-9. [x] Configurar axios con interceptor de token
-10. [x] Configurar router con navigation guards
-11. [x] Añadir botón de logout en AppLayout
-12. [x] Actualizar tipos de gasto (personal, pareja, compartido)
-13. [x] Actualizar dashboard para mostrar deuda + gasto mensual
+### Detalle de Funcionalidades
+
+#### Autenticación ✅
+- [x] Laravel Sanctum para tokens
+- [x] Registro con verificación email (código 6 dígitos)
+- [x] Login con persistencia de sesión
+- [x] Recuperación de contraseña por email
+- [x] Logout y logout de todas las sesiones
+- [x] Opción para borrar todos los datos del usuario
+
+#### Sistema de Compartición ✅
+- [x] Invitar usuario por email
+- [x] Aceptar/rechazar invitaciones
+- [x] Ver dashboard del propietario (como invitado)
+- [x] Ver historial del propietario (como invitado)
+- [x] Proponer gastos (requiere aprobación)
+- [x] Aprobar/rechazar solicitudes de gastos
+- [x] Notificaciones para cada acción
+- [x] Revocar acceso
+
+#### Servicios (Recibos) ✅
+- [x] CRUD de servicios
+- [x] Marcar como pagado (crea gasto automáticamente)
+- [x] Desmarcar pago
+- [x] Alertas de servicios pendientes
+- [x] Día de restablecimiento configurable
 
 ---
 
@@ -733,25 +1015,37 @@ php artisan serve --port=8080
 - Autenticación con tokens Sanctum
 - Datos aislados por usuario
 - Tokens persistentes en localStorage
-- HTTPS recomendado en producción
+- Verificación de email obligatoria en registro
+- HTTPS mediante Cloudflare Tunnel
 
 ### Rendimiento
 - SQLite suficiente para uso personal
 - Índices en columnas de filtro
 - Paginación en listados largos
+- Service Worker para caché de assets
 
 ### Experiencia de Usuario
 - Dashboard enfocado en deuda y gasto mensual
 - Tipos de gasto claros: Personal, Pareja, Compartido
 - Login persistente (no expira)
 - Modo oscuro con preferencia del sistema
+- PWA instalable en móviles
+- Alertas visuales de servicios y gastos recurrentes pendientes
+- Sistema de compartición para parejas/roommates
 
-### Futuras Mejoras
-- [ ] Registro de pareja con cuenta vinculada
-- [ ] Notificaciones de deuda alta
-- [ ] Gráficos de evolución de deuda
-- [ ] Exportación de reportes
-- [ ] Backup automático en la nube
+### Características PWA
+- **Manifest**: Nombre, iconos, colores, orientación portrait
+- **Service Worker**: Cache de assets, estrategia network-first
+- **Iconos**: Múltiples tamaños (72x72 a 512x512), maskable
+- **Instalable**: En Android, iOS y desktop
+
+### Futuras Mejoras Potenciales
+- [ ] Gráficos de evolución de deuda en el tiempo
+- [ ] Presupuestos por categoría con alertas
+- [ ] Importación de gastos desde CSV/Excel
+- [ ] Sincronización entre dispositivos
+- [ ] Notificaciones push
+- [ ] Múltiples monedas con conversión
 
 ---
 
