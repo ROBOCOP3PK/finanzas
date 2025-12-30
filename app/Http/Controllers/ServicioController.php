@@ -267,7 +267,7 @@ class ServicioController extends Controller
             $fechaRestablecimiento->day($ultimoDiaMes);
         }
 
-        $diasRestantes = $hoy->diffInDays($fechaRestablecimiento, false);
+        $diasRestantes = (int) ceil($hoy->diffInDays($fechaRestablecimiento, false));
 
         // Servicios pendientes de pago
         $mes = now()->month;
