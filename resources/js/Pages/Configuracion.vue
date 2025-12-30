@@ -513,17 +513,18 @@
                                 <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">
                                     No has compartido tus datos con nadie. Invita a una persona por email.
                                 </p>
-                                <div class="flex gap-2">
+                                <div class="flex flex-col sm:flex-row gap-2">
                                     <input
                                         v-model="emailInvitacion"
                                         type="email"
                                         placeholder="email@ejemplo.com"
-                                        class="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent"
+                                        class="flex-1 min-w-0 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent"
                                     />
                                     <Button
                                         @click="invitarPersona"
                                         :loading="enviandoInvitacion"
                                         :disabled="!emailInvitacion"
+                                        class="shrink-0 w-full sm:w-auto"
                                     >
                                         Invitar
                                     </Button>
@@ -556,6 +557,19 @@
             </button>
             <div v-show="seccionesAbiertas.cuenta" class="px-4 pb-4 border-t border-gray-100 dark:border-gray-700">
                 <div class="mt-4 space-y-4">
+                    <!-- Info de cuenta -->
+                    <div class="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center">
+                                <UserIcon class="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                            </div>
+                            <div>
+                                <p class="font-medium text-gray-900 dark:text-white">{{ authStore.user?.name }}</p>
+                                <p class="text-sm text-gray-600 dark:text-gray-400">{{ authStore.user?.email }}</p>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Cerrar sesion -->
                     <div class="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
                         <h4 class="font-medium text-gray-800 dark:text-gray-200">Cerrar sesion</h4>
