@@ -8,23 +8,32 @@ use Illuminate\Database\Seeder;
 
 class MedioPagoSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
+    public static function mediosPagoDefault(): array
+    {
+        return [
+            ['nombre' => 'Tarjeta Crédito', 'icono' => 'pi pi-credit-card', 'activo' => true, 'orden' => 1],
+            ['nombre' => 'Efectivo', 'icono' => 'pi pi-money-bill', 'activo' => true, 'orden' => 2],
+        ];
+    }
+
     public function run(): void
     {
-        // Obtener el primer usuario
         $user = User::first();
-        $userId = $user?->id;
+        if (!$user) {
+            return;
+        }
 
-        $mediosPago = [
-            ['nombre' => 'Davivienda Crédito', 'icono' => 'credit-card', 'activo' => true, 'orden' => 1],
-            ['nombre' => 'Daviplata', 'icono' => 'smartphone', 'activo' => true, 'orden' => 2],
-            ['nombre' => 'Nequi', 'icono' => 'smartphone', 'activo' => true, 'orden' => 3],
-            ['nombre' => 'Efectivo', 'icono' => 'banknote', 'activo' => true, 'orden' => 4],
-        ];
+        foreach (self::mediosPagoDefault() as $medio) {
+            MedioPago::create([
+                ...$medio,
+                'user_id' => $user->id,
+            ]);
+        }
+    }
 
-        foreach ($mediosPago as $medio) {
+    public static function crearParaUsuario(int $userId): void
+    {
+        foreach (self::mediosPagoDefault() as $medio) {
             MedioPago::create([
                 ...$medio,
                 'user_id' => $userId,

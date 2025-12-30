@@ -1,0 +1,37 @@
+<?php
+
+namespace App\Http\Requests;
+
+use Illuminate\Foundation\Http\FormRequest;
+
+class ServicioRequest extends FormRequest
+{
+    public function authorize(): bool
+    {
+        return true;
+    }
+
+    public function rules(): array
+    {
+        return [
+            'nombre' => 'required|string|max:100',
+            'categoria_id' => 'nullable|exists:categorias,id',
+            'icono' => 'nullable|string|max:50',
+            'color' => 'nullable|string|max:20',
+            'valor_estimado' => 'nullable|numeric|min:0',
+            'activo' => 'boolean',
+            'orden' => 'integer|min:0'
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'nombre.required' => 'El nombre es obligatorio',
+            'nombre.max' => 'El nombre no puede exceder 100 caracteres',
+            'categoria_id.exists' => 'Categoría no válida',
+            'valor_estimado.numeric' => 'El valor debe ser un número',
+            'valor_estimado.min' => 'El valor no puede ser negativo'
+        ];
+    }
+}

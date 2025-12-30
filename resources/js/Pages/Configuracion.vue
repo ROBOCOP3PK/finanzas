@@ -220,6 +220,103 @@
             </div>
         </div>
 
+        <!-- Seccion: Servicios -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+            <button
+                @click="toggleSeccion('servicios')"
+                class="w-full flex items-center justify-between p-4 text-left"
+            >
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-full bg-cyan-100 dark:bg-cyan-900 flex items-center justify-center">
+                        <i class="pi pi-file text-cyan-600 dark:text-cyan-400"></i>
+                    </div>
+                    <span class="font-medium text-gray-900 dark:text-white">Servicios</span>
+                </div>
+                <ChevronDownIcon
+                    :class="[
+                        'w-5 h-5 text-gray-500 transition-transform duration-200',
+                        seccionesAbiertas.servicios ? 'rotate-180' : ''
+                    ]"
+                />
+            </button>
+            <div v-show="seccionesAbiertas.servicios" class="px-4 pb-4 border-t border-gray-100 dark:border-gray-700">
+                <!-- Dia de restablecimiento -->
+                <div class="pt-4 mb-4">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Dia de restablecimiento mensual
+                    </label>
+                    <div class="flex items-center gap-2">
+                        <input
+                            type="number"
+                            v-model.number="diaRestablecimiento"
+                            min="1"
+                            max="31"
+                            class="w-20 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent"
+                        />
+                        <Button size="sm" @click="guardarDiaRestablecimiento" :loading="guardandoDia">
+                            Guardar
+                        </Button>
+                    </div>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        Dia del mes en que se reinician los estados de pago de servicios
+                    </p>
+                </div>
+
+                <div class="flex justify-end">
+                    <Button size="sm" @click="abrirModalServicio()">
+                        <PlusIcon class="w-4 h-4 mr-1" />
+                        Nuevo
+                    </Button>
+                </div>
+                <div class="mt-3 space-y-2">
+                    <div
+                        v-for="serv in serviciosStore.servicios"
+                        :key="serv.id"
+                        class="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-700 last:border-0"
+                    >
+                        <div class="flex items-center gap-3">
+                            <div
+                                class="w-8 h-8 rounded-lg flex items-center justify-center"
+                                :style="{ backgroundColor: serv.color + '20' }"
+                            >
+                                <i v-if="serv.icono" :class="serv.icono" :style="{ color: serv.color }"></i>
+                                <i v-else class="pi pi-file" :style="{ color: serv.color }"></i>
+                            </div>
+                            <div>
+                                <span :class="['text-gray-900 dark:text-white', !serv.activo && 'opacity-50']">
+                                    {{ serv.nombre }}
+                                </span>
+                                <span v-if="serv.categoria" class="text-xs text-gray-500 dark:text-gray-400 ml-2">
+                                    ({{ serv.categoria.nombre }})
+                                </span>
+                                <span v-if="!serv.activo" class="text-xs text-gray-400 ml-2">(inactivo)</span>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-1">
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                @click="abrirModalServicio(serv)"
+                            >
+                                <PencilIcon class="w-4 h-4" />
+                            </Button>
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                @click="confirmarEliminarServicio(serv)"
+                                class="text-red-500 hover:text-red-600"
+                            >
+                                <TrashIcon class="w-4 h-4" />
+                            </Button>
+                        </div>
+                    </div>
+                    <p v-if="serviciosStore.servicios.length === 0" class="text-gray-500 dark:text-gray-400 text-center py-4">
+                        No hay servicios configurados
+                    </p>
+                </div>
+            </div>
+        </div>
+
         <!-- Seccion: Cuenta -->
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
             <button
@@ -399,6 +496,103 @@
             </template>
         </Modal>
 
+        <!-- Modal Servicio -->
+        <Modal :show="showModalServicio" :title="servicioEditando ? 'Editar Servicio' : 'Nuevo Servicio'" @close="cerrarModalServicio">
+            <div class="space-y-4">
+                <Input
+                    v-model="formServicio.nombre"
+                    label="Nombre"
+                    placeholder="Ej: Luz, Agua, Gas..."
+                    :error="erroresServicio.nombre"
+                />
+                <Select
+                    v-model="formServicio.categoria_id"
+                    label="Categoria asociada"
+                    :options="categoriasOptions"
+                    placeholder="Selecciona una categoria"
+                />
+                <Input
+                    v-model.number="formServicio.valor_estimado"
+                    type="number"
+                    label="Valor estimado (opcional)"
+                    placeholder="0"
+                />
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Icono
+                    </label>
+                    <div class="flex flex-wrap gap-2 max-h-32 overflow-y-auto p-2 border border-gray-200 dark:border-gray-700 rounded-lg">
+                        <button
+                            v-for="icono in iconosServicios"
+                            :key="icono"
+                            type="button"
+                            @click="formServicio.icono = icono"
+                            :class="[
+                                'w-9 h-9 flex items-center justify-center rounded-lg border-2 transition-all',
+                                formServicio.icono === icono
+                                    ? 'border-primary bg-primary/10 dark:bg-primary/20'
+                                    : 'border-transparent hover:bg-gray-100 dark:hover:bg-gray-700'
+                            ]"
+                        >
+                            <i :class="['text-lg', icono]" :style="{ color: formServicio.color }"></i>
+                        </button>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Color
+                    </label>
+                    <div class="flex flex-wrap gap-2">
+                        <button
+                            v-for="color in coloresDisponibles"
+                            :key="color"
+                            type="button"
+                            @click="formServicio.color = color"
+                            :class="[
+                                'w-8 h-8 rounded-full border-2 transition-all',
+                                formServicio.color === color ? 'border-gray-900 dark:border-white scale-110' : 'border-transparent'
+                            ]"
+                            :style="{ backgroundColor: color }"
+                        ></button>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <input
+                        type="checkbox"
+                        id="servicioActivo"
+                        v-model="formServicio.activo"
+                        class="rounded border-gray-300 text-primary focus:ring-primary"
+                    />
+                    <label for="servicioActivo" class="text-sm text-gray-700 dark:text-gray-300">
+                        Servicio activo
+                    </label>
+                </div>
+            </div>
+            <template #footer>
+                <div class="flex gap-2 justify-end">
+                    <Button variant="secondary" @click="cerrarModalServicio">Cancelar</Button>
+                    <Button @click="guardarServicio" :loading="guardandoServicio">
+                        {{ servicioEditando ? 'Actualizar' : 'Crear' }}
+                    </Button>
+                </div>
+            </template>
+        </Modal>
+
+        <!-- Modal Confirmar Eliminar Servicio -->
+        <Modal :show="showModalEliminarServicio" title="Eliminar Servicio" @close="showModalEliminarServicio = false">
+            <p class="text-gray-600 dark:text-gray-400">
+                Estas seguro de eliminar el servicio <strong>{{ servicioEliminar?.nombre }}</strong>?
+            </p>
+            <template #footer>
+                <div class="flex gap-2 justify-end">
+                    <Button variant="secondary" @click="showModalEliminarServicio = false">Cancelar</Button>
+                    <Button variant="danger" @click="eliminarServicio" :loading="eliminandoServicio">
+                        Eliminar
+                    </Button>
+                </div>
+            </template>
+        </Modal>
+
         <!-- Modal Confirmar Restablecer Datos -->
         <Modal :show="showModalRestablecer" title="Restablecer todos los datos" @close="showModalRestablecer = false">
             <div class="space-y-3">
@@ -443,7 +637,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue';
+import { ref, reactive, onMounted, computed } from 'vue';
 import {
     PlusIcon,
     PencilIcon,
@@ -465,18 +659,24 @@ import { useThemeStore } from '../Stores/theme';
 import { useMediosPagoStore } from '../Stores/mediosPago';
 import { useCategoriasStore } from '../Stores/categorias';
 import { useConfigStore } from '../Stores/config';
+import { useServiciosStore } from '../Stores/servicios';
+import { useAuthStore } from '../Stores/auth';
+import Select from '../Components/UI/Select.vue';
 import axios from 'axios';
 
 const themeStore = useThemeStore();
 const mediosPagoStore = useMediosPagoStore();
 const categoriasStore = useCategoriasStore();
 const configStore = useConfigStore();
+const serviciosStore = useServiciosStore();
+const authStore = useAuthStore();
 
 // Secciones del acordeon
 const seccionesAbiertas = reactive({
     apariencia: false,
     categorias: false,
     mediosPago: false,
+    servicios: false,
     cuenta: false
 });
 
@@ -783,6 +983,157 @@ const cambiarFormatoDivisa = async (formato) => {
     }
 };
 
+// Servicios
+const showModalServicio = ref(false);
+const servicioEditando = ref(null);
+const guardandoServicio = ref(false);
+const erroresServicio = reactive({});
+const diaRestablecimiento = ref(1);
+const guardandoDia = ref(false);
+
+const iconosServicios = [
+    'pi pi-bolt',
+    'pi pi-sun',
+    'pi pi-cloud',
+    'pi pi-wifi',
+    'pi pi-phone',
+    'pi pi-mobile',
+    'pi pi-home',
+    'pi pi-building',
+    'pi pi-car',
+    'pi pi-send',
+    'pi pi-inbox',
+    'pi pi-credit-card',
+    'pi pi-wallet',
+    'pi pi-file',
+    'pi pi-file-edit',
+    'pi pi-cog',
+    'pi pi-wrench',
+    'pi pi-heart',
+    'pi pi-shield',
+    'pi pi-lock',
+];
+
+const formServicio = reactive({
+    nombre: '',
+    categoria_id: '',
+    icono: 'pi pi-file',
+    color: '#06B6D4',
+    valor_estimado: null,
+    activo: true
+});
+
+const categoriasOptions = computed(() => [
+    { value: '', label: 'Sin categoria' },
+    ...categoriasStore.activas.map(c => ({ value: c.id, label: c.nombre }))
+]);
+
+const abrirModalServicio = (servicio = null) => {
+    servicioEditando.value = servicio;
+    if (servicio) {
+        formServicio.nombre = servicio.nombre;
+        formServicio.categoria_id = servicio.categoria_id || '';
+        formServicio.icono = servicio.icono || 'pi pi-file';
+        formServicio.color = servicio.color || '#06B6D4';
+        formServicio.valor_estimado = servicio.valor_estimado;
+        formServicio.activo = servicio.activo;
+    } else {
+        formServicio.nombre = '';
+        formServicio.categoria_id = '';
+        formServicio.icono = 'pi pi-file';
+        formServicio.color = '#06B6D4';
+        formServicio.valor_estimado = null;
+        formServicio.activo = true;
+    }
+    Object.keys(erroresServicio).forEach(key => delete erroresServicio[key]);
+    showModalServicio.value = true;
+};
+
+const cerrarModalServicio = () => {
+    showModalServicio.value = false;
+    servicioEditando.value = null;
+};
+
+const guardarServicio = async () => {
+    Object.keys(erroresServicio).forEach(key => delete erroresServicio[key]);
+
+    if (!formServicio.nombre.trim()) {
+        erroresServicio.nombre = 'El nombre es requerido';
+        return;
+    }
+
+    guardandoServicio.value = true;
+    try {
+        const data = {
+            nombre: formServicio.nombre,
+            categoria_id: formServicio.categoria_id || null,
+            icono: formServicio.icono,
+            color: formServicio.color,
+            valor_estimado: formServicio.valor_estimado || null,
+            activo: formServicio.activo
+        };
+
+        if (servicioEditando.value) {
+            await serviciosStore.actualizarServicio(servicioEditando.value.id, data);
+            mostrarToast('Servicio actualizado');
+        } else {
+            await serviciosStore.crearServicio(data);
+            mostrarToast('Servicio creado');
+        }
+        cerrarModalServicio();
+    } catch (error) {
+        const mensaje = error.response?.data?.message || 'Error al guardar';
+        mostrarToast(mensaje, 'error');
+    } finally {
+        guardandoServicio.value = false;
+    }
+};
+
+// Eliminar Servicio
+const showModalEliminarServicio = ref(false);
+const servicioEliminar = ref(null);
+const eliminandoServicio = ref(false);
+
+const confirmarEliminarServicio = (servicio) => {
+    servicioEliminar.value = servicio;
+    showModalEliminarServicio.value = true;
+};
+
+const eliminarServicio = async () => {
+    if (!servicioEliminar.value) return;
+
+    eliminandoServicio.value = true;
+    try {
+        await serviciosStore.eliminarServicio(servicioEliminar.value.id);
+        mostrarToast('Servicio eliminado');
+        showModalEliminarServicio.value = false;
+    } catch (error) {
+        const mensaje = error.response?.data?.message || 'Error al eliminar';
+        mostrarToast(mensaje, 'error');
+    } finally {
+        eliminandoServicio.value = false;
+    }
+};
+
+const guardarDiaRestablecimiento = async () => {
+    if (diaRestablecimiento.value < 1 || diaRestablecimiento.value > 31) {
+        mostrarToast('El dia debe estar entre 1 y 31', 'error');
+        return;
+    }
+
+    guardandoDia.value = true;
+    try {
+        await axios.put('/api/configuracion', {
+            dia_restablecimiento_servicios: diaRestablecimiento.value
+        });
+        mostrarToast('Dia de restablecimiento actualizado');
+    } catch (error) {
+        mostrarToast('Error al actualizar', 'error');
+    } finally {
+        guardandoDia.value = false;
+    }
+};
+
 // Restablecer datos
 const showModalRestablecer = ref(false);
 const restableciendo = ref(false);
@@ -812,7 +1163,13 @@ const restablecerDatos = async () => {
 onMounted(async () => {
     await Promise.all([
         mediosPagoStore.cargarMediosPago(),
-        categoriasStore.cargarCategorias()
+        categoriasStore.cargarCategorias(),
+        serviciosStore.cargarServicios()
     ]);
+
+    // Cargar dia de restablecimiento del usuario
+    if (authStore.user?.dia_restablecimiento_servicios) {
+        diaRestablecimiento.value = authStore.user.dia_restablecimiento_servicios;
+    }
 });
 </script>

@@ -10,6 +10,7 @@ use App\Http\Controllers\GastoController;
 use App\Http\Controllers\GastoRecurrenteController;
 use App\Http\Controllers\MedioPagoController;
 use App\Http\Controllers\PlantillaController;
+use App\Http\Controllers\ServicioController;
 use Illuminate\Support\Facades\Route;
 
 // Rutas públicas de autenticación
@@ -74,4 +75,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('gastos-recurrentes', GastoRecurrenteController::class)->parameters([
         'gastos-recurrentes' => 'gastoRecurrente'
     ]);
+
+    // Servicios
+    Route::get('/servicios/pendientes', [ServicioController::class, 'pendientes']);
+    Route::get('/servicios/alertas', [ServicioController::class, 'alertas']);
+    Route::put('/servicios/reordenar', [ServicioController::class, 'reordenar']);
+    Route::post('/servicios/{servicio}/pagar', [ServicioController::class, 'marcarPagado']);
+    Route::delete('/servicios/{servicio}/pagar', [ServicioController::class, 'desmarcarPagado']);
+    Route::apiResource('servicios', ServicioController::class);
 });

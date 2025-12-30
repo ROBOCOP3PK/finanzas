@@ -19,6 +19,7 @@ class User extends Authenticatable
         'password',
         'persona_secundaria_id',
         'porcentaje_persona_2',
+        'dia_restablecimiento_servicios',
     ];
 
     protected $hidden = [
@@ -32,6 +33,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'porcentaje_persona_2' => 'decimal:2',
+            'dia_restablecimiento_servicios' => 'integer',
         ];
     }
 
@@ -87,6 +89,12 @@ class User extends Authenticatable
     public function conceptosFrecuentes(): HasMany
     {
         return $this->hasMany(ConceptoFrecuente::class);
+    }
+
+    // Mis servicios
+    public function servicios(): HasMany
+    {
+        return $this->hasMany(Servicio::class);
     }
 
     // Calcular deuda de persona secundaria

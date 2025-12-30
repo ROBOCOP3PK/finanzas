@@ -25,8 +25,16 @@ class ConfiguracionController extends Controller
             'porcentaje_persona_2' => 'sometimes|numeric|min:0|max:100',
             'tema' => 'sometimes|in:light,dark,system',
             'divisa' => 'sometimes|in:COP,USD,EUR,MXN',
-            'formato_divisa' => 'sometimes|in:punto,coma'
+            'formato_divisa' => 'sometimes|in:punto,coma',
+            'dia_restablecimiento_servicios' => 'sometimes|integer|min:1|max:31'
         ]);
+
+        // Si se actualiza el dia de restablecimiento, guardarlo en el usuario
+        if ($request->has('dia_restablecimiento_servicios')) {
+            $request->user()->update([
+                'dia_restablecimiento_servicios' => $request->dia_restablecimiento_servicios
+            ]);
+        }
 
         $configuraciones = $request->only([
             'nombre_persona_1',

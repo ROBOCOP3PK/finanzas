@@ -1,36 +1,132 @@
 <template>
     <form @submit.prevent="submit" class="space-y-4">
-        <!-- Selector de Categoria con iconos (obligatorio) -->
+        <!-- Carousel de Categorías / Servicios -->
         <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Categoria <span class="text-red-500">*</span>
-            </label>
-            <div class="grid grid-cols-4 gap-2">
+            <!-- Tabs del carousel -->
+            <div class="flex border-b border-gray-200 dark:border-gray-700 mb-3">
                 <button
-                    v-for="cat in categoriasActivas"
-                    :key="cat.id"
                     type="button"
-                    @click="form.categoria_id = cat.id"
+                    @click="tabActivo = 'categorias'"
                     :class="[
-                        'flex flex-col items-center justify-center p-2 rounded-lg border-2 transition-all min-h-[60px]',
-                        form.categoria_id === cat.id
-                            ? 'border-primary bg-primary/10 dark:bg-primary/20'
-                            : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800'
+                        'flex-1 py-2 text-sm font-medium border-b-2 transition-colors',
+                        tabActivo === 'categorias'
+                            ? 'border-primary text-primary'
+                            : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
                     ]"
                 >
-                    <div
-                        class="w-8 h-8 rounded-lg flex items-center justify-center mb-1"
-                        :style="{ backgroundColor: cat.color + '20' }"
+                    Categorias
+                </button>
+                <button
+                    v-if="serviciosActivos.length > 0"
+                    type="button"
+                    @click="tabActivo = 'servicios'"
+                    :class="[
+                        'flex-1 py-2 text-sm font-medium border-b-2 transition-colors relative',
+                        tabActivo === 'servicios'
+                            ? 'border-primary text-primary'
+                            : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                    ]"
+                >
+                    Servicios
+                    <span
+                        v-if="serviciosPendientes.length > 0"
+                        class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center"
                     >
-                        <i v-if="cat.icono" :class="cat.icono" :style="{ color: cat.color }"></i>
-                        <span v-else class="w-3 h-3 rounded" :style="{ backgroundColor: cat.color }"></span>
-                    </div>
-                    <span class="text-xs text-gray-700 dark:text-gray-300 text-center leading-tight truncate w-full">
-                        {{ cat.nombre }}
+                        {{ serviciosPendientes.length }}
                     </span>
                 </button>
             </div>
-            <p v-if="errors.categoria_id" class="mt-1 text-sm text-red-500">{{ errors.categoria_id }}</p>
+
+            <!-- Panel Categorías -->
+            <div v-show="tabActivo === 'categorias'">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Categoria <span class="text-red-500">*</span>
+                </label>
+                <div class="grid grid-cols-4 gap-2">
+                    <button
+                        v-for="cat in categoriasActivas"
+                        :key="cat.id"
+                        type="button"
+                        @click="seleccionarCategoria(cat)"
+                        :class="[
+                            'flex flex-col items-center justify-center p-2 rounded-lg border-2 transition-all min-h-[60px]',
+                            form.categoria_id === cat.id && !servicioSeleccionado
+                                ? 'border-primary bg-primary/10 dark:bg-primary/20'
+                                : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800'
+                        ]"
+                    >
+                        <div
+                            class="w-8 h-8 rounded-lg flex items-center justify-center mb-1"
+                            :style="{ backgroundColor: cat.color + '20' }"
+                        >
+                            <i v-if="cat.icono" :class="cat.icono" :style="{ color: cat.color }"></i>
+                            <span v-else class="w-3 h-3 rounded" :style="{ backgroundColor: cat.color }"></span>
+                        </div>
+                        <span class="text-xs text-gray-700 dark:text-gray-300 text-center leading-tight truncate w-full">
+                            {{ cat.nombre }}
+                        </span>
+                    </button>
+                </div>
+                <p v-if="errors.categoria_id" class="mt-1 text-sm text-red-500">{{ errors.categoria_id }}</p>
+            </div>
+
+            <!-- Panel Servicios -->
+            <div v-show="tabActivo === 'servicios'">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Selecciona un servicio para registrar pago
+                </label>
+                <div class="grid grid-cols-4 gap-2">
+                    <button
+                        v-for="serv in serviciosActivos"
+                        :key="serv.id"
+                        type="button"
+                        @click="seleccionarServicio(serv)"
+                        :class="[
+                            'flex flex-col items-center justify-center p-2 rounded-lg border-2 transition-all min-h-[60px]',
+                            servicioSeleccionado?.id === serv.id
+                                ? 'border-primary bg-primary/10 dark:bg-primary/20'
+                                : serv.pagado
+                                    ? 'border-green-300 dark:border-green-700 bg-green-50 dark:bg-green-900/20'
+                                    : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800'
+                        ]"
+                    >
+                        <div
+                            class="w-8 h-8 rounded-lg flex items-center justify-center mb-1"
+                            :style="{
+                                backgroundColor: serv.pagado ? (serv.color + '40') : (serv.color + '20'),
+                                opacity: serv.pagado && servicioSeleccionado?.id !== serv.id ? 0.6 : 1
+                            }"
+                        >
+                            <i
+                                v-if="serv.icono"
+                                :class="serv.icono"
+                                :style="{ color: serv.pagado ? '#22c55e' : serv.color }"
+                            ></i>
+                            <i
+                                v-else
+                                class="pi pi-file"
+                                :style="{ color: serv.pagado ? '#22c55e' : serv.color }"
+                            ></i>
+                        </div>
+                        <span
+                            :class="[
+                                'text-xs text-center leading-tight truncate w-full',
+                                serv.pagado ? 'text-green-600 dark:text-green-400' : 'text-gray-700 dark:text-gray-300'
+                            ]"
+                        >
+                            {{ serv.nombre }}
+                        </span>
+                        <i
+                            v-if="serv.pagado"
+                            class="pi pi-check-circle text-green-500 text-xs mt-0.5"
+                        ></i>
+                    </button>
+                </div>
+                <p v-if="serviciosPendientes.length === 0 && serviciosActivos.length > 0" class="mt-2 text-sm text-green-600 dark:text-green-400">
+                    <i class="pi pi-check-circle mr-1"></i>
+                    Todos los servicios estan pagados este mes
+                </p>
+            </div>
         </div>
 
         <!-- Valor (obligatorio) -->
@@ -43,6 +139,7 @@
                     {{ divisaInfo.simbolo }}
                 </span>
                 <input
+                    ref="valorInput"
                     type="text"
                     :value="valorFormateado"
                     @input="onValorInput"
@@ -167,7 +264,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue';
+import { ref, computed, watch, onMounted, nextTick } from 'vue';
 import { StarIcon } from '@heroicons/vue/24/solid';
 import { ChevronDownIcon, XCircleIcon } from '@heroicons/vue/24/outline';
 import Input from '../UI/Input.vue';
@@ -177,6 +274,7 @@ import { useMediosPagoStore } from '../../Stores/mediosPago';
 import { useCategoriasStore } from '../../Stores/categorias';
 import { useConfigStore } from '../../Stores/config';
 import { useConceptosFrecuentesStore } from '../../Stores/conceptosFrecuentes';
+import { useServiciosStore } from '../../Stores/servicios';
 import { useCurrency } from '../../Composables/useCurrency';
 
 const props = defineProps({
@@ -192,16 +290,20 @@ const props = defineProps({
     }
 });
 
-const emit = defineEmits(['submit']);
+const emit = defineEmits(['submit', 'servicio-pagado']);
 
 const mediosPagoStore = useMediosPagoStore();
 const categoriasStore = useCategoriasStore();
 const configStore = useConfigStore();
 const conceptosStore = useConceptosFrecuentesStore();
+const serviciosStore = useServiciosStore();
 const { formatInputValue, parseFormattedValue, divisaInfo } = useCurrency();
 
 const showSugerencias = ref(false);
 const showOpciones = ref(false);
+const tabActivo = ref('categorias');
+const servicioSeleccionado = ref(null);
+const valorInput = ref(null);
 const sugerencias = computed(() => conceptosStore.sugerencias);
 
 // Valor formateado para mostrar en el input
@@ -219,9 +321,7 @@ const actualizarValorFormateado = (valorNumerico) => {
 // Manejar input del usuario en el campo de valor
 const onValorInput = (event) => {
     const inputValue = event.target.value;
-    // Formatear el input mientras el usuario escribe (preserva decimales)
     valorFormateado.value = formatInputValue(inputValue);
-    // Parsear el valor numérico para el formulario
     form.value.valor = parseFormattedValue(inputValue);
 };
 
@@ -248,12 +348,14 @@ onMounted(async () => {
     if (categoriasStore.categorias.length === 0) {
         await categoriasStore.cargarCategorias(true);
     }
+    if (serviciosStore.servicios.length === 0) {
+        await serviciosStore.cargarServicios();
+    }
 
     // Si hay gasto para editar, cargar datos y mostrar opciones
     if (props.gasto) {
         form.value = { ...props.gasto };
         actualizarValorFormateado(props.gasto.valor);
-        // Si tiene datos opcionales, mostrar el acordeon
         if (props.gasto.fecha || props.gasto.medio_pago_id || props.gasto.tipo !== 'personal' || props.gasto.concepto) {
             showOpciones.value = true;
         }
@@ -266,6 +368,8 @@ const mediosPagoOptions = computed(() => [
 ]);
 
 const categoriasActivas = computed(() => categoriasStore.activas);
+const serviciosActivos = computed(() => serviciosStore.activos);
+const serviciosPendientes = computed(() => serviciosStore.pendientes);
 
 const tiposGasto = computed(() => configStore.tiposGasto);
 
@@ -273,6 +377,38 @@ const isValid = computed(() =>
     form.value.valor > 0 &&
     form.value.categoria_id
 );
+
+// Seleccionar categoría (limpia servicio seleccionado)
+const seleccionarCategoria = (cat) => {
+    form.value.categoria_id = cat.id;
+    servicioSeleccionado.value = null;
+    form.value.concepto = '';
+};
+
+// Seleccionar servicio (auto-rellena campos)
+const seleccionarServicio = (servicio) => {
+    servicioSeleccionado.value = servicio;
+
+    // Auto-rellenar campos
+    if (servicio.categoria_id) {
+        form.value.categoria_id = servicio.categoria_id;
+    }
+    form.value.concepto = servicio.nombre;
+
+    // Si tiene valor estimado, usarlo
+    if (servicio.valor_estimado) {
+        form.value.valor = servicio.valor_estimado;
+        actualizarValorFormateado(servicio.valor_estimado);
+    }
+
+    // Enfocar el input de valor para que pueda modificar si necesita
+    nextTick(() => {
+        if (valorInput.value) {
+            valorInput.value.focus();
+            valorInput.value.select();
+        }
+    });
+};
 
 let debounceTimer;
 const buscarConceptos = () => {
@@ -294,8 +430,37 @@ const seleccionarConcepto = (concepto) => {
     conceptosStore.limpiarSugerencias();
 };
 
-const submit = () => {
-    emit('submit', { ...form.value });
+const submit = async () => {
+    // Si es un servicio, marcarlo como pagado
+    if (servicioSeleccionado.value) {
+        try {
+            await serviciosStore.marcarPagado(servicioSeleccionado.value.id, {
+                fecha: form.value.fecha || new Date().toISOString().split('T')[0],
+                valor: form.value.valor,
+                medio_pago_id: form.value.medio_pago_id || null,
+                tipo: form.value.tipo,
+                crear_gasto: true
+            });
+            emit('servicio-pagado', servicioSeleccionado.value);
+
+            // Resetear formulario
+            servicioSeleccionado.value = null;
+            form.value = {
+                fecha: '',
+                medio_pago_id: '',
+                categoria_id: '',
+                concepto: '',
+                valor: '',
+                tipo: 'personal'
+            };
+            valorFormateado.value = '';
+        } catch (error) {
+            console.error('Error marcando servicio como pagado:', error);
+        }
+    } else {
+        // Flujo normal de gasto
+        emit('submit', { ...form.value });
+    }
 };
 
 // Cerrar sugerencias al hacer clic fuera

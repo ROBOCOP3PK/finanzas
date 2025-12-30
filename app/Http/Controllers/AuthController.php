@@ -298,45 +298,13 @@ class AuthController extends Controller
     }
 
     /**
-     * Crear categorias y medios de pago por defecto para un nuevo usuario
+     * Crear categorias, medios de pago y servicios por defecto para un nuevo usuario
      */
     private function crearDatosPorDefecto(User $user): void
     {
-        // Categorias por defecto
-        $categorias = [
-            ['nombre' => 'Comida', 'icono' => 'utensils', 'color' => '#EF4444', 'orden' => 1],
-            ['nombre' => 'Hogar', 'icono' => 'home', 'color' => '#8B5CF6', 'orden' => 2],
-            ['nombre' => 'Transporte', 'icono' => 'car', 'color' => '#3B82F6', 'orden' => 3],
-            ['nombre' => 'Personal', 'icono' => 'user', 'color' => '#EC4899', 'orden' => 4],
-            ['nombre' => 'Prestamo', 'icono' => 'banknotes', 'color' => '#F59E0B', 'orden' => 5],
-            ['nombre' => 'Regalos', 'icono' => 'gift', 'color' => '#10B981', 'orden' => 6],
-            ['nombre' => 'Servicios', 'icono' => 'zap', 'color' => '#6366F1', 'orden' => 7],
-            ['nombre' => 'Viajes', 'icono' => 'plane', 'color' => '#14B8A6', 'orden' => 8],
-        ];
-
-        foreach ($categorias as $categoria) {
-            Categoria::create([
-                ...$categoria,
-                'user_id' => $user->id,
-                'activo' => true,
-            ]);
-        }
-
-        // Medios de pago por defecto
-        $mediosPago = [
-            ['nombre' => 'Efectivo', 'icono' => 'banknote', 'orden' => 1],
-            ['nombre' => 'Tarjeta Debito', 'icono' => 'credit-card', 'orden' => 2],
-            ['nombre' => 'Tarjeta Credito', 'icono' => 'credit-card', 'orden' => 3],
-            ['nombre' => 'Transferencia', 'icono' => 'smartphone', 'orden' => 4],
-        ];
-
-        foreach ($mediosPago as $medio) {
-            MedioPago::create([
-                ...$medio,
-                'user_id' => $user->id,
-                'activo' => true,
-            ]);
-        }
+        \Database\Seeders\CategoriaSeeder::crearParaUsuario($user->id);
+        \Database\Seeders\MedioPagoSeeder::crearParaUsuario($user->id);
+        \Database\Seeders\ServicioSeeder::crearParaUsuario($user->id);
     }
 
     /**
