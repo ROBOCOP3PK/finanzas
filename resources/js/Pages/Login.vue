@@ -65,7 +65,7 @@
                     </div>
 
                     <!-- Error -->
-                    <div v-if="authStore.error" class="p-3 bg-red-100 dark:bg-red-900/30 border border-red-300 dark:border-red-700 rounded-lg">
+                    <div v-show="authStore.error" class="p-3 bg-red-100 dark:bg-red-900/30 border border-red-300 dark:border-red-700 rounded-lg">
                         <p class="text-sm text-red-600 dark:text-red-400">
                             {{ authStore.error }}
                         </p>
@@ -117,21 +117,16 @@
 import { ref, onMounted, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '../Stores/auth';
-import { useThemeStore } from '../Stores/theme';
 import { EyeIcon, EyeSlashIcon } from '@heroicons/vue/24/outline';
 
 const router = useRouter();
 const authStore = useAuthStore();
-const themeStore = useThemeStore();
 
 const email = ref('');
 const password = ref('');
 const showPassword = ref(false);
 
 onMounted(() => {
-    // Aplicar tema
-    themeStore.inicializar();
-
     // Si ya está autenticado, redirigir
     if (authStore.isAuthenticated) {
         router.push('/');

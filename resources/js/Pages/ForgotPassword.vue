@@ -219,12 +219,10 @@
 import { ref, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '../Stores/auth';
-import { useThemeStore } from '../Stores/theme';
 import { EyeIcon, EyeSlashIcon } from '@heroicons/vue/24/outline';
 
 const router = useRouter();
 const authStore = useAuthStore();
-const themeStore = useThemeStore();
 
 const step = ref(1);
 const email = ref('');
@@ -239,7 +237,6 @@ const showPasswordConfirm = ref(false);
 let cooldownInterval = null;
 
 onMounted(() => {
-    themeStore.inicializar();
     authStore.clearError();
 
     if (authStore.isAuthenticated) {

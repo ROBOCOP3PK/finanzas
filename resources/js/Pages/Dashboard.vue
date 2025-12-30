@@ -8,7 +8,7 @@
                 class="bg-white dark:bg-gray-800 rounded-xl shadow p-4 block hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
             >
                 <div class="flex items-center justify-between mb-1">
-                    <p class="text-xs text-gray-500 dark:text-gray-400">Te debe</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">Deuda {{ nombrePersona2 }}</p>
                     <ChevronRightIcon class="w-4 h-4 text-gray-400" />
                 </div>
                 <p class="text-xl font-bold" :class="dashboardStore.deudaPersona2 > 0 ? 'text-red-500' : 'text-green-500'">
@@ -92,7 +92,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { ChevronRightIcon } from '@heroicons/vue/24/outline';
 import AlertaRecurrentes from '../Components/Dashboard/AlertaRecurrentes.vue';
 import PlantillasRapidas from '../Components/Dashboard/PlantillasRapidas.vue';
@@ -106,12 +106,16 @@ import Toast from '../Components/UI/Toast.vue';
 import { useDashboardStore } from '../Stores/dashboard';
 import { usePlantillasStore } from '../Stores/plantillas';
 import { useGastosRecurrentesStore } from '../Stores/gastosRecurrentes';
+import { useConfigStore } from '../Stores/config';
 import { useCurrency } from '../Composables/useCurrency';
 
 const dashboardStore = useDashboardStore();
 const plantillasStore = usePlantillasStore();
 const gastosRecurrentesStore = useGastosRecurrentesStore();
+const configStore = useConfigStore();
 const { formatCurrency } = useCurrency();
+
+const nombrePersona2 = computed(() => configStore.nombre_persona_2 || 'Pareja');
 
 const showPlantillaModal = ref(false);
 const plantillaSeleccionada = ref(null);
@@ -126,7 +130,8 @@ const toastType = ref('success');
 onMounted(async () => {
     await Promise.all([
         dashboardStore.cargarDashboard(),
-        plantillasStore.cargarRapidas()
+        plantillasStore.cargarRapidas(),
+        configStore.cargarConfiguracion()
     ]);
 });
 
