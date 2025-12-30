@@ -2,13 +2,19 @@
     <div class="p-4 space-y-4 max-w-full overflow-hidden">
         <!-- Cards principales: Deuda y Gasto del Mes -->
         <div class="grid grid-cols-2 gap-3">
-            <!-- Card Deuda -->
-            <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-4">
-                <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Te debe</p>
+            <!-- Card Deuda - clickeable para ir a abonos -->
+            <router-link
+                to="/abonos"
+                class="bg-white dark:bg-gray-800 rounded-xl shadow p-4 block hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+            >
+                <div class="flex items-center justify-between mb-1">
+                    <p class="text-xs text-gray-500 dark:text-gray-400">Te debe</p>
+                    <ChevronRightIcon class="w-4 h-4 text-gray-400" />
+                </div>
                 <p class="text-xl font-bold" :class="dashboardStore.deudaPersona2 > 0 ? 'text-red-500' : 'text-green-500'">
                     {{ formatCurrency(dashboardStore.deudaPersona2) }}
                 </p>
-            </div>
+            </router-link>
             <!-- Card Gasto Mes -->
             <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-4">
                 <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Gasto este mes</p>
@@ -87,6 +93,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
+import { ChevronRightIcon } from '@heroicons/vue/24/outline';
 import AlertaRecurrentes from '../Components/Dashboard/AlertaRecurrentes.vue';
 import PlantillasRapidas from '../Components/Dashboard/PlantillasRapidas.vue';
 import ResumenMes from '../Components/Dashboard/ResumenMes.vue';
