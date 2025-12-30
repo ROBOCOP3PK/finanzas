@@ -37,95 +37,109 @@
                 </button>
             </div>
 
-            <!-- Panel Categorías -->
-            <div v-show="tabActivo === 'categorias'">
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Categoria <span class="text-red-500">*</span>
-                </label>
-                <div class="grid grid-cols-4 gap-2">
-                    <button
-                        v-for="cat in categoriasActivas"
-                        :key="cat.id"
-                        type="button"
-                        @click="seleccionarCategoria(cat)"
-                        :class="[
-                            'flex flex-col items-center justify-center p-2 rounded-lg border-2 transition-all min-h-[60px]',
-                            form.categoria_id === cat.id && !servicioSeleccionado
-                                ? 'border-primary bg-primary/10 dark:bg-primary/20'
-                                : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800'
-                        ]"
-                    >
-                        <div
-                            class="w-8 h-8 rounded-lg flex items-center justify-center mb-1"
-                            :style="{ backgroundColor: cat.color + '20' }"
-                        >
-                            <i v-if="cat.icono" :class="cat.icono" :style="{ color: cat.color }"></i>
-                            <span v-else class="w-3 h-3 rounded" :style="{ backgroundColor: cat.color }"></span>
+            <!-- Contenedor con swipe -->
+            <div
+                ref="swipeContainer"
+                class="overflow-hidden touch-pan-y"
+                @touchstart="onTouchStart"
+                @touchmove="onTouchMove"
+                @touchend="onTouchEnd"
+            >
+                <div
+                    class="flex transition-transform duration-300 ease-out"
+                    :style="{ transform: `translateX(${swipeOffset}px)` }"
+                >
+                    <!-- Panel Categorías -->
+                    <div class="w-full flex-shrink-0">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Categoria <span class="text-red-500">*</span>
+                        </label>
+                        <div class="grid grid-cols-4 gap-2">
+                            <button
+                                v-for="cat in categoriasActivas"
+                                :key="cat.id"
+                                type="button"
+                                @click="seleccionarCategoria(cat)"
+                                :class="[
+                                    'flex flex-col items-center justify-center p-2 rounded-lg border-2 transition-all min-h-[60px]',
+                                    form.categoria_id === cat.id && !servicioSeleccionado
+                                        ? 'border-primary bg-primary/10 dark:bg-primary/20'
+                                        : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800'
+                                ]"
+                            >
+                                <div
+                                    class="w-8 h-8 rounded-lg flex items-center justify-center mb-1"
+                                    :style="{ backgroundColor: cat.color + '20' }"
+                                >
+                                    <i v-if="cat.icono" :class="cat.icono" :style="{ color: cat.color }"></i>
+                                    <span v-else class="w-3 h-3 rounded" :style="{ backgroundColor: cat.color }"></span>
+                                </div>
+                                <span class="text-xs text-gray-700 dark:text-gray-300 text-center leading-tight truncate w-full">
+                                    {{ cat.nombre }}
+                                </span>
+                            </button>
                         </div>
-                        <span class="text-xs text-gray-700 dark:text-gray-300 text-center leading-tight truncate w-full">
-                            {{ cat.nombre }}
-                        </span>
-                    </button>
-                </div>
-                <p v-if="errors.categoria_id" class="mt-1 text-sm text-red-500">{{ errors.categoria_id }}</p>
-            </div>
+                        <p v-if="errors.categoria_id" class="mt-1 text-sm text-red-500">{{ errors.categoria_id }}</p>
+                    </div>
 
-            <!-- Panel Servicios -->
-            <div v-show="tabActivo === 'servicios'">
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Selecciona un servicio para registrar pago
-                </label>
-                <div class="grid grid-cols-4 gap-2">
-                    <button
-                        v-for="serv in serviciosActivos"
-                        :key="serv.id"
-                        type="button"
-                        @click="seleccionarServicio(serv)"
-                        :class="[
-                            'flex flex-col items-center justify-center p-2 rounded-lg border-2 transition-all min-h-[60px]',
-                            servicioSeleccionado?.id === serv.id
-                                ? 'border-primary bg-primary/10 dark:bg-primary/20'
-                                : serv.pagado
-                                    ? 'border-green-300 dark:border-green-700 bg-green-50 dark:bg-green-900/20'
-                                    : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800'
-                        ]"
-                    >
-                        <div
-                            class="w-8 h-8 rounded-lg flex items-center justify-center mb-1"
-                            :style="{
-                                backgroundColor: serv.pagado ? (serv.color + '40') : (serv.color + '20'),
-                                opacity: serv.pagado && servicioSeleccionado?.id !== serv.id ? 0.6 : 1
-                            }"
-                        >
-                            <i
-                                v-if="serv.icono"
-                                :class="serv.icono"
-                                :style="{ color: serv.pagado ? '#22c55e' : serv.color }"
-                            ></i>
-                            <i
-                                v-else
-                                class="pi pi-file"
-                                :style="{ color: serv.pagado ? '#22c55e' : serv.color }"
-                            ></i>
+                    <!-- Panel Servicios -->
+                    <div v-if="serviciosActivos.length > 0" class="w-full flex-shrink-0">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Selecciona un servicio para registrar pago
+                        </label>
+                        <div class="grid grid-cols-4 gap-2">
+                            <button
+                                v-for="serv in serviciosActivos"
+                                :key="serv.id"
+                                type="button"
+                                @click="seleccionarServicio(serv)"
+                                :class="[
+                                    'flex flex-col items-center justify-center p-2 rounded-lg border-2 transition-all min-h-[60px]',
+                                    servicioSeleccionado?.id === serv.id
+                                        ? 'border-primary bg-primary/10 dark:bg-primary/20'
+                                        : serv.pagado
+                                            ? 'border-green-300 dark:border-green-700 bg-green-50 dark:bg-green-900/20'
+                                            : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800'
+                                ]"
+                            >
+                                <div
+                                    class="w-8 h-8 rounded-lg flex items-center justify-center mb-1"
+                                    :style="{
+                                        backgroundColor: serv.pagado ? (serv.color + '40') : (serv.color + '20'),
+                                        opacity: serv.pagado && servicioSeleccionado?.id !== serv.id ? 0.6 : 1
+                                    }"
+                                >
+                                    <i
+                                        v-if="serv.icono"
+                                        :class="serv.icono"
+                                        :style="{ color: serv.pagado ? '#22c55e' : serv.color }"
+                                    ></i>
+                                    <i
+                                        v-else
+                                        class="pi pi-file"
+                                        :style="{ color: serv.pagado ? '#22c55e' : serv.color }"
+                                    ></i>
+                                </div>
+                                <span
+                                    :class="[
+                                        'text-xs text-center leading-tight truncate w-full',
+                                        serv.pagado ? 'text-green-600 dark:text-green-400' : 'text-gray-700 dark:text-gray-300'
+                                    ]"
+                                >
+                                    {{ serv.nombre }}
+                                </span>
+                                <i
+                                    v-if="serv.pagado"
+                                    class="pi pi-check-circle text-green-500 text-xs mt-0.5"
+                                ></i>
+                            </button>
                         </div>
-                        <span
-                            :class="[
-                                'text-xs text-center leading-tight truncate w-full',
-                                serv.pagado ? 'text-green-600 dark:text-green-400' : 'text-gray-700 dark:text-gray-300'
-                            ]"
-                        >
-                            {{ serv.nombre }}
-                        </span>
-                        <i
-                            v-if="serv.pagado"
-                            class="pi pi-check-circle text-green-500 text-xs mt-0.5"
-                        ></i>
-                    </button>
+                        <p v-if="serviciosPendientes.length === 0 && serviciosActivos.length > 0" class="mt-2 text-sm text-green-600 dark:text-green-400">
+                            <i class="pi pi-check-circle mr-1"></i>
+                            Todos los servicios estan pagados este mes
+                        </p>
+                    </div>
                 </div>
-                <p v-if="serviciosPendientes.length === 0 && serviciosActivos.length > 0" class="mt-2 text-sm text-green-600 dark:text-green-400">
-                    <i class="pi pi-check-circle mr-1"></i>
-                    Todos los servicios estan pagados este mes
-                </p>
             </div>
         </div>
 
@@ -305,6 +319,56 @@ const tabActivo = ref('categorias');
 const servicioSeleccionado = ref(null);
 const valorInput = ref(null);
 const sugerencias = computed(() => conceptosStore.sugerencias);
+
+// Swipe para cambiar tabs
+const swipeContainer = ref(null);
+const touchStartX = ref(0);
+const touchCurrentX = ref(0);
+const isSwiping = ref(false);
+const swipeThreshold = 50;
+
+const swipeOffset = computed(() => {
+    const containerWidth = swipeContainer.value?.offsetWidth || 0;
+    const baseOffset = tabActivo.value === 'servicios' ? -containerWidth : 0;
+
+    if (isSwiping.value) {
+        const diff = touchCurrentX.value - touchStartX.value;
+        // Limitar el swipe para no pasar de los límites
+        if (tabActivo.value === 'categorias' && diff > 0) return 0;
+        if (tabActivo.value === 'servicios' && diff < 0) return -containerWidth;
+        return baseOffset + diff;
+    }
+
+    return baseOffset;
+});
+
+const onTouchStart = (e) => {
+    if (serviciosActivos.value.length === 0) return;
+    touchStartX.value = e.touches[0].clientX;
+    touchCurrentX.value = e.touches[0].clientX;
+    isSwiping.value = true;
+};
+
+const onTouchMove = (e) => {
+    if (!isSwiping.value) return;
+    touchCurrentX.value = e.touches[0].clientX;
+};
+
+const onTouchEnd = () => {
+    if (!isSwiping.value) return;
+
+    const diff = touchCurrentX.value - touchStartX.value;
+
+    if (Math.abs(diff) > swipeThreshold) {
+        if (diff < 0 && tabActivo.value === 'categorias' && serviciosActivos.value.length > 0) {
+            tabActivo.value = 'servicios';
+        } else if (diff > 0 && tabActivo.value === 'servicios') {
+            tabActivo.value = 'categorias';
+        }
+    }
+
+    isSwiping.value = false;
+};
 
 // Valor formateado para mostrar en el input
 const valorFormateado = ref('');

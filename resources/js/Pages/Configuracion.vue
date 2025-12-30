@@ -511,12 +511,32 @@
                     :options="categoriasOptions"
                     placeholder="Selecciona una categoria"
                 />
-                <Input
-                    v-model.number="formServicio.valor_estimado"
-                    type="number"
-                    label="Valor estimado (opcional)"
-                    placeholder="0"
-                />
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Valor estimado (opcional)
+                    </label>
+                    <div class="relative">
+                        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400">
+                            {{ divisaInfo.simbolo }}
+                        </span>
+                        <input
+                            type="text"
+                            :value="valorEstimadoFormateado"
+                            @input="onValorEstimadoInput"
+                            placeholder="0"
+                            inputmode="decimal"
+                            class="w-full pl-8 pr-10 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent"
+                        />
+                        <button
+                            v-if="valorEstimadoFormateado"
+                            type="button"
+                            @click="limpiarValorEstimado"
+                            class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                        >
+                            <XCircleIcon class="w-5 h-5" />
+                        </button>
+                    </div>
+                </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Icono
@@ -648,7 +668,8 @@ import {
     CreditCardIcon,
     UserIcon,
     ArrowPathIcon,
-    ExclamationTriangleIcon
+    ExclamationTriangleIcon,
+    XCircleIcon
 } from '@heroicons/vue/24/outline';
 import Card from '../Components/UI/Card.vue';
 import Input from '../Components/UI/Input.vue';
@@ -663,6 +684,7 @@ import { useServiciosStore } from '../Stores/servicios';
 import { useAuthStore } from '../Stores/auth';
 import Select from '../Components/UI/Select.vue';
 import axios from 'axios';
+import { useCurrency } from '../Composables/useCurrency';
 
 const themeStore = useThemeStore();
 const mediosPagoStore = useMediosPagoStore();
@@ -670,6 +692,7 @@ const categoriasStore = useCategoriasStore();
 const configStore = useConfigStore();
 const serviciosStore = useServiciosStore();
 const authStore = useAuthStore();
+const { formatInputValue, parseFormattedValue, divisaInfo } = useCurrency();
 
 // Secciones del acordeon
 const seccionesAbiertas = reactive({
@@ -1023,6 +1046,20 @@ const formServicio = reactive({
     activo: true
 });
 
+// Valor estimado formateado
+const valorEstimadoFormateado = ref('');
+
+const onValorEstimadoInput = (event) => {
+    const inputValue = event.target.value;
+    valorEstimadoFormateado.value = formatInputValue(inputValue);
+    formServicio.valor_estimado = parseFormattedValue(inputValue);
+};
+
+const limpiarValorEstimado = () => {
+    valorEstimadoFormateado.value = '';
+    formServicio.valor_estimado = null;
+};
+
 const categoriasOptions = computed(() => [
     { value: '', label: 'Sin categoria' },
     ...categoriasStore.activas.map(c => ({ value: c.id, label: c.nombre }))
@@ -1037,6 +1074,7 @@ const abrirModalServicio = (servicio = null) => {
         formServicio.color = servicio.color || '#06B6D4';
         formServicio.valor_estimado = servicio.valor_estimado;
         formServicio.activo = servicio.activo;
+        valorEstimadoFormateado.value = servicio.valor_estimado ? formatInputValue(servicio.valor_estimado) : '';
     } else {
         formServicio.nombre = '';
         formServicio.categoria_id = '';
@@ -1044,6 +1082,7 @@ const abrirModalServicio = (servicio = null) => {
         formServicio.color = '#06B6D4';
         formServicio.valor_estimado = null;
         formServicio.activo = true;
+        valorEstimadoFormateado.value = '';
     }
     Object.keys(erroresServicio).forEach(key => delete erroresServicio[key]);
     showModalServicio.value = true;

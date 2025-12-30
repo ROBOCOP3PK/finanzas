@@ -101,6 +101,11 @@ body {
     padding-bottom: calc(5rem + env(safe-area-inset-bottom, 0px));
 }
 
+/* Top content padding to avoid floating buttons overlap */
+.top-content-padding {
+    padding-top: calc(4rem + env(safe-area-inset-top, 0px));
+}
+
 /* Minimum touch target size (44x44 for iOS) */
 .touch-target {
     min-height: 44px;

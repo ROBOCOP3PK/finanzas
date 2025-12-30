@@ -30,7 +30,7 @@
 
         <!-- Main Content -->
         <main class="flex-1 overflow-y-auto overflow-x-hidden overscroll-contain">
-            <div class="max-w-full main-content-padding pt-14">
+            <div class="max-w-full main-content-padding top-content-padding">
                 <slot />
             </div>
         </main>
