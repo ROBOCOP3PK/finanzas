@@ -73,9 +73,10 @@ export function useCurrency() {
         // Convertir a string y normalizar el separador decimal
         let str = String(value);
 
-        // Si el valor viene como número con punto decimal, convertir al formato correcto
-        if (typeof value === 'number') {
-            const partes = value.toFixed(2).split('.');
+        // Si el valor viene como número o string numérico con punto decimal, convertir al formato correcto
+        if (typeof value === 'number' || (typeof value === 'string' && /^\d+\.?\d*$/.test(value))) {
+            const numValue = typeof value === 'number' ? value : parseFloat(value);
+            const partes = numValue.toFixed(2).split('.');
             const entero = parseInt(partes[0], 10);
             const decimal = partes[1];
 

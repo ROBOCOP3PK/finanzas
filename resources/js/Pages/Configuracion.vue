@@ -1314,6 +1314,11 @@ const guardarDiaRestablecimiento = async () => {
         await axios.put('/api/configuracion', {
             dia_restablecimiento_servicios: diaRestablecimiento.value
         });
+        // Actualizar el usuario en el store y localStorage
+        if (authStore.user) {
+            authStore.user.dia_restablecimiento_servicios = diaRestablecimiento.value;
+            localStorage.setItem('finanzas_auth_user', JSON.stringify(authStore.user));
+        }
         mostrarToast('Dia de restablecimiento actualizado');
     } catch (error) {
         mostrarToast('Error al actualizar', 'error');
