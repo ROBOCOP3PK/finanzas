@@ -1,12 +1,5 @@
 <template>
     <div class="p-4 max-w-full overflow-hidden">
-        <div class="flex items-center gap-3 mb-6">
-            <button @click="$router.back()" class="p-2 -ml-2 text-gray-600 dark:text-gray-400">
-                <ArrowLeftIcon class="w-5 h-5" />
-            </button>
-            <h1 class="text-xl font-bold text-gray-900 dark:text-white">Nuevo Gasto</h1>
-        </div>
-
         <Card>
             <GastoForm
                 :loading="loading"
@@ -28,7 +21,6 @@
 <script setup>
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
-import { ArrowLeftIcon } from '@heroicons/vue/24/outline';
 import Card from '../../Components/UI/Card.vue';
 import Toast from '../../Components/UI/Toast.vue';
 import GastoForm from '../../Components/Gastos/GastoForm.vue';

@@ -1,12 +1,5 @@
 <template>
     <div class="p-4 max-w-full overflow-hidden">
-        <div class="flex items-center gap-3 mb-6">
-            <button @click="$router.back()" class="p-2 -ml-2 text-gray-600 dark:text-gray-400">
-                <ArrowLeftIcon class="w-5 h-5" />
-            </button>
-            <h1 class="text-xl font-bold text-gray-900 dark:text-white">Editar Gasto</h1>
-        </div>
-
         <div v-if="cargando" class="text-center py-8">
             <div class="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto"></div>
         </div>
@@ -58,7 +51,6 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { ArrowLeftIcon } from '@heroicons/vue/24/outline';
 import Card from '../../Components/UI/Card.vue';
 import Button from '../../Components/UI/Button.vue';
 import Modal from '../../Components/UI/Modal.vue';

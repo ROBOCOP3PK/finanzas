@@ -1,7 +1,5 @@
 <template>
     <div class="p-4 space-y-3 max-w-full overflow-hidden">
-        <h1 class="text-xl font-bold text-gray-900 dark:text-white">Configuracion</h1>
-
         <!-- Seccion: Apariencia -->
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
             <button

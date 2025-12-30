@@ -1,7 +1,6 @@
 <template>
     <div class="p-4 max-w-full overflow-hidden">
-        <div class="flex justify-between items-center mb-4">
-            <h1 class="text-xl font-bold text-gray-900 dark:text-white">Historial</h1>
+        <div class="flex justify-end mb-4">
             <Button variant="secondary" size="sm" @click="abrirModalExportar">
                 Exportar
             </Button>

@@ -2,10 +2,7 @@
     <div class="flex flex-col min-h-screen min-h-[-webkit-fill-available]">
         <!-- Header -->
         <header class="bg-white dark:bg-gray-800 shadow-sm sticky top-0 z-40 safe-top">
-            <div class="px-5 py-4 flex items-center justify-between safe-x">
-                <h1 class="text-xl font-semibold text-gray-900 dark:text-white tracking-tight">
-                    Finanzas
-                </h1>
+            <div class="px-5 py-3 flex items-center justify-end safe-x">
                 <div class="flex items-center gap-1">
                     <ThemeToggle />
                     <button
