@@ -464,6 +464,24 @@
             </button>
             <div v-show="seccionesAbiertas.cuenta" class="px-4 pb-4 border-t border-gray-100 dark:border-gray-700">
                 <div class="mt-4 space-y-4">
+                    <!-- Cerrar sesion -->
+                    <div class="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                        <h4 class="font-medium text-gray-800 dark:text-gray-200">Cerrar sesion</h4>
+                        <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                            Cierra tu sesion actual en este dispositivo.
+                        </p>
+                        <Button
+                            variant="secondary"
+                            size="sm"
+                            class="mt-3"
+                            @click="cerrarSesion"
+                            :loading="cerrandoSesion"
+                        >
+                            <ArrowRightOnRectangleIcon class="w-4 h-4 mr-1" />
+                            Cerrar sesion
+                        </Button>
+                    </div>
+
                     <!-- Restablecer datos -->
                     <div class="p-4 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
                         <h4 class="font-medium text-red-800 dark:text-red-300">Restablecer datos</h4>
@@ -784,6 +802,7 @@
 
 <script setup>
 import { ref, reactive, onMounted, computed } from 'vue';
+import { useRouter } from 'vue-router';
 import {
     PlusIcon,
     PencilIcon,
@@ -795,6 +814,7 @@ import {
     UserIcon,
     UsersIcon,
     ArrowPathIcon,
+    ArrowRightOnRectangleIcon,
     ExclamationTriangleIcon,
     XCircleIcon
 } from '@heroicons/vue/24/outline';
@@ -813,6 +833,7 @@ import Select from '../Components/UI/Select.vue';
 import axios from 'axios';
 import { useCurrency } from '../Composables/useCurrency';
 
+const router = useRouter();
 const themeStore = useThemeStore();
 const mediosPagoStore = useMediosPagoStore();
 const categoriasStore = useCategoriasStore();
@@ -1338,6 +1359,21 @@ const guardarGastosCompartidos = async () => {
         mostrarToast(mensaje, 'error');
     } finally {
         guardandoCompartidos.value = false;
+    }
+};
+
+// Cerrar sesion
+const cerrandoSesion = ref(false);
+
+const cerrarSesion = async () => {
+    cerrandoSesion.value = true;
+    try {
+        await authStore.logout();
+        router.push('/login');
+    } catch (error) {
+        mostrarToast('Error al cerrar sesion', 'error');
+    } finally {
+        cerrandoSesion.value = false;
     }
 };
 

@@ -23,19 +23,20 @@ export function useCurrency() {
         const formato = configStore.formatoDivisa;
         const divisa = divisaInfo.value;
 
-        // Formatear el numero con 2 decimales
+        // Redondear el numero para mostrar (sin decimales)
+        const rounded = Math.round(num);
         let formatted;
         if (formato === 'punto') {
-            // Formato con punto como separador de miles y coma como decimal (ej: 1.234,56)
-            formatted = num.toLocaleString('de-DE', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
+            // Formato con punto como separador de miles (ej: 1.235)
+            formatted = rounded.toLocaleString('de-DE', {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
             });
         } else {
-            // Formato con coma como separador de miles y punto como decimal (ej: 1,234.56)
-            formatted = num.toLocaleString('en-US', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
+            // Formato con coma como separador de miles (ej: 1,235)
+            formatted = rounded.toLocaleString('en-US', {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
             });
         }
 
@@ -50,11 +51,13 @@ export function useCurrency() {
 
         const divisa = divisaInfo.value;
 
+        // Redondear antes de formatear
+        const rounded = Math.round(num);
         const formatted = new Intl.NumberFormat(divisa.locale, {
             notation: 'compact',
             compactDisplay: 'short',
-            maximumFractionDigits: 1
-        }).format(num);
+            maximumFractionDigits: 0
+        }).format(rounded);
 
         return `${divisa.simbolo} ${formatted}`;
     };

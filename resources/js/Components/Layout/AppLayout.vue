@@ -1,11 +1,10 @@
 <template>
     <div class="h-screen h-[-webkit-fill-available] flex flex-col overflow-hidden">
         <!-- Floating Actions -->
-        <div class="fixed top-0 right-0 z-50 safe-top safe-right">
+        <div v-if="serviciosStore.tieneAlertas" class="fixed top-0 right-0 z-50 safe-top safe-right">
             <div class="flex items-center gap-3 p-4">
                 <!-- Alerta de servicios pendientes -->
                 <button
-                    v-if="serviciosStore.tieneAlertas"
                     @click="mostrarModalAlertas"
                     class="relative p-2.5 rounded-xl text-amber-600 hover:text-amber-700 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm shadow-sm transition-colors touch-target flex items-center justify-center animate-pulse"
                     title="Servicios pendientes"
@@ -16,14 +15,6 @@
                     >
                         {{ serviciosStore.serviciosPendientesCount }}
                     </span>
-                </button>
-                <ThemeToggle />
-                <button
-                    @click="handleLogout"
-                    class="p-2.5 rounded-xl text-gray-500 hover:text-red-500 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm shadow-sm transition-colors touch-target flex items-center justify-center"
-                    title="Cerrar sesion"
-                >
-                    <ArrowRightOnRectangleIcon class="w-5 h-5" />
                 </button>
             </div>
         </div>
@@ -105,25 +96,17 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { ArrowRightOnRectangleIcon, BellAlertIcon, ExclamationTriangleIcon } from '@heroicons/vue/24/outline';
+import { BellAlertIcon, ExclamationTriangleIcon } from '@heroicons/vue/24/outline';
 import BottomNav from './BottomNav.vue';
-import ThemeToggle from './ThemeToggle.vue';
 import Modal from '../UI/Modal.vue';
-import { useAuthStore } from '../../Stores/auth';
 import { useServiciosStore } from '../../Stores/servicios';
 import { useConfigStore } from '../../Stores/config';
 
 const router = useRouter();
-const authStore = useAuthStore();
 const serviciosStore = useServiciosStore();
 const configStore = useConfigStore();
 
 const showModalAlertas = ref(false);
-
-const handleLogout = async () => {
-    await authStore.logout();
-    router.push('/login');
-};
 
 const mostrarModalAlertas = async () => {
     await serviciosStore.cargarPendientesDetalle();
