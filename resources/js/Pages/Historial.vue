@@ -1,80 +1,10 @@
 <template>
     <div class="p-4 max-w-full overflow-hidden">
-        <div class="flex justify-end gap-2 mb-4">
+        <div class="flex justify-end mb-4">
             <Button variant="secondary" size="sm" @click="abrirModalCompartir">
                 <ShareIcon class="w-4 h-4 mr-1" />
                 Compartir
             </Button>
-            <Button variant="secondary" size="sm" @click="abrirModalExportar">
-                Exportar
-            </Button>
-        </div>
-
-        <!-- Modal Exportar -->
-        <div v-if="mostrarModalExportar" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <Card class="w-full max-w-md">
-                <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Exportar Gastos</h2>
-
-                <div class="space-y-4">
-                    <!-- Checkbox exportar todos -->
-                    <label class="flex items-center gap-2 cursor-pointer">
-                        <input
-                            type="checkbox"
-                            v-model="filtrosExport.exportar_todos"
-                            class="w-4 h-4 text-primary rounded border-gray-300 focus:ring-primary"
-                        />
-                        <span class="text-sm text-gray-700 dark:text-gray-300">
-                            Exportar todos los registros (desde siempre)
-                        </span>
-                    </label>
-
-                    <!-- Rango de fechas (deshabilitado si exportar_todos está activo) -->
-                    <div :class="{ 'opacity-50 pointer-events-none': filtrosExport.exportar_todos }">
-                        <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">O selecciona un rango de fechas:</p>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 min-w-0">
-                            <Input
-                                v-model="filtrosExport.desde"
-                                type="date"
-                                label="Desde"
-                                :disabled="filtrosExport.exportar_todos"
-                            />
-                            <Input
-                                v-model="filtrosExport.hasta"
-                                type="date"
-                                label="Hasta"
-                                :disabled="filtrosExport.exportar_todos"
-                            />
-                        </div>
-                    </div>
-
-                    <!-- Filtros adicionales opcionales -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <Select
-                            v-model="filtrosExport.tipo"
-                            label="Tipo"
-                            :options="tiposOptions"
-                        />
-                        <Select
-                            v-model="filtrosExport.categoria_id"
-                            label="Categoría"
-                            :options="categoriasOptions"
-                        />
-                    </div>
-                </div>
-
-                <div class="flex gap-2 mt-6">
-                    <Button variant="ghost" class="flex-1" @click="cerrarModalExportar">
-                        Cancelar
-                    </Button>
-                    <Button
-                        class="flex-1"
-                        @click="exportar"
-                        :disabled="exportando || (!filtrosExport.exportar_todos && !filtrosExport.desde && !filtrosExport.hasta)"
-                    >
-                        {{ exportando ? 'Exportando...' : 'Descargar CSV' }}
-                    </Button>
-                </div>
-            </Card>
         </div>
 
         <!-- Modal Compartir -->
@@ -105,30 +35,26 @@
                         </label>
                     </div>
 
-                    <!-- Opciones de rango -->
+                    <!-- Rango de fechas opcional -->
                     <div class="space-y-2">
-                        <label class="flex items-center gap-2 cursor-pointer">
-                            <input
-                                type="radio"
-                                v-model="opcionCompartir"
-                                value="actuales"
-                                class="w-4 h-4 text-primary border-gray-300 focus:ring-primary"
+                        <p class="text-sm text-gray-600 dark:text-gray-400">
+                            Rango de fechas (opcional)
+                        </p>
+                        <div class="grid grid-cols-2 gap-3">
+                            <Input
+                                v-model="fechaCompartirDesde"
+                                type="date"
+                                label="Desde"
                             />
-                            <span class="text-sm text-gray-700 dark:text-gray-300">
-                                Gastos mostrados en pantalla ({{ gastosStore.gastos.length }})
-                            </span>
-                        </label>
-                        <label class="flex items-center gap-2 cursor-pointer">
-                            <input
-                                type="radio"
-                                v-model="opcionCompartir"
-                                value="filtrados"
-                                class="w-4 h-4 text-primary border-gray-300 focus:ring-primary"
+                            <Input
+                                v-model="fechaCompartirHasta"
+                                type="date"
+                                label="Hasta"
                             />
-                            <span class="text-sm text-gray-700 dark:text-gray-300">
-                                Todos los gastos con filtros actuales
-                            </span>
-                        </label>
+                        </div>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">
+                            Si no seleccionas fechas, se incluyen todos los registros
+                        </p>
                     </div>
 
                     <!-- Filtros de Tipo (selección múltiple) -->
@@ -166,15 +92,15 @@
                         </div>
                     </div>
 
-                    <!-- Filtros de Categoría (selección múltiple) -->
+                    <!-- Filtros de Categoría (colapsable) -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                             Categorías
                         </label>
-                        <div class="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
+                        <div class="flex flex-wrap gap-2">
                             <button
                                 type="button"
-                                @click="toggleCategoriaCompartir('')"
+                                @click="categoriasCompartirSeleccionadas = ['']; mostrarCategoriasCompartir = false"
                                 :class="[
                                     'px-3 py-1.5 rounded-full text-sm font-medium transition-colors',
                                     categoriasCompartirSeleccionadas.includes('')
@@ -184,6 +110,17 @@
                             >
                                 Todas
                             </button>
+                            <button
+                                v-if="!mostrarCategoriasCompartir && categoriasCompartirSeleccionadas.includes('')"
+                                type="button"
+                                @click="mostrarCategoriasCompartir = true"
+                                class="px-3 py-1.5 rounded-full text-sm font-medium bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                            >
+                                Elegir categorías...
+                            </button>
+                        </div>
+                        <!-- Categorías expandidas -->
+                        <div v-if="mostrarCategoriasCompartir || !categoriasCompartirSeleccionadas.includes('')" class="flex flex-wrap gap-2 mt-2 max-h-32 overflow-y-auto">
                             <button
                                 v-for="cat in categoriasStore.activas"
                                 :key="cat.id"
@@ -202,30 +139,38 @@
                     </div>
 
                     <!-- Botones de compartir -->
-                    <div class="grid grid-cols-2 gap-3">
+                    <div class="grid grid-cols-3 gap-2">
                         <button
                             @click="compartirWhatsApp"
                             :disabled="generandoCompartir"
-                            class="flex flex-col items-center justify-center p-4 rounded-lg border-2 border-gray-200 dark:border-gray-700 hover:border-green-500 hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors"
+                            class="flex flex-col items-center justify-center p-3 rounded-lg border-2 border-gray-200 dark:border-gray-700 hover:border-green-500 hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors"
                         >
-                            <div class="w-12 h-12 rounded-full bg-green-500 flex items-center justify-center mb-2">
-                                <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+                            <div class="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center mb-1">
+                                <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
                                     <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
                                 </svg>
                             </div>
-                            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">WhatsApp</span>
-                            <span class="text-xs text-gray-500 dark:text-gray-400">Texto formateado</span>
+                            <span class="text-xs font-medium text-gray-700 dark:text-gray-300">WhatsApp</span>
                         </button>
                         <button
                             @click="generarPDF"
                             :disabled="generandoCompartir"
-                            class="flex flex-col items-center justify-center p-4 rounded-lg border-2 border-gray-200 dark:border-gray-700 hover:border-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                            class="flex flex-col items-center justify-center p-3 rounded-lg border-2 border-gray-200 dark:border-gray-700 hover:border-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
                         >
-                            <div class="w-12 h-12 rounded-full bg-red-500 flex items-center justify-center mb-2">
-                                <DocumentTextIcon class="w-6 h-6 text-white" />
+                            <div class="w-10 h-10 rounded-full bg-red-500 flex items-center justify-center mb-1">
+                                <DocumentTextIcon class="w-5 h-5 text-white" />
                             </div>
-                            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">PDF</span>
-                            <span class="text-xs text-gray-500 dark:text-gray-400">Documento</span>
+                            <span class="text-xs font-medium text-gray-700 dark:text-gray-300">PDF</span>
+                        </button>
+                        <button
+                            @click="exportarCSV"
+                            :disabled="generandoCompartir"
+                            class="flex flex-col items-center justify-center p-3 rounded-lg border-2 border-gray-200 dark:border-gray-700 hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+                        >
+                            <div class="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center mb-1">
+                                <TableCellsIcon class="w-5 h-5 text-white" />
+                            </div>
+                            <span class="text-xs font-medium text-gray-700 dark:text-gray-300">CSV</span>
                         </button>
                     </div>
 
@@ -329,7 +274,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { ShareIcon, DocumentTextIcon } from '@heroicons/vue/24/outline';
+import { ShareIcon, DocumentTextIcon, TableCellsIcon } from '@heroicons/vue/24/outline';
 import Card from '../Components/UI/Card.vue';
 import Input from '../Components/UI/Input.vue';
 import Select from '../Components/UI/Select.vue';
@@ -355,17 +300,6 @@ const filtros = ref({
     hasta: '',
     tipo: '',
     categoria_id: ''
-});
-
-// Estado para modal de exportación
-const mostrarModalExportar = ref(false);
-const exportando = ref(false);
-const filtrosExport = ref({
-    desde: '',
-    hasta: '',
-    tipo: '',
-    categoria_id: '',
-    exportar_todos: false
 });
 
 onMounted(async () => {
@@ -406,49 +340,23 @@ const editarGasto = (id) => {
     router.push(`/gastos/${id}/editar`);
 };
 
-// Funciones de exportación
-const abrirModalExportar = () => {
-    // Inicializar con los filtros actuales de la vista
-    filtrosExport.value = {
-        desde: filtros.value.desde || '',
-        hasta: filtros.value.hasta || '',
-        tipo: filtros.value.tipo || '',
-        categoria_id: filtros.value.categoria_id || '',
-        exportar_todos: false
-    };
-    mostrarModalExportar.value = true;
-};
-
-const cerrarModalExportar = () => {
-    mostrarModalExportar.value = false;
-};
-
-const exportar = async () => {
-    exportando.value = true;
-    try {
-        await gastosStore.exportarGastos(filtrosExport.value);
-        cerrarModalExportar();
-    } catch (error) {
-        console.error('Error exportando:', error);
-        alert('Error al exportar los gastos');
-    } finally {
-        exportando.value = false;
-    }
-};
-
 // Funciones de compartir
 const mostrarModalCompartir = ref(false);
-const opcionCompartir = ref('actuales');
 const generandoCompartir = ref(false);
 const incluirSaldoPendiente = ref(true);
 const tiposCompartirSeleccionados = ref(['']);
 const categoriasCompartirSeleccionadas = ref(['']);
+const mostrarCategoriasCompartir = ref(false);
+const fechaCompartirDesde = ref('');
+const fechaCompartirHasta = ref('');
 
 const abrirModalCompartir = () => {
-    opcionCompartir.value = 'actuales';
     incluirSaldoPendiente.value = true;
     tiposCompartirSeleccionados.value = [''];
     categoriasCompartirSeleccionadas.value = [''];
+    mostrarCategoriasCompartir.value = false;
+    fechaCompartirDesde.value = '';
+    fechaCompartirHasta.value = '';
     mostrarModalCompartir.value = true;
 };
 
@@ -528,13 +436,17 @@ const formatDateShort = (date) => {
 };
 
 const obtenerGastosParaCompartir = async () => {
-    let gastos;
-    if (opcionCompartir.value === 'actuales') {
-        gastos = gastosStore.gastos;
-    } else {
-        // Cargar todos los gastos con los filtros actuales
-        gastos = await gastosStore.obtenerTodosGastos(filtros.value);
+    // Construir filtros para la consulta
+    const filtrosCompartir = {};
+    if (fechaCompartirDesde.value) {
+        filtrosCompartir.desde = fechaCompartirDesde.value;
     }
+    if (fechaCompartirHasta.value) {
+        filtrosCompartir.hasta = fechaCompartirHasta.value;
+    }
+
+    // Cargar todos los gastos con los filtros de fecha
+    let gastos = await gastosStore.obtenerTodosGastos(filtrosCompartir);
 
     // Filtrar por tipos seleccionados
     if (!tiposCompartirSeleccionados.value.includes('')) {
@@ -828,6 +740,58 @@ const generarPDF = async () => {
     } catch (error) {
         console.error('Error generando PDF:', error);
         alert('Error al generar el PDF');
+    } finally {
+        generandoCompartir.value = false;
+    }
+};
+
+const exportarCSV = async () => {
+    generandoCompartir.value = true;
+    try {
+        const gastos = await obtenerGastosParaCompartir();
+
+        if (gastos.length === 0) {
+            alert('No hay gastos para exportar');
+            return;
+        }
+
+        // Crear contenido CSV
+        const headers = ['Fecha', 'Concepto', 'Categoria', 'Tipo', 'Medio de Pago', 'Valor'];
+        const rows = gastos.map(g => [
+            g.fecha,
+            `"${(g.concepto || '').replace(/"/g, '""')}"`,
+            `"${(g.categoria?.nombre || '').replace(/"/g, '""')}"`,
+            configStore.getNombreTipo(g.tipo),
+            `"${(g.medio_pago?.nombre || '').replace(/"/g, '""')}"`,
+            g.valor
+        ]);
+
+        const csvContent = [
+            headers.join(','),
+            ...rows.map(row => row.join(','))
+        ].join('\n');
+
+        // Determinar nombre del archivo
+        const fechas = gastos.map(g => new Date(g.fecha)).sort((a, b) => a - b);
+        const fechaInicio = fechas[0].toISOString().split('T')[0];
+        const fechaFin = fechas[fechas.length - 1].toISOString().split('T')[0];
+        const fileName = `gastos_${fechaInicio}_${fechaFin}.csv`;
+
+        // Crear blob y descargar
+        const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+
+        cerrarModalCompartir();
+    } catch (error) {
+        console.error('Error exportando CSV:', error);
+        alert('Error al exportar los gastos');
     } finally {
         generandoCompartir.value = false;
     }
