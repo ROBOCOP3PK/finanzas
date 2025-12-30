@@ -340,6 +340,8 @@ import { useCategoriasStore } from '../Stores/categorias';
 import { useConfigStore } from '../Stores/config';
 import { useDashboardStore } from '../Stores/dashboard';
 import { useCurrency } from '../Composables/useCurrency';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 
 const router = useRouter();
 const gastosStore = useGastosStore();
@@ -657,6 +659,11 @@ const generarPDF = async () => {
     try {
         const gastos = await obtenerGastosParaCompartir();
 
+        if (gastos.length === 0) {
+            alert('No hay gastos para generar el PDF');
+            return;
+        }
+
         // Calcular totales
         const total = gastos.reduce((sum, g) => sum + parseFloat(g.valor), 0);
         const porTipo = {};
@@ -670,130 +677,152 @@ const generarPDF = async () => {
         const fechaInicio = formatDate(fechas[0]);
         const fechaFin = formatDate(fechas[fechas.length - 1]);
 
-        // Generar saldo pendiente HTML
-        let saldoPendienteHtml = '';
+        // Crear PDF
+        const doc = new jsPDF();
+        const pageWidth = doc.internal.pageSize.getWidth();
+        let yPos = 20;
+
+        // Título
+        doc.setFontSize(20);
+        doc.setTextColor(79, 70, 229); // Primary color
+        doc.text('Resumen de Gastos', pageWidth / 2, yPos, { align: 'center' });
+        yPos += 10;
+
+        // Periodo
+        doc.setFontSize(11);
+        doc.setTextColor(100, 100, 100);
+        doc.text(`Periodo: ${fechaInicio} - ${fechaFin}`, pageWidth / 2, yPos, { align: 'center' });
+        yPos += 15;
+
+        // Saldo pendiente
         if (incluirSaldoPendiente.value) {
             const deuda = dashboardStore.deudaPersona2;
             const nombrePareja = configStore.nombre_persona_2;
             let saldoTexto = '';
-            let saldoColor = '#22c55e';
+
             if (deuda > 0) {
+                doc.setFillColor(239, 68, 68); // Rojo
                 saldoTexto = `${nombrePareja} te debe: ${formatCurrency(deuda)}`;
-                saldoColor = '#ef4444';
             } else if (deuda < 0) {
+                doc.setFillColor(245, 158, 11); // Amarillo
                 saldoTexto = `Le debes a ${nombrePareja}: ${formatCurrency(Math.abs(deuda))}`;
-                saldoColor = '#f59e0b';
             } else {
-                saldoTexto = 'Están a paz y salvo ✅';
+                doc.setFillColor(34, 197, 94); // Verde
+                saldoTexto = 'Estan a paz y salvo';
             }
-            saldoPendienteHtml = `
-                <div class="saldo-box" style="background: ${saldoColor}; color: white; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-                    <h3 style="margin: 0;">💵 Saldo Pendiente</h3>
-                    <p style="margin: 5px 0 0 0; font-size: 18px;">${saldoTexto}</p>
-                </div>
-            `;
+
+            doc.roundedRect(14, yPos - 5, pageWidth - 28, 18, 3, 3, 'F');
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(12);
+            doc.text('Saldo Pendiente', 20, yPos + 3);
+            doc.setFontSize(11);
+            doc.text(saldoTexto, pageWidth - 20, yPos + 3, { align: 'right' });
+            yPos += 20;
         }
 
-        // Crear contenido HTML para el PDF
-        let html = `
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <meta charset="UTF-8">
-                <title>Resumen de Gastos</title>
-                <style>
-                    body { font-family: Arial, sans-serif; padding: 20px; color: #333; }
-                    h1 { color: #4F46E5; border-bottom: 2px solid #4F46E5; padding-bottom: 10px; }
-                    h2 { color: #6366F1; margin-top: 25px; }
-                    .header-info { background: #F3F4F6; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
-                    .total-box { background: #4F46E5; color: white; padding: 15px; border-radius: 8px; margin: 20px 0; }
-                    .total-box h3 { margin: 0; }
-                    table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-                    th { background: #4F46E5; color: white; padding: 12px; text-align: left; }
-                    td { padding: 10px; border-bottom: 1px solid #E5E7EB; }
-                    tr:nth-child(even) { background: #F9FAFB; }
-                    .tipo-personal { color: #3B82F6; }
-                    .tipo-pareja { color: #8B5CF6; }
-                    .tipo-compartido { color: #10B981; }
-                    .monto { text-align: right; font-weight: bold; }
-                    .resumen-tipo { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #E5E7EB; }
-                    .footer { margin-top: 30px; text-align: center; color: #9CA3AF; font-size: 12px; }
-                </style>
-            </head>
-            <body>
-                <h1>📊 Resumen de Gastos</h1>
+        // Totales por tipo
+        doc.setTextColor(79, 70, 229);
+        doc.setFontSize(14);
+        doc.text('Totales por Tipo', 14, yPos);
+        yPos += 8;
 
-                ${saldoPendienteHtml}
-
-                <div class="header-info">
-                    <strong>Período:</strong> ${fechaInicio} - ${fechaFin}<br>
-                    <strong>Total de movimientos:</strong> ${gastos.length}
-                </div>
-
-                <h2>💰 Totales por Tipo</h2>
-                <div>
-        `;
-
+        doc.setFontSize(10);
+        doc.setTextColor(60, 60, 60);
         Object.entries(porTipo).forEach(([tipo, monto]) => {
-            html += `<div class="resumen-tipo"><span>${tipo}</span><span>${formatCurrency(monto)}</span></div>`;
+            doc.text(tipo, 20, yPos);
+            doc.text(formatCurrency(monto), pageWidth - 20, yPos, { align: 'right' });
+            yPos += 6;
         });
 
-        html += `
-                </div>
+        // Total general
+        yPos += 5;
+        doc.setFillColor(79, 70, 229);
+        doc.roundedRect(14, yPos - 5, pageWidth - 28, 12, 2, 2, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(12);
+        doc.text('Total General:', 20, yPos + 2);
+        doc.text(formatCurrency(total), pageWidth - 20, yPos + 2, { align: 'right' });
+        yPos += 18;
 
-                <div class="total-box">
-                    <h3>Total General: ${formatCurrency(total)}</h3>
-                </div>
+        // Tabla de gastos
+        doc.setTextColor(79, 70, 229);
+        doc.setFontSize(14);
+        doc.text('Detalle de Gastos', 14, yPos);
+        yPos += 5;
 
-                <h2>📋 Detalle de Gastos</h2>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Fecha</th>
-                            <th>Concepto</th>
-                            <th>Categoría</th>
-                            <th>Tipo</th>
-                            <th>Medio Pago</th>
-                            <th class="monto">Valor</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-        `;
+        const tableData = gastos.map(g => [
+            formatDateShort(g.fecha),
+            g.concepto || '-',
+            g.categoria?.nombre || '-',
+            configStore.getNombreTipo(g.tipo),
+            g.medio_pago?.nombre || '-',
+            formatCurrency(g.valor)
+        ]);
 
-        gastos.forEach(g => {
-            const tipoClass = `tipo-${g.tipo}`;
-            html += `
-                <tr>
-                    <td>${formatDateShort(g.fecha)}</td>
-                    <td>${g.concepto || '-'}</td>
-                    <td>${g.categoria?.nombre || '-'}</td>
-                    <td class="${tipoClass}">${configStore.getNombreTipo(g.tipo)}</td>
-                    <td>${g.medio_pago?.nombre || '-'}</td>
-                    <td class="monto">${formatCurrency(g.valor)}</td>
-                </tr>
-            `;
+        doc.autoTable({
+            startY: yPos,
+            head: [['Fecha', 'Concepto', 'Categoria', 'Tipo', 'Medio Pago', 'Valor']],
+            body: tableData,
+            theme: 'striped',
+            headStyles: {
+                fillColor: [79, 70, 229],
+                textColor: 255,
+                fontSize: 9
+            },
+            bodyStyles: {
+                fontSize: 8
+            },
+            columnStyles: {
+                0: { cellWidth: 22 },
+                5: { halign: 'right', fontStyle: 'bold' }
+            },
+            margin: { left: 14, right: 14 }
         });
 
-        html += `
-                    </tbody>
-                </table>
+        // Footer
+        const finalY = doc.lastAutoTable.finalY + 10;
+        doc.setFontSize(8);
+        doc.setTextColor(150, 150, 150);
+        doc.text(
+            `Generado el ${new Date().toLocaleDateString('es-CO', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}`,
+            pageWidth / 2,
+            finalY,
+            { align: 'center' }
+        );
 
-                <div class="footer">
-                    Generado el ${new Date().toLocaleDateString('es-CO', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                </div>
-            </body>
-            </html>
-        `;
+        // Generar el PDF como Blob
+        const pdfBlob = doc.output('blob');
+        const fileName = `gastos_${fechaInicio.replace(/\s/g, '-')}_${fechaFin.replace(/\s/g, '-')}.pdf`;
 
-        // Crear ventana de impresión
-        const printWindow = window.open('', '_blank');
-        printWindow.document.write(html);
-        printWindow.document.close();
+        // Intentar usar Web Share API si está disponible y soporta archivos
+        if (navigator.canShare && navigator.canShare({ files: [new File([pdfBlob], fileName, { type: 'application/pdf' })] })) {
+            const file = new File([pdfBlob], fileName, { type: 'application/pdf' });
+            try {
+                await navigator.share({
+                    files: [file],
+                    title: 'Resumen de Gastos',
+                    text: 'Aqui esta el resumen de gastos'
+                });
+                cerrarModalCompartir();
+                return;
+            } catch (shareError) {
+                if (shareError.name === 'AbortError') {
+                    // Usuario canceló, no hacer nada
+                    return;
+                }
+                // Si falla el share, continuar con la descarga
+            }
+        }
 
-        // Esperar a que cargue y luego imprimir/guardar como PDF
-        printWindow.onload = () => {
-            printWindow.print();
-        };
+        // Fallback: descargar el PDF
+        const url = URL.createObjectURL(pdfBlob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
 
         cerrarModalCompartir();
     } catch (error) {
