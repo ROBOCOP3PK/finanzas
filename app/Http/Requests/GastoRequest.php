@@ -19,7 +19,7 @@ class GastoRequest extends FormRequest
             'fecha' => 'nullable|date',
             'medio_pago_id' => 'nullable|exists:medios_pago,id',
             'categoria_id' => 'required|exists:categorias,id',
-            'concepto' => 'required|string|max:255',
+            'concepto' => 'nullable|string|max:255',
             'valor' => 'required|numeric|min:0.01',
             'tipo' => ['nullable', Rule::in(Gasto::TIPOS)]
         ];
@@ -32,7 +32,7 @@ class GastoRequest extends FormRequest
             'medio_pago_id.exists' => 'Medio de pago no válido',
             'categoria_id.required' => 'La categoría es obligatoria',
             'categoria_id.exists' => 'Categoría no válida',
-            'concepto.required' => 'El concepto es obligatorio',
+            'concepto.string' => 'El concepto debe ser texto',
             'concepto.max' => 'El concepto no puede exceder 255 caracteres',
             'valor.required' => 'El valor es obligatorio',
             'valor.numeric' => 'El valor debe ser un número',

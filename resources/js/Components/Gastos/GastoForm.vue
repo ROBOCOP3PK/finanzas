@@ -1,64 +1,6 @@
 <template>
     <form @submit.prevent="submit" class="space-y-4">
-        <!-- Campos obligatorios -->
-        <div class="relative">
-            <Input
-                v-model="form.concepto"
-                label="Concepto"
-                placeholder="Ej: Almuerzo, Mercado..."
-                required
-                :error="errors.concepto"
-                @input="buscarConceptos"
-                @focus="showSugerencias = true"
-            />
-            <!-- Sugerencias de autocompletado -->
-            <div
-                v-if="showSugerencias && sugerencias.length > 0"
-                class="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-48 overflow-y-auto"
-            >
-                <button
-                    v-for="sug in sugerencias"
-                    :key="sug.id"
-                    type="button"
-                    @click="seleccionarConcepto(sug)"
-                    class="w-full px-3 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
-                >
-                    <StarIcon v-if="sug.es_favorito" class="w-4 h-4 text-yellow-500" />
-                    <span class="text-gray-900 dark:text-white">{{ sug.concepto }}</span>
-                </button>
-            </div>
-        </div>
-
-        <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Valor ({{ divisaInfo.codigo }})
-            </label>
-            <div class="relative">
-                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400">
-                    {{ divisaInfo.simbolo }}
-                </span>
-                <input
-                    type="text"
-                    :value="valorFormateado"
-                    @input="onValorInput"
-                    placeholder="0"
-                    inputmode="decimal"
-                    class="w-full pl-8 pr-10 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent"
-                    :class="{ 'border-red-500': errors.valor }"
-                />
-                <button
-                    v-if="valorFormateado"
-                    type="button"
-                    @click="limpiarValor"
-                    class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                >
-                    <XCircleIcon class="w-5 h-5" />
-                </button>
-            </div>
-            <p v-if="errors.valor" class="mt-1 text-sm text-red-500">{{ errors.valor }}</p>
-        </div>
-
-        <!-- Selector de Categoria con iconos -->
+        <!-- Selector de Categoria con iconos (obligatorio) -->
         <div>
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Categoria <span class="text-red-500">*</span>
@@ -91,6 +33,36 @@
             <p v-if="errors.categoria_id" class="mt-1 text-sm text-red-500">{{ errors.categoria_id }}</p>
         </div>
 
+        <!-- Valor (obligatorio) -->
+        <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Valor ({{ divisaInfo.codigo }}) <span class="text-red-500">*</span>
+            </label>
+            <div class="relative">
+                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400">
+                    {{ divisaInfo.simbolo }}
+                </span>
+                <input
+                    type="text"
+                    :value="valorFormateado"
+                    @input="onValorInput"
+                    placeholder="0"
+                    inputmode="decimal"
+                    class="w-full pl-8 pr-10 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent"
+                    :class="{ 'border-red-500': errors.valor }"
+                />
+                <button
+                    v-if="valorFormateado"
+                    type="button"
+                    @click="limpiarValor"
+                    class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                >
+                    <XCircleIcon class="w-5 h-5" />
+                </button>
+            </div>
+            <p v-if="errors.valor" class="mt-1 text-sm text-red-500">{{ errors.valor }}</p>
+        </div>
+
         <!-- Acordeon de opciones adicionales -->
         <div class="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
             <button
@@ -109,26 +81,7 @@
                 />
             </button>
             <div v-show="showOpciones" class="p-3 space-y-3 border-t border-gray-200 dark:border-gray-700">
-                <div class="w-full">
-                    <Input
-                        v-model="form.fecha"
-                        type="date"
-                        label="Fecha"
-                        :error="errors.fecha"
-                    />
-                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                        Si no se indica, se usa la fecha de hoy
-                    </p>
-                </div>
-
-                <Select
-                    v-model="form.medio_pago_id"
-                    label="Medio de Pago"
-                    :options="mediosPagoOptions"
-                    placeholder="Selecciona un medio de pago"
-                    :error="errors.medio_pago_id"
-                />
-
+                <!-- Tipo de gasto -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Tipo de gasto
@@ -150,9 +103,59 @@
                         </button>
                     </div>
                     <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                        Por defecto: Mío
+                        Por defecto: Mio
                     </p>
                     <p v-if="errors.tipo" class="mt-1 text-sm text-red-500">{{ errors.tipo }}</p>
+                </div>
+
+                <!-- Medio de pago -->
+                <Select
+                    v-model="form.medio_pago_id"
+                    label="Medio de Pago"
+                    :options="mediosPagoOptions"
+                    placeholder="Selecciona un medio de pago"
+                    :error="errors.medio_pago_id"
+                />
+
+                <!-- Concepto (opcional) -->
+                <div class="relative">
+                    <Input
+                        v-model="form.concepto"
+                        label="Concepto"
+                        placeholder="Ej: Almuerzo, Mercado..."
+                        :error="errors.concepto"
+                        @input="buscarConceptos"
+                        @focus="showSugerencias = true"
+                    />
+                    <!-- Sugerencias de autocompletado -->
+                    <div
+                        v-if="showSugerencias && sugerencias.length > 0"
+                        class="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-48 overflow-y-auto"
+                    >
+                        <button
+                            v-for="sug in sugerencias"
+                            :key="sug.id"
+                            type="button"
+                            @click="seleccionarConcepto(sug)"
+                            class="w-full px-3 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+                        >
+                            <StarIcon v-if="sug.es_favorito" class="w-4 h-4 text-yellow-500" />
+                            <span class="text-gray-900 dark:text-white">{{ sug.concepto }}</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Fecha -->
+                <div class="w-full">
+                    <Input
+                        v-model="form.fecha"
+                        type="date"
+                        label="Fecha"
+                        :error="errors.fecha"
+                    />
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        Si no se indica, se usa la fecha de hoy
+                    </p>
                 </div>
             </div>
         </div>
@@ -251,7 +254,7 @@ onMounted(async () => {
         form.value = { ...props.gasto };
         actualizarValorFormateado(props.gasto.valor);
         // Si tiene datos opcionales, mostrar el acordeon
-        if (props.gasto.fecha || props.gasto.medio_pago_id || props.gasto.tipo !== 'personal') {
+        if (props.gasto.fecha || props.gasto.medio_pago_id || props.gasto.tipo !== 'personal' || props.gasto.concepto) {
             showOpciones.value = true;
         }
     }
@@ -267,7 +270,6 @@ const categoriasActivas = computed(() => categoriasStore.activas);
 const tiposGasto = computed(() => configStore.tiposGasto);
 
 const isValid = computed(() =>
-    form.value.concepto &&
     form.value.valor > 0 &&
     form.value.categoria_id
 );
@@ -284,11 +286,9 @@ const seleccionarConcepto = (concepto) => {
     form.value.concepto = concepto.concepto;
     if (concepto.medio_pago_id) {
         form.value.medio_pago_id = concepto.medio_pago_id;
-        showOpciones.value = true;
     }
     if (concepto.tipo && concepto.tipo !== 'personal') {
         form.value.tipo = concepto.tipo;
-        showOpciones.value = true;
     }
     showSugerencias.value = false;
     conceptosStore.limpiarSugerencias();
