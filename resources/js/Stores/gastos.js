@@ -87,6 +87,20 @@ export const useGastosStore = defineStore('gastos', {
             };
         },
 
+        async obtenerTodosGastos(filtros = {}) {
+            const params = { ...filtros, per_page: 1000 };
+
+            // Remove null/empty values
+            Object.keys(params).forEach(key => {
+                if (params[key] === null || params[key] === '') {
+                    delete params[key];
+                }
+            });
+
+            const response = await api.get('/gastos', { params });
+            return response.data.data;
+        },
+
         async exportarGastos(filtrosExport) {
             const params = new URLSearchParams();
 
