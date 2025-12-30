@@ -777,8 +777,30 @@ const exportarCSV = async () => {
         const fechaFin = fechas[fechas.length - 1].toISOString().split('T')[0];
         const fileName = `gastos_${fechaInicio}_${fechaFin}.csv`;
 
-        // Crear blob y descargar
+        // Crear blob
         const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+
+        // Intentar usar Web Share API si está disponible y soporta archivos
+        if (navigator.canShare && navigator.canShare({ files: [new File([blob], fileName, { type: 'text/csv' })] })) {
+            const file = new File([blob], fileName, { type: 'text/csv' });
+            try {
+                await navigator.share({
+                    files: [file],
+                    title: 'Gastos CSV',
+                    text: 'Aqui esta el archivo de gastos'
+                });
+                cerrarModalCompartir();
+                return;
+            } catch (shareError) {
+                if (shareError.name === 'AbortError') {
+                    // Usuario canceló, no hacer nada
+                    return;
+                }
+                // Si falla el share, continuar con la descarga
+            }
+        }
+
+        // Fallback: descargar el archivo
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
