@@ -79,10 +79,32 @@
 
         <!-- Modal Compartir -->
         <div v-if="mostrarModalCompartir" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <Card class="w-full max-w-md">
+            <Card class="w-full max-w-md max-h-[90vh] overflow-y-auto">
                 <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Compartir Gastos</h2>
 
                 <div class="space-y-4">
+                    <!-- Saldo pendiente -->
+                    <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3">
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-gray-600 dark:text-gray-400">
+                                {{ configStore.nombre_persona_2 }} te debe:
+                            </span>
+                            <span class="text-lg font-bold" :class="dashboardStore.deudaPersona2 > 0 ? 'text-red-500' : 'text-green-500'">
+                                {{ formatCurrency(dashboardStore.deudaPersona2) }}
+                            </span>
+                        </div>
+                        <label class="flex items-center gap-2 mt-2 cursor-pointer">
+                            <input
+                                type="checkbox"
+                                v-model="incluirSaldoPendiente"
+                                class="w-4 h-4 text-primary rounded border-gray-300 focus:ring-primary"
+                            />
+                            <span class="text-xs text-gray-500 dark:text-gray-400">
+                                Incluir saldo pendiente en el reporte
+                            </span>
+                        </label>
+                    </div>
+
                     <!-- Opciones de rango -->
                     <div class="space-y-2">
                         <label class="flex items-center gap-2 cursor-pointer">
@@ -107,6 +129,76 @@
                                 Todos los gastos con filtros actuales
                             </span>
                         </label>
+                    </div>
+
+                    <!-- Filtros de Tipo (selección múltiple) -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Tipo de gasto
+                        </label>
+                        <div class="flex flex-wrap gap-2">
+                            <button
+                                type="button"
+                                @click="toggleTipoCompartir('')"
+                                :class="[
+                                    'px-3 py-1.5 rounded-full text-sm font-medium transition-colors',
+                                    tiposCompartirSeleccionados.includes('')
+                                        ? 'bg-primary text-white'
+                                        : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                                ]"
+                            >
+                                Todos
+                            </button>
+                            <button
+                                v-for="tipo in configStore.tiposGasto"
+                                :key="tipo.value"
+                                type="button"
+                                @click="toggleTipoCompartir(tipo.value)"
+                                :class="[
+                                    'px-3 py-1.5 rounded-full text-sm font-medium transition-colors',
+                                    tiposCompartirSeleccionados.includes(tipo.value)
+                                        ? 'bg-primary text-white'
+                                        : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                                ]"
+                            >
+                                {{ tipo.label }}
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Filtros de Categoría (selección múltiple) -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Categorías
+                        </label>
+                        <div class="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
+                            <button
+                                type="button"
+                                @click="toggleCategoriaCompartir('')"
+                                :class="[
+                                    'px-3 py-1.5 rounded-full text-sm font-medium transition-colors',
+                                    categoriasCompartirSeleccionadas.includes('')
+                                        ? 'bg-primary text-white'
+                                        : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                                ]"
+                            >
+                                Todas
+                            </button>
+                            <button
+                                v-for="cat in categoriasStore.activas"
+                                :key="cat.id"
+                                type="button"
+                                @click="toggleCategoriaCompartir(cat.id)"
+                                :class="[
+                                    'px-3 py-1.5 rounded-full text-sm font-medium transition-colors',
+                                    categoriasCompartirSeleccionadas.includes(cat.id)
+                                        ? 'bg-primary text-white'
+                                        : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                                ]"
+                            >
+                                {{ cat.nombre }}
+                            </button>
+                        </div>
                     </div>
 
                     <!-- Botones de compartir -->
@@ -246,12 +338,14 @@ import GastoItem from '../Components/Gastos/GastoItem.vue';
 import { useGastosStore } from '../Stores/gastos';
 import { useCategoriasStore } from '../Stores/categorias';
 import { useConfigStore } from '../Stores/config';
+import { useDashboardStore } from '../Stores/dashboard';
 import { useCurrency } from '../Composables/useCurrency';
 
 const router = useRouter();
 const gastosStore = useGastosStore();
 const categoriasStore = useCategoriasStore();
 const configStore = useConfigStore();
+const dashboardStore = useDashboardStore();
 const { formatCurrency } = useCurrency();
 
 const filtros = ref({
@@ -276,7 +370,8 @@ onMounted(async () => {
     await Promise.all([
         gastosStore.cargarGastos(),
         categoriasStore.cargarCategorias(true),
-        configStore.cargarConfiguracion()
+        configStore.cargarConfiguracion(),
+        dashboardStore.cargarDashboard()
     ]);
 });
 
@@ -343,14 +438,76 @@ const exportar = async () => {
 const mostrarModalCompartir = ref(false);
 const opcionCompartir = ref('actuales');
 const generandoCompartir = ref(false);
+const incluirSaldoPendiente = ref(true);
+const tiposCompartirSeleccionados = ref(['']);
+const categoriasCompartirSeleccionadas = ref(['']);
 
 const abrirModalCompartir = () => {
     opcionCompartir.value = 'actuales';
+    incluirSaldoPendiente.value = true;
+    tiposCompartirSeleccionados.value = [''];
+    categoriasCompartirSeleccionadas.value = [''];
     mostrarModalCompartir.value = true;
 };
 
 const cerrarModalCompartir = () => {
     mostrarModalCompartir.value = false;
+};
+
+// Toggle para selección múltiple de tipos
+const toggleTipoCompartir = (tipo) => {
+    if (tipo === '') {
+        // Si selecciona "Todos", deselecciona los demás
+        tiposCompartirSeleccionados.value = [''];
+    } else {
+        // Si selecciona un tipo específico
+        const index = tiposCompartirSeleccionados.value.indexOf(tipo);
+        // Quitar "Todos" si está seleccionado
+        const todosIndex = tiposCompartirSeleccionados.value.indexOf('');
+        if (todosIndex > -1) {
+            tiposCompartirSeleccionados.value.splice(todosIndex, 1);
+        }
+
+        if (index > -1) {
+            // Ya está seleccionado, quitarlo
+            tiposCompartirSeleccionados.value.splice(index, 1);
+            // Si no queda ninguno, seleccionar "Todos"
+            if (tiposCompartirSeleccionados.value.length === 0) {
+                tiposCompartirSeleccionados.value = [''];
+            }
+        } else {
+            // Agregarlo
+            tiposCompartirSeleccionados.value.push(tipo);
+        }
+    }
+};
+
+// Toggle para selección múltiple de categorías
+const toggleCategoriaCompartir = (catId) => {
+    if (catId === '') {
+        // Si selecciona "Todas", deselecciona las demás
+        categoriasCompartirSeleccionadas.value = [''];
+    } else {
+        // Si selecciona una categoría específica
+        const index = categoriasCompartirSeleccionadas.value.indexOf(catId);
+        // Quitar "Todas" si está seleccionada
+        const todasIndex = categoriasCompartirSeleccionadas.value.indexOf('');
+        if (todasIndex > -1) {
+            categoriasCompartirSeleccionadas.value.splice(todasIndex, 1);
+        }
+
+        if (index > -1) {
+            // Ya está seleccionada, quitarla
+            categoriasCompartirSeleccionadas.value.splice(index, 1);
+            // Si no queda ninguna, seleccionar "Todas"
+            if (categoriasCompartirSeleccionadas.value.length === 0) {
+                categoriasCompartirSeleccionadas.value = [''];
+            }
+        } else {
+            // Agregarla
+            categoriasCompartirSeleccionadas.value.push(catId);
+        }
+    }
 };
 
 const formatDate = (date) => {
@@ -369,13 +526,25 @@ const formatDateShort = (date) => {
 };
 
 const obtenerGastosParaCompartir = async () => {
+    let gastos;
     if (opcionCompartir.value === 'actuales') {
-        return gastosStore.gastos;
+        gastos = gastosStore.gastos;
     } else {
         // Cargar todos los gastos con los filtros actuales
-        const response = await gastosStore.obtenerTodosGastos(filtros.value);
-        return response;
+        gastos = await gastosStore.obtenerTodosGastos(filtros.value);
     }
+
+    // Filtrar por tipos seleccionados
+    if (!tiposCompartirSeleccionados.value.includes('')) {
+        gastos = gastos.filter(g => tiposCompartirSeleccionados.value.includes(g.tipo));
+    }
+
+    // Filtrar por categorías seleccionadas
+    if (!categoriasCompartirSeleccionadas.value.includes('')) {
+        gastos = gastos.filter(g => categoriasCompartirSeleccionadas.value.includes(g.categoria_id));
+    }
+
+    return gastos;
 };
 
 const generarTextoWhatsApp = (gastos) => {
@@ -397,6 +566,20 @@ const generarTextoWhatsApp = (gastos) => {
     let texto = `📊 *RESUMEN DE GASTOS*\n`;
     texto += `📅 ${fechaInicio} - ${fechaFin}\n`;
     texto += `━━━━━━━━━━━━━━━━━━\n\n`;
+
+    // Saldo pendiente
+    if (incluirSaldoPendiente.value) {
+        const deuda = dashboardStore.deudaPersona2;
+        const nombrePareja = configStore.nombre_persona_2;
+        texto += `💵 *SALDO PENDIENTE:*\n`;
+        if (deuda > 0) {
+            texto += `${nombrePareja} te debe: ${formatCurrency(deuda)}\n\n`;
+        } else if (deuda < 0) {
+            texto += `Le debes a ${nombrePareja}: ${formatCurrency(Math.abs(deuda))}\n\n`;
+        } else {
+            texto += `Están a paz y salvo ✅\n\n`;
+        }
+    }
 
     // Resumen por tipo
     texto += `💰 *TOTALES POR TIPO:*\n`;
@@ -487,6 +670,30 @@ const generarPDF = async () => {
         const fechaInicio = formatDate(fechas[0]);
         const fechaFin = formatDate(fechas[fechas.length - 1]);
 
+        // Generar saldo pendiente HTML
+        let saldoPendienteHtml = '';
+        if (incluirSaldoPendiente.value) {
+            const deuda = dashboardStore.deudaPersona2;
+            const nombrePareja = configStore.nombre_persona_2;
+            let saldoTexto = '';
+            let saldoColor = '#22c55e';
+            if (deuda > 0) {
+                saldoTexto = `${nombrePareja} te debe: ${formatCurrency(deuda)}`;
+                saldoColor = '#ef4444';
+            } else if (deuda < 0) {
+                saldoTexto = `Le debes a ${nombrePareja}: ${formatCurrency(Math.abs(deuda))}`;
+                saldoColor = '#f59e0b';
+            } else {
+                saldoTexto = 'Están a paz y salvo ✅';
+            }
+            saldoPendienteHtml = `
+                <div class="saldo-box" style="background: ${saldoColor}; color: white; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                    <h3 style="margin: 0;">💵 Saldo Pendiente</h3>
+                    <p style="margin: 5px 0 0 0; font-size: 18px;">${saldoTexto}</p>
+                </div>
+            `;
+        }
+
         // Crear contenido HTML para el PDF
         let html = `
             <!DOCTYPE html>
@@ -515,6 +722,9 @@ const generarPDF = async () => {
             </head>
             <body>
                 <h1>📊 Resumen de Gastos</h1>
+
+                ${saldoPendienteHtml}
+
                 <div class="header-info">
                     <strong>Período:</strong> ${fechaInicio} - ${fechaFin}<br>
                     <strong>Total de movimientos:</strong> ${gastos.length}
