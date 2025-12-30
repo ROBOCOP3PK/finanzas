@@ -9,10 +9,10 @@
                 :key="`${mov.tipo_movimiento}-${mov.id}`"
                 class="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-700 last:border-0"
             >
-                <div class="flex items-center gap-3">
+                <div class="flex items-center gap-3 flex-1 min-w-0">
                     <div
                         :class="[
-                            'w-10 h-10 rounded-full flex items-center justify-center',
+                            'w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0',
                             mov.tipo_movimiento === 'abono'
                                 ? 'bg-green-100 dark:bg-green-900'
                                 : 'bg-gray-100 dark:bg-gray-700'
@@ -21,8 +21,8 @@
                         <ArrowDownIcon v-if="mov.tipo_movimiento === 'abono'" class="w-5 h-5 text-green-600 dark:text-green-400" />
                         <ArrowUpIcon v-else class="w-5 h-5 text-gray-600 dark:text-gray-400" />
                     </div>
-                    <div>
-                        <p class="font-medium text-gray-900 dark:text-white text-sm">{{ mov.concepto }}</p>
+                    <div class="min-w-0 flex-1">
+                        <p class="font-medium text-gray-900 dark:text-white text-sm truncate">{{ mov.concepto }}</p>
                         <div class="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
                             <span>{{ formatDate(mov.fecha) }}</span>
                             <Badge v-if="mov.categoria" :customColor="mov.categoria_color">
@@ -31,7 +31,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="text-right">
+                <div class="text-right flex-shrink-0 ml-2">
                     <p
                         :class="[
                             'font-semibold',

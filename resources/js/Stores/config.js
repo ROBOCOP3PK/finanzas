@@ -10,9 +10,9 @@ export const useConfigStore = defineStore('config', {
 
     getters: {
         tiposGasto: () => [
-            { value: 'personal', label: 'Personal (mío)' },
-            { value: 'pareja', label: 'Pareja (100%)' },
-            { value: 'compartido', label: 'Compartido' }
+            { value: 'personal', label: 'Mío' },
+            { value: 'pareja', label: 'Pareja' },
+            { value: 'compartido', label: '50/50' }
         ],
 
         getNombreTipo: () => (tipo) => {

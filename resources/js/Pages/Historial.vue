@@ -28,7 +28,7 @@
                     <!-- Rango de fechas (deshabilitado si exportar_todos está activo) -->
                     <div :class="{ 'opacity-50 pointer-events-none': filtrosExport.exportar_todos }">
                         <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">O selecciona un rango de fechas:</p>
-                        <div class="grid grid-cols-2 gap-3">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <Input
                                 v-model="filtrosExport.desde"
                                 type="date"
@@ -45,7 +45,7 @@
                     </div>
 
                     <!-- Filtros adicionales opcionales -->
-                    <div class="grid grid-cols-2 gap-3">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <Select
                             v-model="filtrosExport.tipo"
                             label="Tipo"
@@ -76,31 +76,35 @@
 
         <!-- Filtros -->
         <Card class="mb-4">
-            <div class="grid grid-cols-2 gap-3">
-                <Input
-                    v-model="filtros.desde"
-                    type="date"
-                    label="Desde"
-                    @change="aplicarFiltros"
-                />
-                <Input
-                    v-model="filtros.hasta"
-                    type="date"
-                    label="Hasta"
-                    @change="aplicarFiltros"
-                />
-                <Select
-                    v-model="filtros.tipo"
-                    label="Tipo"
-                    :options="tiposOptions"
-                    @change="aplicarFiltros"
-                />
-                <Select
-                    v-model="filtros.categoria_id"
-                    label="Categoría"
-                    :options="categoriasOptions"
-                    @change="aplicarFiltros"
-                />
+            <div class="space-y-3">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <Input
+                        v-model="filtros.desde"
+                        type="date"
+                        label="Desde"
+                        @change="aplicarFiltros"
+                    />
+                    <Input
+                        v-model="filtros.hasta"
+                        type="date"
+                        label="Hasta"
+                        @change="aplicarFiltros"
+                    />
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <Select
+                        v-model="filtros.tipo"
+                        label="Tipo"
+                        :options="tiposOptions"
+                        @change="aplicarFiltros"
+                    />
+                    <Select
+                        v-model="filtros.categoria_id"
+                        label="Categoría"
+                        :options="categoriasOptions"
+                        @change="aplicarFiltros"
+                    />
+                </div>
             </div>
             <div class="mt-3 flex justify-end">
                 <Button variant="ghost" size="sm" @click="limpiarFiltros">

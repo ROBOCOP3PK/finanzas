@@ -2,17 +2,18 @@
     <div class="flex items-center justify-between py-3 border-b border-gray-100 dark:border-gray-700 last:border-0">
         <div class="flex items-center gap-3 flex-1 min-w-0">
             <div
-                class="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
+                class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
                 :style="{ backgroundColor: gasto.categoria?.color + '20' }"
             >
-                <span class="text-lg">{{ getEmoji(gasto.categoria?.icono) }}</span>
+                <i v-if="gasto.categoria?.icono" :class="gasto.categoria.icono" :style="{ color: gasto.categoria.color }"></i>
+                <span v-else class="w-4 h-4 rounded" :style="{ backgroundColor: gasto.categoria?.color || '#6366F1' }"></span>
             </div>
             <div class="min-w-0 flex-1">
                 <p class="font-medium text-gray-900 dark:text-white truncate">{{ gasto.concepto }}</p>
-                <div class="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                <div class="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 flex-wrap">
                     <span>{{ formatDate(gasto.fecha) }}</span>
-                    <span>•</span>
-                    <span>{{ gasto.medio_pago?.nombre }}</span>
+                    <span v-if="gasto.medio_pago?.nombre">•</span>
+                    <span v-if="gasto.medio_pago?.nombre" class="truncate">{{ gasto.medio_pago.nombre }}</span>
                 </div>
             </div>
         </div>
@@ -51,22 +52,10 @@ const getTipoLabel = (tipo) => configStore.getNombreTipo(tipo);
 
 const getTipoBadgeVariant = (tipo) => {
     const variants = {
-        'persona_1': 'info',
-        'persona_2': 'primary',
-        'casa': 'success'
+        'personal': 'info',
+        'pareja': 'primary',
+        'compartido': 'success'
     };
     return variants[tipo] || 'default';
-};
-
-const getEmoji = (icono) => {
-    const emojis = {
-        'utensils': '🍽️',
-        'car': '🚗',
-        'zap': '⚡',
-        'film': '🎬',
-        'heart-pulse': '❤️',
-        'more-horizontal': '📦'
-    };
-    return emojis[icono] || '💰';
 };
 </script>

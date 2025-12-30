@@ -164,34 +164,54 @@
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                 Contrasena
                             </label>
-                            <input
-                                v-model="password"
-                                type="password"
-                                required
-                                autocomplete="new-password"
-                                class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg
-                                       bg-white dark:bg-gray-700 text-gray-900 dark:text-white
-                                       focus:ring-2 focus:ring-primary focus:border-transparent
-                                       transition-colors"
-                                placeholder="Minimo 6 caracteres"
-                            />
+                            <div class="relative">
+                                <input
+                                    v-model="password"
+                                    :type="showPassword ? 'text' : 'password'"
+                                    required
+                                    autocomplete="new-password"
+                                    class="w-full px-4 py-3 pr-12 border border-gray-300 dark:border-gray-600 rounded-lg
+                                           bg-white dark:bg-gray-700 text-gray-900 dark:text-white
+                                           focus:ring-2 focus:ring-primary focus:border-transparent
+                                           transition-colors"
+                                    placeholder="Minimo 6 caracteres"
+                                />
+                                <button
+                                    type="button"
+                                    @click="showPassword = !showPassword"
+                                    class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                                >
+                                    <EyeIcon v-if="!showPassword" class="w-5 h-5" />
+                                    <EyeSlashIcon v-else class="w-5 h-5" />
+                                </button>
+                            </div>
                         </div>
 
                         <div>
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                 Confirmar Contrasena
                             </label>
-                            <input
-                                v-model="passwordConfirmation"
-                                type="password"
-                                required
-                                autocomplete="new-password"
-                                class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg
-                                       bg-white dark:bg-gray-700 text-gray-900 dark:text-white
-                                       focus:ring-2 focus:ring-primary focus:border-transparent
-                                       transition-colors"
-                                placeholder="Repite la contrasena"
-                            />
+                            <div class="relative">
+                                <input
+                                    v-model="passwordConfirmation"
+                                    :type="showPasswordConfirm ? 'text' : 'password'"
+                                    required
+                                    autocomplete="new-password"
+                                    class="w-full px-4 py-3 pr-12 border border-gray-300 dark:border-gray-600 rounded-lg
+                                           bg-white dark:bg-gray-700 text-gray-900 dark:text-white
+                                           focus:ring-2 focus:ring-primary focus:border-transparent
+                                           transition-colors"
+                                    placeholder="Repite la contrasena"
+                                />
+                                <button
+                                    type="button"
+                                    @click="showPasswordConfirm = !showPasswordConfirm"
+                                    class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                                >
+                                    <EyeIcon v-if="!showPasswordConfirm" class="w-5 h-5" />
+                                    <EyeSlashIcon v-else class="w-5 h-5" />
+                                </button>
+                            </div>
                         </div>
 
                         <div v-if="authStore.error" class="p-3 bg-red-100 dark:bg-red-900/30 border border-red-300 dark:border-red-700 rounded-lg">
@@ -252,6 +272,7 @@ import { ref, onMounted, onUnmounted, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '../Stores/auth';
 import { useThemeStore } from '../Stores/theme';
+import { EyeIcon, EyeSlashIcon } from '@heroicons/vue/24/outline';
 
 const router = useRouter();
 const authStore = useAuthStore();
@@ -264,6 +285,8 @@ const name = ref('');
 const password = ref('');
 const passwordConfirmation = ref('');
 const resendCooldown = ref(0);
+const showPassword = ref(false);
+const showPasswordConfirm = ref(false);
 
 let cooldownInterval = null;
 

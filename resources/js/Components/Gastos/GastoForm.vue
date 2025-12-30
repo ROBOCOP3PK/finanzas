@@ -108,16 +108,18 @@
                     ]"
                 />
             </button>
-            <div v-show="showOpciones" class="p-4 space-y-4 border-t border-gray-200 dark:border-gray-700">
-                <Input
-                    v-model="form.fecha"
-                    type="date"
-                    label="Fecha"
-                    :error="errors.fecha"
-                />
-                <p class="text-xs text-gray-500 dark:text-gray-400 -mt-2">
-                    Si no se indica, se usa la fecha de hoy
-                </p>
+            <div v-show="showOpciones" class="p-3 space-y-3 border-t border-gray-200 dark:border-gray-700">
+                <div class="w-full">
+                    <Input
+                        v-model="form.fecha"
+                        type="date"
+                        label="Fecha"
+                        :error="errors.fecha"
+                    />
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        Si no se indica, se usa la fecha de hoy
+                    </p>
+                </div>
 
                 <Select
                     v-model="form.medio_pago_id"
@@ -138,7 +140,7 @@
                             type="button"
                             @click="form.tipo = tipo.value"
                             :class="[
-                                'py-3 px-4 rounded-lg font-medium text-sm transition-colors',
+                                'py-2 px-2 rounded-lg font-medium text-sm transition-colors text-center',
                                 form.tipo === tipo.value
                                     ? 'bg-primary text-white dark:bg-indigo-500'
                                     : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
@@ -148,7 +150,7 @@
                         </button>
                     </div>
                     <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                        Por defecto: Personal
+                        Por defecto: Mío
                     </p>
                     <p v-if="errors.tipo" class="mt-1 text-sm text-red-500">{{ errors.tipo }}</p>
                 </div>

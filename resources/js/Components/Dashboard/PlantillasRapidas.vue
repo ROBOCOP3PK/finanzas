@@ -6,7 +6,7 @@
                 Crear plantilla
             </router-link>
         </div>
-        <div v-else class="grid grid-cols-3 gap-2">
+        <div v-else class="grid grid-cols-2 sm:grid-cols-3 gap-2">
             <button
                 v-for="plantilla in plantillas"
                 :key="plantilla.id"

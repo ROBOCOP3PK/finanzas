@@ -44,13 +44,13 @@
                 <!-- Divisa -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Divisa</label>
-                    <div class="flex gap-2">
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
                         <button
                             v-for="div in configStore.divisasDisponibles"
                             :key="div.value"
                             @click="cambiarDivisa(div.value)"
                             :class="[
-                                'flex-1 py-2 px-3 rounded-lg font-medium text-sm transition-colors',
+                                'py-2 px-3 rounded-lg font-medium text-sm transition-colors',
                                 configStore.divisa === div.value
                                     ? 'bg-primary text-white dark:bg-indigo-500'
                                     : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
