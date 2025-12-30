@@ -1,5 +1,5 @@
 <template>
-    <div class="p-4">
+    <div class="p-4 max-w-full overflow-hidden">
         <div class="flex items-center gap-3 mb-6">
             <button @click="$router.back()" class="p-2 -ml-2 text-gray-600 dark:text-gray-400">
                 <ArrowLeftIcon class="w-5 h-5" />

@@ -1,5 +1,5 @@
 <template>
-    <div class="p-4">
+    <div class="p-4 max-w-full overflow-hidden">
         <div class="flex items-center justify-between mb-4">
             <h1 class="text-xl font-bold text-gray-900 dark:text-white">Gastos</h1>
             <router-link to="/gastos/nuevo">

@@ -116,6 +116,29 @@ button, a, [role="button"] {
 input, select, textarea {
     font-size: 16px !important; /* Prevents iOS zoom on focus */
     @apply touch-manipulation;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+/* Fix for date inputs on iOS - they have internal elements that can overflow */
+input[type="date"],
+input[type="datetime-local"],
+input[type="time"] {
+    -webkit-appearance: none;
+    appearance: none;
+    min-width: 0;
+    width: 100%;
+    max-width: 100%;
+}
+
+/* Ensure date picker icon is visible on iOS */
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="datetime-local"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator {
+    opacity: 1;
+    padding: 0;
+    margin: 0;
+    cursor: pointer;
 }
 
 /* Improved focus states for accessibility */

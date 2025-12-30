@@ -1,5 +1,5 @@
 <template>
-    <div class="p-4 space-y-3">
+    <div class="p-4 space-y-3 max-w-full overflow-hidden">
         <h1 class="text-xl font-bold text-gray-900 dark:text-white">Configuracion</h1>
 
         <!-- Seccion: Apariencia -->

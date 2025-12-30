@@ -1,5 +1,5 @@
 <template>
-    <div class="p-4 space-y-4">
+    <div class="p-4 space-y-4 max-w-full overflow-hidden">
         <!-- Cards principales: Deuda y Gasto del Mes -->
         <div class="grid grid-cols-2 gap-3">
             <!-- Card Deuda -->

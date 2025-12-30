@@ -1,7 +1,7 @@
 <template>
     <div
         :class="[
-            'bg-white dark:bg-gray-800 rounded-xl shadow-sm',
+            'bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden min-w-0 max-w-full',
             padding ? 'p-4' : '',
             border ? 'border border-gray-200 dark:border-gray-700' : ''
         ]"

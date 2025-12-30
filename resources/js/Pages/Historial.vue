@@ -1,5 +1,5 @@
 <template>
-    <div class="p-4">
+    <div class="p-4 max-w-full overflow-hidden">
         <div class="flex justify-between items-center mb-4">
             <h1 class="text-xl font-bold text-gray-900 dark:text-white">Historial</h1>
             <Button variant="secondary" size="sm" @click="abrirModalExportar">
@@ -28,7 +28,7 @@
                     <!-- Rango de fechas (deshabilitado si exportar_todos está activo) -->
                     <div :class="{ 'opacity-50 pointer-events-none': filtrosExport.exportar_todos }">
                         <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">O selecciona un rango de fechas:</p>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 min-w-0">
                             <Input
                                 v-model="filtrosExport.desde"
                                 type="date"
@@ -76,8 +76,8 @@
 
         <!-- Filtros -->
         <Card class="mb-4">
-            <div class="space-y-3">
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div class="space-y-3 min-w-0">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 min-w-0">
                     <Input
                         v-model="filtros.desde"
                         type="date"
@@ -91,7 +91,7 @@
                         @change="aplicarFiltros"
                     />
                 </div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 min-w-0">
                     <Select
                         v-model="filtros.tipo"
                         label="Tipo"

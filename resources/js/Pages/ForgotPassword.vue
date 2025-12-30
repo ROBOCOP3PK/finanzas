@@ -1,6 +1,6 @@
 <template>
-    <div class="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900 px-4">
-        <div class="w-full max-w-md">
+    <div class="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900 px-4 overflow-hidden">
+        <div class="w-full max-w-md min-w-0">
             <!-- Logo / Titulo -->
             <div class="text-center mb-8">
                 <h1 class="text-3xl font-bold text-primary dark:text-indigo-400">

@@ -20,8 +20,10 @@
         </header>
 
         <!-- Main Content -->
-        <main class="flex-1 main-content-padding overflow-y-auto">
-            <slot />
+        <main class="flex-1 main-content-padding overflow-y-auto overflow-x-hidden">
+            <div class="max-w-full">
+                <slot />
+            </div>
         </main>
 
         <!-- Bottom Navigation -->
