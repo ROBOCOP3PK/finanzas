@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -95,6 +96,87 @@ class User extends Authenticatable
     public function servicios(): HasMany
     {
         return $this->hasMany(Servicio::class);
+    }
+
+    // ========================================
+    // RELACIONES DE COMPARTICION DE DATOS
+    // ========================================
+
+    /**
+     * Comparticion donde soy propietario (activa o pendiente)
+     */
+    public function myDataShare(): HasOne
+    {
+        return $this->hasOne(DataShare::class, 'owner_id')
+            ->whereIn('status', [DataShare::STATUS_PENDING, DataShare::STATUS_ACCEPTED])
+            ->latest();
+    }
+
+    /**
+     * Todas mis comparticiones como propietario (historico)
+     */
+    public function dataSharesAsOwner(): HasMany
+    {
+        return $this->hasMany(DataShare::class, 'owner_id');
+    }
+
+    /**
+     * Comparticiones donde soy invitado (activas)
+     */
+    public function accessibleDataShares(): HasMany
+    {
+        return $this->hasMany(DataShare::class, 'guest_id')
+            ->where('status', DataShare::STATUS_ACCEPTED);
+    }
+
+    /**
+     * Invitaciones pendientes para mi (como invitado)
+     */
+    public function pendingInvitations(): HasMany
+    {
+        return $this->hasMany(DataShare::class, 'guest_id')
+            ->where('status', DataShare::STATUS_PENDING);
+    }
+
+    /**
+     * Gastos pendientes que debo aprobar (como propietario)
+     */
+    public function pendingExpensesToApprove(): HasMany
+    {
+        return $this->hasMany(PendingExpense::class, 'owner_id')
+            ->where('status', PendingExpense::STATUS_PENDING);
+    }
+
+    /**
+     * Gastos pendientes que he creado (como invitado)
+     */
+    public function myPendingExpenses(): HasMany
+    {
+        return $this->hasMany(PendingExpense::class, 'created_by');
+    }
+
+    /**
+     * Mis notificaciones de comparticion
+     */
+    public function shareNotifications(): HasMany
+    {
+        return $this->hasMany(ShareNotification::class);
+    }
+
+    /**
+     * Contador de notificaciones sin leer
+     */
+    public function unreadShareNotificationsCount(): int
+    {
+        return $this->shareNotifications()->where('read', false)->count();
+    }
+
+    /**
+     * Contador de gastos pendientes por aprobar
+     */
+    public function pendingExpensesCount(): int
+    {
+        return $this->pendingExpensesToApprove()->count();
     }
 
     // Calcular deuda de persona secundaria

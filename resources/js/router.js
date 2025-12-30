@@ -71,6 +71,18 @@ const routes = [
         name: 'configuracion',
         component: () => import('./Pages/Configuracion.vue'),
         meta: { requiresAuth: true }
+    },
+    {
+        path: '/shared-data',
+        name: 'shared-data.list',
+        component: () => import('./Pages/SharedData/List.vue'),
+        meta: { requiresAuth: true }
+    },
+    {
+        path: '/shared-data/:shareId',
+        name: 'shared-data.view',
+        component: () => import('./Pages/SharedData/Index.vue'),
+        meta: { requiresAuth: true }
     }
 ];
 

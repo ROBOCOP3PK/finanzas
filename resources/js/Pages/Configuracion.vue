@@ -443,6 +443,98 @@
             </div>
         </div>
 
+        <!-- Seccion: Compartir Datos -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+            <button
+                @click="toggleSeccion('compartirDatos')"
+                class="w-full flex items-center justify-between p-4 text-left"
+            >
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
+                        <ShareIcon class="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                    </div>
+                    <span class="font-medium text-gray-900 dark:text-white">Compartir Datos</span>
+                </div>
+                <ChevronDownIcon
+                    :class="[
+                        'w-5 h-5 text-gray-500 transition-transform duration-200',
+                        seccionesAbiertas.compartirDatos ? 'rotate-180' : ''
+                    ]"
+                />
+            </button>
+            <div v-show="seccionesAbiertas.compartirDatos" class="px-4 pb-4 space-y-4 border-t border-gray-100 dark:border-gray-700">
+                <div class="pt-4">
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                        Comparte tus datos financieros con otra persona. Podra ver tu dashboard, historial y crear solicitudes de gastos.
+                    </p>
+
+                    <!-- Estado actual de comparticion -->
+                    <div v-if="dataShareStore.loading" class="flex justify-center py-4">
+                        <div class="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full"></div>
+                    </div>
+
+                    <template v-else>
+                        <!-- Ya tiene alguien con acceso -->
+                        <div v-if="dataShareStore.currentShare" class="space-y-3">
+                            <div class="bg-green-50 dark:bg-green-900/20 rounded-lg p-4 border border-green-200 dark:border-green-800">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/40 flex items-center justify-center">
+                                        <UserIcon class="w-5 h-5 text-green-600 dark:text-green-400" />
+                                    </div>
+                                    <div class="flex-1">
+                                        <p class="font-medium text-gray-900 dark:text-white">
+                                            {{ dataShareStore.currentShare.guest?.name || dataShareStore.currentShare.guest_email }}
+                                        </p>
+                                        <p class="text-sm text-gray-500 dark:text-gray-400">
+                                            <span v-if="dataShareStore.currentShare.status === 'pending'" class="text-amber-600 dark:text-amber-400">
+                                                Invitacion pendiente
+                                            </span>
+                                            <span v-else-if="dataShareStore.currentShare.status === 'accepted'" class="text-green-600 dark:text-green-400">
+                                                Acceso activo
+                                            </span>
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            <Button
+                                variant="danger"
+                                size="sm"
+                                @click="revocarAcceso"
+                                :loading="revocandoAcceso"
+                                class="w-full"
+                            >
+                                Revocar acceso
+                            </Button>
+                        </div>
+
+                        <!-- No tiene a nadie, mostrar formulario de invitacion -->
+                        <div v-else class="space-y-3">
+                            <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
+                                <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                                    No has compartido tus datos con nadie. Invita a una persona por email.
+                                </p>
+                                <div class="flex gap-2">
+                                    <input
+                                        v-model="emailInvitacion"
+                                        type="email"
+                                        placeholder="email@ejemplo.com"
+                                        class="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent"
+                                    />
+                                    <Button
+                                        @click="invitarPersona"
+                                        :loading="enviandoInvitacion"
+                                        :disabled="!emailInvitacion"
+                                    >
+                                        Invitar
+                                    </Button>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </div>
+
         <!-- Seccion: Cuenta -->
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
             <button
@@ -816,7 +908,8 @@ import {
     ArrowPathIcon,
     ArrowRightOnRectangleIcon,
     ExclamationTriangleIcon,
-    XCircleIcon
+    XCircleIcon,
+    ShareIcon
 } from '@heroicons/vue/24/outline';
 import Card from '../Components/UI/Card.vue';
 import Input from '../Components/UI/Input.vue';
@@ -829,6 +922,7 @@ import { useCategoriasStore } from '../Stores/categorias';
 import { useConfigStore } from '../Stores/config';
 import { useServiciosStore } from '../Stores/servicios';
 import { useAuthStore } from '../Stores/auth';
+import { useDataShareStore } from '../Stores/dataShare';
 import Select from '../Components/UI/Select.vue';
 import axios from 'axios';
 import { useCurrency } from '../Composables/useCurrency';
@@ -840,6 +934,7 @@ const categoriasStore = useCategoriasStore();
 const configStore = useConfigStore();
 const serviciosStore = useServiciosStore();
 const authStore = useAuthStore();
+const dataShareStore = useDataShareStore();
 const { formatInputValue, parseFormattedValue, divisaInfo } = useCurrency();
 
 // Secciones del acordeon
@@ -849,6 +944,7 @@ const seccionesAbiertas = reactive({
     mediosPago: false,
     servicios: false,
     compartidos: false,
+    compartirDatos: false,
     cuenta: false
 });
 
@@ -1382,6 +1478,38 @@ const cerrarSesion = async () => {
     }
 };
 
+// Compartir datos
+const emailInvitacion = ref('');
+const enviandoInvitacion = ref(false);
+const revocandoAcceso = ref(false);
+
+const invitarPersona = async () => {
+    if (!emailInvitacion.value) return;
+
+    enviandoInvitacion.value = true;
+    const result = await dataShareStore.inviteUser(emailInvitacion.value);
+    enviandoInvitacion.value = false;
+
+    if (result.success) {
+        emailInvitacion.value = '';
+        mostrarToast('Invitacion enviada');
+    } else {
+        mostrarToast(result.error || 'Error al enviar invitacion', 'error');
+    }
+};
+
+const revocarAcceso = async () => {
+    revocandoAcceso.value = true;
+    const result = await dataShareStore.revokeAccess();
+    revocandoAcceso.value = false;
+
+    if (result.success) {
+        mostrarToast('Acceso revocado');
+    } else {
+        mostrarToast(result.error || 'Error al revocar acceso', 'error');
+    }
+};
+
 // Restablecer datos
 const showModalRestablecer = ref(false);
 const restableciendo = ref(false);
@@ -1413,7 +1541,8 @@ onMounted(async () => {
         mediosPagoStore.cargarMediosPago(),
         categoriasStore.cargarCategorias(),
         serviciosStore.cargarServicios(),
-        configStore.cargarConfiguracion()
+        configStore.cargarConfiguracion(),
+        dataShareStore.fetchShareStatus()
     ]);
 
     // Cargar dia de restablecimiento del usuario

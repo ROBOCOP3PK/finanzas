@@ -11,6 +11,10 @@ use App\Http\Controllers\GastoRecurrenteController;
 use App\Http\Controllers\MedioPagoController;
 use App\Http\Controllers\PlantillaController;
 use App\Http\Controllers\ServicioController;
+use App\Http\Controllers\DataShareController;
+use App\Http\Controllers\SharedDataController;
+use App\Http\Controllers\PendingExpenseController;
+use App\Http\Controllers\ShareNotificationController;
 use Illuminate\Support\Facades\Route;
 
 // Rutas públicas de autenticación
@@ -83,4 +87,49 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/servicios/{servicio}/pagar', [ServicioController::class, 'marcarPagado']);
     Route::delete('/servicios/{servicio}/pagar', [ServicioController::class, 'desmarcarPagado']);
     Route::apiResource('servicios', ServicioController::class);
+
+    // ========================================
+    // COMPARTICION DE DATOS
+    // ========================================
+
+    // Como propietario - gestionar mi comparticion
+    Route::prefix('data-share')->group(function () {
+        Route::get('/status', [DataShareController::class, 'status']);
+        Route::post('/invite', [DataShareController::class, 'invite']);
+        Route::post('/revoke', [DataShareController::class, 'revoke']);
+    });
+
+    // Como invitado - datos compartidos conmigo
+    Route::prefix('shared-with-me')->group(function () {
+        Route::get('/', [DataShareController::class, 'sharedWithMe']);
+        Route::post('/{dataShare}/accept', [DataShareController::class, 'accept']);
+        Route::post('/{dataShare}/reject', [DataShareController::class, 'reject']);
+
+        // Acceso a datos del propietario
+        Route::get('/{dataShare}/dashboard', [SharedDataController::class, 'dashboard']);
+        Route::get('/{dataShare}/gastos', [SharedDataController::class, 'gastos']);
+        Route::get('/{dataShare}/categorias', [SharedDataController::class, 'categorias']);
+        Route::get('/{dataShare}/medios-pago', [SharedDataController::class, 'mediosPago']);
+    });
+
+    // Gastos pendientes de aprobacion
+    Route::prefix('pending-expenses')->group(function () {
+        // Como propietario
+        Route::get('/pending', [PendingExpenseController::class, 'pending']);
+        Route::get('/history', [PendingExpenseController::class, 'history']);
+        Route::post('/{pendingExpense}/approve', [PendingExpenseController::class, 'approve']);
+        Route::post('/{pendingExpense}/reject', [PendingExpenseController::class, 'reject']);
+
+        // Como invitado
+        Route::post('/share/{dataShare}', [PendingExpenseController::class, 'store']);
+        Route::get('/my-requests', [PendingExpenseController::class, 'myRequests']);
+    });
+
+    // Notificaciones de comparticion
+    Route::prefix('share-notifications')->group(function () {
+        Route::get('/', [ShareNotificationController::class, 'index']);
+        Route::get('/unread-count', [ShareNotificationController::class, 'unreadCount']);
+        Route::post('/{shareNotification}/read', [ShareNotificationController::class, 'markAsRead']);
+        Route::post('/read-all', [ShareNotificationController::class, 'markAllAsRead']);
+    });
 });
