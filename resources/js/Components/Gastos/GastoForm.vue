@@ -85,7 +85,7 @@
                     <!-- Panel Servicios -->
                     <div v-if="serviciosActivos.length > 0" class="w-full flex-shrink-0">
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Selecciona un servicio para registrar pago
+                            Servicio
                         </label>
                         <div class="grid grid-cols-4 gap-2">
                             <button
