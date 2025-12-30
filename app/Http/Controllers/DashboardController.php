@@ -35,6 +35,7 @@ class DashboardController extends Controller
                 ] : null,
                 'resumen_mes' => $resumenMes,
                 'por_medio_pago' => $porMedioPago,
+                'por_categoria' => $this->getGastosPorCategoria($user),
                 'ultimos_movimientos' => $ultimosMovimientos,
                 'pendientes_recurrentes' => $pendientesRecurrentes
             ]
@@ -109,6 +110,43 @@ class DashboardController extends Controller
                 return [$medioPago->nombre => round($total, 2)];
             })
             ->toArray();
+    }
+
+    private function getGastosPorCategoria($user): array
+    {
+        $mes = now()->month;
+        $anio = now()->year;
+
+        $gastos = $user->gastos()
+            ->delMes($mes, $anio)
+            ->with('categoria')
+            ->get()
+            ->groupBy('categoria_id');
+
+        $totalMes = $user->gastos()->delMes($mes, $anio)->sum('valor');
+
+        $resultado = [];
+        foreach ($gastos as $categoriaId => $gastosCategoria) {
+            $categoria = $gastosCategoria->first()->categoria;
+            if (!$categoria) continue;
+
+            $total = $gastosCategoria->sum('valor');
+            $porcentaje = $totalMes > 0 ? round(($total / $totalMes) * 100, 1) : 0;
+
+            $resultado[] = [
+                'categoria_id' => $categoria->id,
+                'nombre' => $categoria->nombre,
+                'icono' => $categoria->icono,
+                'color' => $categoria->color,
+                'total' => round($total, 2),
+                'porcentaje' => $porcentaje
+            ];
+        }
+
+        // Ordenar por total descendente
+        usort($resultado, fn($a, $b) => $b['total'] <=> $a['total']);
+
+        return $resultado;
     }
 
     private function getUltimosMovimientos($user, int $limite = 10): array

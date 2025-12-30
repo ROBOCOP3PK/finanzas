@@ -17,6 +17,7 @@ export const useDashboardStore = defineStore('dashboard', {
             total_abonos: 0
         },
         porMedioPago: {},
+        porCategoria: [],
         ultimosMovimientos: [],
         pendientesRecurrentes: 0,
         loading: false,
@@ -39,6 +40,7 @@ export const useDashboardStore = defineStore('dashboard', {
                 this.personaSecundaria = data.persona_secundaria;
                 this.resumenMes = data.resumen_mes;
                 this.porMedioPago = data.por_medio_pago;
+                this.porCategoria = data.por_categoria || [];
                 this.ultimosMovimientos = data.ultimos_movimientos;
                 this.pendientesRecurrentes = data.pendientes_recurrentes;
             } catch (error) {

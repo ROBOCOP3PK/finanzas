@@ -30,6 +30,13 @@
             @usar="abrirModalPlantilla"
         />
 
+        <!-- Resumen por Categorías -->
+        <ResumenCategorias
+            :categorias="dashboardStore.porCategoria"
+            :mes="dashboardStore.resumenMes.mes || new Date().getMonth() + 1"
+            :anio="dashboardStore.resumenMes.anio || new Date().getFullYear()"
+        />
+
         <!-- Resumen del Mes -->
         <ResumenMes
             :gastosPersonal="dashboardStore.resumenMes.gastos_personal"
@@ -83,6 +90,7 @@ import { ref, onMounted } from 'vue';
 import AlertaRecurrentes from '../Components/Dashboard/AlertaRecurrentes.vue';
 import PlantillasRapidas from '../Components/Dashboard/PlantillasRapidas.vue';
 import ResumenMes from '../Components/Dashboard/ResumenMes.vue';
+import ResumenCategorias from '../Components/Dashboard/ResumenCategorias.vue';
 import UltimosMovimientos from '../Components/Dashboard/UltimosMovimientos.vue';
 import Modal from '../Components/UI/Modal.vue';
 import Input from '../Components/UI/Input.vue';
