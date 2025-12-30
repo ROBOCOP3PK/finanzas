@@ -1,6 +1,6 @@
 <template>
     <div class="p-4 space-y-3 max-w-full overflow-hidden">
-        <!-- Seccion: Apariencia -->
+        <!-- Seccion: Parametros -->
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
             <button
                 @click="toggleSeccion('apariencia')"
@@ -10,7 +10,7 @@
                     <div class="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center">
                         <PaintBrushIcon class="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
                     </div>
-                    <span class="font-medium text-gray-900 dark:text-white">Apariencia</span>
+                    <span class="font-medium text-gray-900 dark:text-white">Parametros</span>
                 </div>
                 <ChevronDownIcon
                     :class="[
