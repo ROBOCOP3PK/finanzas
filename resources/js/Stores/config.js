@@ -46,7 +46,7 @@ export const useConfigStore = defineStore('config', {
     actions: {
         async cargarConfiguracion() {
             try {
-                const { data } = await axios.get('/api/configuracion');
+                const { data } = await axios.get('/configuracion');
                 if (data.success && data.data) {
                     this.divisa = data.data.divisa || 'COP';
                     this.formato_divisa = data.data.formato_divisa || 'punto';
@@ -64,7 +64,7 @@ export const useConfigStore = defineStore('config', {
 
         async actualizarDivisa(divisa) {
             try {
-                const { data } = await axios.put('/api/configuracion', { divisa });
+                const { data } = await axios.put('/configuracion', { divisa });
                 if (data.success) {
                     this.divisa = divisa;
                 }
@@ -76,7 +76,7 @@ export const useConfigStore = defineStore('config', {
 
         async actualizarFormatoDivisa(formato_divisa) {
             try {
-                const { data } = await axios.put('/api/configuracion', { formato_divisa });
+                const { data } = await axios.put('/configuracion', { formato_divisa });
                 if (data.success) {
                     this.formato_divisa = formato_divisa;
                 }
@@ -88,7 +88,7 @@ export const useConfigStore = defineStore('config', {
 
         async actualizarGastosCompartidos(config) {
             try {
-                const { data } = await axios.put('/api/configuracion', {
+                const { data } = await axios.put('/configuracion', {
                     nombre_persona_1: config.nombre_persona_1,
                     nombre_persona_2: config.nombre_persona_2,
                     porcentaje_persona_1: config.porcentaje_persona_1,
