@@ -494,6 +494,25 @@ const seleccionarConcepto = (concepto) => {
     conceptosStore.limpiarSugerencias();
 };
 
+// Función para limpiar el formulario
+const resetForm = () => {
+    servicioSeleccionado.value = null;
+    tabActivo.value = 'categorias';
+    form.value = {
+        fecha: '',
+        medio_pago_id: '',
+        categoria_id: '',
+        concepto: '',
+        valor: '',
+        tipo: 'personal'
+    };
+    valorFormateado.value = '';
+    showOpciones.value = false;
+};
+
+// Exponer la función reset para uso externo
+defineExpose({ resetForm });
+
 const submit = async () => {
     // Si es un servicio, marcarlo como pagado
     if (servicioSeleccionado.value) {
@@ -506,18 +525,7 @@ const submit = async () => {
                 crear_gasto: true
             });
             emit('servicio-pagado', servicioSeleccionado.value);
-
-            // Resetear formulario
-            servicioSeleccionado.value = null;
-            form.value = {
-                fecha: '',
-                medio_pago_id: '',
-                categoria_id: '',
-                concepto: '',
-                valor: '',
-                tipo: 'personal'
-            };
-            valorFormateado.value = '';
+            resetForm();
         } catch (error) {
             console.error('Error marcando servicio como pagado:', error);
         }

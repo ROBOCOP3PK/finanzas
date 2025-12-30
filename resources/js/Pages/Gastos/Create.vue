@@ -2,6 +2,7 @@
     <div class="p-4 max-w-full overflow-hidden">
         <Card>
             <GastoForm
+                ref="gastoFormRef"
                 :loading="loading"
                 :errors="errors"
                 submitText="Guardar Gasto"
@@ -20,15 +21,14 @@
 
 <script setup>
 import { ref } from 'vue';
-import { useRouter } from 'vue-router';
 import Card from '../../Components/UI/Card.vue';
 import Toast from '../../Components/UI/Toast.vue';
 import GastoForm from '../../Components/Gastos/GastoForm.vue';
 import { useGastosStore } from '../../Stores/gastos';
 
-const router = useRouter();
 const gastosStore = useGastosStore();
 
+const gastoFormRef = ref(null);
 const loading = ref(false);
 const errors = ref({});
 const showToast = ref(false);
@@ -45,9 +45,8 @@ const guardar = async (data) => {
         toastType.value = 'success';
         showToast.value = true;
 
-        setTimeout(() => {
-            router.push('/');
-        }, 1000);
+        // Limpiar formulario para agregar otro gasto
+        gastoFormRef.value?.resetForm();
     } catch (error) {
         if (error.response?.data?.errors) {
             errors.value = error.response.data.errors;
