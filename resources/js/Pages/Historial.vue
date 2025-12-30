@@ -285,8 +285,8 @@ import { useCategoriasStore } from '../Stores/categorias';
 import { useConfigStore } from '../Stores/config';
 import { useDashboardStore } from '../Stores/dashboard';
 import { useCurrency } from '../Composables/useCurrency';
-import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 const router = useRouter();
 const gastosStore = useGastosStore();
@@ -671,7 +671,7 @@ const generarPDF = async () => {
             formatCurrency(g.valor)
         ]);
 
-        doc.autoTable({
+        autoTable(doc, {
             startY: yPos,
             head: [['Fecha', 'Concepto', 'Categoria', 'Tipo', 'Medio Pago', 'Valor']],
             body: tableData,
@@ -692,7 +692,7 @@ const generarPDF = async () => {
         });
 
         // Footer
-        const finalY = doc.lastAutoTable.finalY + 10;
+        const finalY = (doc).lastAutoTable.finalY + 10;
         doc.setFontSize(8);
         doc.setTextColor(150, 150, 150);
         doc.text(
