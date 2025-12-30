@@ -220,13 +220,48 @@
                 </div>
 
                 <!-- Medio de pago -->
-                <Select
-                    v-model="form.medio_pago_id"
-                    label="Medio de Pago"
-                    :options="mediosPagoOptions"
-                    placeholder="Selecciona un medio de pago"
-                    :error="errors.medio_pago_id"
-                />
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Medio de Pago
+                    </label>
+                    <div class="grid grid-cols-4 gap-2">
+                        <button
+                            v-for="mp in mediosPagoActivos"
+                            :key="mp.id"
+                            type="button"
+                            @click="form.medio_pago_id = form.medio_pago_id === mp.id ? '' : mp.id"
+                            :class="[
+                                'flex flex-col items-center justify-center p-2 rounded-lg border-2 transition-all min-h-[60px]',
+                                form.medio_pago_id === mp.id
+                                    ? 'border-primary bg-primary/10 dark:bg-primary/20'
+                                    : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800'
+                            ]"
+                        >
+                            <div
+                                class="w-8 h-8 rounded-lg flex items-center justify-center mb-1"
+                                :style="{ backgroundColor: mp.color ? mp.color + '20' : '#6366f120' }"
+                            >
+                                <i
+                                    v-if="mp.icono"
+                                    :class="mp.icono"
+                                    :style="{ color: mp.color || '#6366f1' }"
+                                ></i>
+                                <CreditCardIcon
+                                    v-else
+                                    class="w-4 h-4"
+                                    :style="{ color: mp.color || '#6366f1' }"
+                                />
+                            </div>
+                            <span class="text-xs text-gray-700 dark:text-gray-300 text-center leading-tight truncate w-full">
+                                {{ mp.nombre }}
+                            </span>
+                        </button>
+                    </div>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        Toca de nuevo para deseleccionar
+                    </p>
+                    <p v-if="errors.medio_pago_id" class="mt-1 text-sm text-red-500">{{ errors.medio_pago_id }}</p>
+                </div>
 
                 <!-- Concepto (opcional) -->
                 <div class="relative">
@@ -280,9 +315,8 @@
 <script setup>
 import { ref, computed, watch, onMounted, nextTick } from 'vue';
 import { StarIcon } from '@heroicons/vue/24/solid';
-import { ChevronDownIcon, XCircleIcon } from '@heroicons/vue/24/outline';
+import { ChevronDownIcon, XCircleIcon, CreditCardIcon } from '@heroicons/vue/24/outline';
 import Input from '../UI/Input.vue';
-import Select from '../UI/Select.vue';
 import Button from '../UI/Button.vue';
 import { useMediosPagoStore } from '../../Stores/mediosPago';
 import { useCategoriasStore } from '../../Stores/categorias';
@@ -426,10 +460,7 @@ onMounted(async () => {
     }
 });
 
-const mediosPagoOptions = computed(() => [
-    { value: '', label: 'Sin medio de pago' },
-    ...mediosPagoStore.activos.map(mp => ({ value: mp.id, label: mp.nombre }))
-]);
+const mediosPagoActivos = computed(() => mediosPagoStore.activos);
 
 const categoriasActivas = computed(() => categoriasStore.activas);
 const serviciosActivos = computed(() => serviciosStore.activos);
