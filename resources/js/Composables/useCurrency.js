@@ -62,56 +62,36 @@ export function useCurrency() {
         return `${divisa.simbolo} ${formatted}`;
     };
 
-    // Para inputs - formatea mientras el usuario escribe (soporta decimales)
+    // Para inputs - formatea mientras el usuario escribe
     const formatInputValue = (value) => {
         if (!value && value !== 0) return '';
 
-        const formato = configStore.formatoDivisa || 'coma'; // Default a 'coma' si no está definido
-        const separadorDecimal = formato === 'punto' ? ',' : '.';
+        const formato = configStore.formatoDivisa || 'coma';
 
-        // Convertir a string
-        let str = String(value);
-
-        // Si el valor viene como número o string numérico con punto decimal, convertir al formato correcto
-        if (typeof value === 'number' || (typeof value === 'string' && /^\d+\.?\d*$/.test(value))) {
-            const numValue = typeof value === 'number' ? value : parseFloat(value);
-            if (isNaN(numValue)) return '';
-
-            const partes = numValue.toFixed(2).split('.');
-            const entero = parseInt(partes[0], 10);
-            const decimal = partes[1];
-
-            let enteroFormateado;
+        // Si es un número puro (desde el backend o selección de servicio)
+        if (typeof value === 'number') {
+            const entero = Math.round(value);
             if (formato === 'punto') {
-                enteroFormateado = entero.toLocaleString('de-DE');
+                return entero.toLocaleString('de-DE');
             } else {
-                enteroFormateado = entero.toLocaleString('en-US');
+                return entero.toLocaleString('en-US');
             }
-
-            return decimal && decimal !== '00'
-                ? `${enteroFormateado}${separadorDecimal}${decimal}`
-                : enteroFormateado;
         }
 
-        // Para strings, solo permitir dígitos (sin separadores decimales para simplificar)
-        // Remover todo excepto números
-        str = str.replace(/[^0-9]/g, '');
+        // Para strings (input del usuario), solo extraer dígitos
+        const str = String(value).replace(/[^0-9]/g, '');
 
-        // Si no queda nada, retornar vacío
         if (!str) return '';
 
         const entero = parseInt(str, 10);
         if (isNaN(entero)) return '';
 
         // Formatear con separadores de miles
-        let enteroFormateado;
         if (formato === 'punto') {
-            enteroFormateado = entero.toLocaleString('de-DE');
+            return entero.toLocaleString('de-DE');
         } else {
-            enteroFormateado = entero.toLocaleString('en-US');
+            return entero.toLocaleString('en-US');
         }
-
-        return enteroFormateado;
     };
 
     // Parsea un valor formateado a numero (soporta decimales)
