@@ -6,11 +6,11 @@
                 <span class="font-medium text-gray-900 dark:text-white">{{ formatCurrency(gastosPersonal) }}</span>
             </div>
             <div class="flex justify-between items-center">
-                <span class="text-gray-600 dark:text-gray-400">Gastos pareja (100%)</span>
+                <span class="text-gray-600 dark:text-gray-400">Gastos usuario 2 (100%)</span>
                 <span class="font-medium text-red-500">{{ formatCurrency(gastosPareja) }}</span>
             </div>
             <div class="flex justify-between items-center">
-                <span class="text-gray-600 dark:text-gray-400">Compartidos ({{ porcentajePersona2 }}% pareja)</span>
+                <span class="text-gray-600 dark:text-gray-400">Compartidos ({{ porcentajePersona2 }}% usuario 2)</span>
                 <span class="font-medium text-gray-900 dark:text-white">{{ formatCurrency(gastosCompartido) }}</span>
             </div>
             <div class="border-t border-gray-200 dark:border-gray-700 pt-3">

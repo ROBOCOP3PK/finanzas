@@ -7,7 +7,7 @@ export const useConfigStore = defineStore('config', {
         divisa: 'COP',
         formato_divisa: 'punto',
         nombre_persona_1: 'Yo',
-        nombre_persona_2: 'Pareja',
+        nombre_persona_2: 'Usuario 2',
         porcentaje_persona_1: 50,
         porcentaje_persona_2: 50
     }),
@@ -51,7 +51,7 @@ export const useConfigStore = defineStore('config', {
                     this.divisa = data.data.divisa || 'COP';
                     this.formato_divisa = data.data.formato_divisa || 'punto';
                     this.nombre_persona_1 = data.data.nombre_persona_1 || 'Yo';
-                    this.nombre_persona_2 = data.data.nombre_persona_2 || 'Pareja';
+                    this.nombre_persona_2 = data.data.nombre_persona_2 || 'Usuario 2';
                     this.porcentaje_persona_1 = parseFloat(data.data.porcentaje_persona_1) || 50;
                     this.porcentaje_persona_2 = parseFloat(data.data.porcentaje_persona_2) || 50;
                 }

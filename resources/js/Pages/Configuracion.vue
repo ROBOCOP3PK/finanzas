@@ -357,13 +357,13 @@
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                Nombre pareja
+                                Nombre usuario 2
                             </label>
                             <input
                                 type="text"
                                 v-model="formCompartidos.nombre_persona_2"
                                 class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent"
-                                placeholder="Pareja"
+                                placeholder="Usuario 2"
                             />
                         </div>
                     </div>
@@ -391,7 +391,7 @@
                             </div>
                             <div class="flex-1">
                                 <div class="flex items-center justify-between mb-1">
-                                    <span class="text-sm text-gray-600 dark:text-gray-400">{{ formCompartidos.nombre_persona_2 || 'Pareja' }}</span>
+                                    <span class="text-sm text-gray-600 dark:text-gray-400">{{ formCompartidos.nombre_persona_2 || 'Usuario 2' }}</span>
                                     <span class="text-sm font-medium text-gray-900 dark:text-white">{{ formCompartidos.porcentaje_persona_2 }}%</span>
                                 </div>
                                 <input
@@ -425,7 +425,7 @@
                                 <span class="font-medium text-primary">${{ (100000 * formCompartidos.porcentaje_persona_1 / 100).toLocaleString() }}</span>
                             </li>
                             <li class="text-gray-700 dark:text-gray-300">
-                                <span class="font-medium">{{ formCompartidos.nombre_persona_2 || 'Pareja' }}</span> debe
+                                <span class="font-medium">{{ formCompartidos.nombre_persona_2 || 'Usuario 2' }}</span> debe
                                 <span class="font-medium text-purple-600 dark:text-purple-400">${{ (100000 * formCompartidos.porcentaje_persona_2 / 100).toLocaleString() }}</span>
                             </li>
                         </ul>
@@ -1440,7 +1440,7 @@ const guardarDiaRestablecimiento = async () => {
 // Gastos Compartidos
 const formCompartidos = reactive({
     nombre_persona_1: 'Yo',
-    nombre_persona_2: 'Pareja',
+    nombre_persona_2: 'Usuario 2',
     porcentaje_persona_1: 50,
     porcentaje_persona_2: 50
 });

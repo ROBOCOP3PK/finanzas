@@ -139,7 +139,7 @@ const formatDate = (date) => {
 const getTipoLabel = (tipo) => {
     const labels = {
         personal: 'Personal',
-        pareja: 'Pareja',
+        pareja: 'Usuario 2',
         compartido: 'Compartido'
     };
     return labels[tipo] || tipo;

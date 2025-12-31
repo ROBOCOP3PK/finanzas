@@ -117,7 +117,7 @@ const gastosRecurrentesStore = useGastosRecurrentesStore();
 const configStore = useConfigStore();
 const { formatCurrency } = useCurrency();
 
-const nombrePersona2 = computed(() => configStore.nombre_persona_2 || 'Pareja');
+const nombrePersona2 = computed(() => configStore.nombre_persona_2 || 'Usuario 2');
 
 const showPlantillaModal = ref(false);
 const plantillaSeleccionada = ref(null);
