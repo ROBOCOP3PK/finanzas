@@ -279,7 +279,7 @@ const formatearValor = (valor) => {
 onMounted(async () => {
     await Promise.all([
         serviciosStore.cargarAlertas(),
-        dataShareStore.fetchPendingExpensesCount()
+        dataShareStore.fetchPendingExpenses()
     ]);
 });
 </script>
