@@ -364,6 +364,10 @@ class AuthController extends Controller
         $user->conceptosFrecuentes()->delete();
         $user->categorias()->delete();
         $user->mediosPago()->delete();
+        $user->servicios()->delete();
+
+        // Restablecer configuracion a valores por defecto
+        $this->restablecerConfiguracion();
 
         // Recrear datos por defecto
         $this->crearDatosPorDefecto($user);
@@ -371,5 +375,24 @@ class AuthController extends Controller
         return response()->json([
             'message' => 'Todos los datos han sido restablecidos correctamente',
         ]);
+    }
+
+    /**
+     * Restablecer configuracion a valores por defecto
+     */
+    private function restablecerConfiguracion(): void
+    {
+        $configuracionesPorDefecto = [
+            'nombre_persona_1' => 'Yo',
+            'nombre_persona_2' => '',
+            'porcentaje_persona_1' => '50',
+            'porcentaje_persona_2' => '50',
+            'divisa' => 'COP',
+            'formato_divisa' => 'punto',
+        ];
+
+        foreach ($configuracionesPorDefecto as $clave => $valor) {
+            \App\Models\Configuracion::establecer($clave, $valor);
+        }
     }
 }

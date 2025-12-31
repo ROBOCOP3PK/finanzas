@@ -1536,7 +1536,9 @@ const restablecerDatos = async () => {
         // Recargar los stores con los nuevos datos por defecto
         await Promise.all([
             mediosPagoStore.cargarMediosPago(),
-            categoriasStore.cargarCategorias()
+            categoriasStore.cargarCategorias(),
+            serviciosStore.cargarServicios(),
+            configStore.cargarConfiguracion()
         ]);
 
         showModalRestablecer.value = false;

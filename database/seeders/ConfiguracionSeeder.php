@@ -13,11 +13,13 @@ class ConfiguracionSeeder extends Seeder
     public function run(): void
     {
         $configuraciones = [
-            ['clave' => 'nombre_persona_1', 'valor' => 'Persona 1'],
-            ['clave' => 'nombre_persona_2', 'valor' => 'Persona 2'],
+            ['clave' => 'nombre_persona_1', 'valor' => 'Yo'],
+            ['clave' => 'nombre_persona_2', 'valor' => ''],
             ['clave' => 'porcentaje_persona_1', 'valor' => '50'],
             ['clave' => 'porcentaje_persona_2', 'valor' => '50'],
             ['clave' => 'tema', 'valor' => 'system'],
+            ['clave' => 'divisa', 'valor' => 'COP'],
+            ['clave' => 'formato_divisa', 'valor' => 'punto'],
         ];
 
         foreach ($configuraciones as $config) {
