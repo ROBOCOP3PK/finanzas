@@ -61,7 +61,7 @@
                                 </span>
                             </div>
                             <div class="flex justify-between text-sm">
-                                <span class="text-gray-600 dark:text-gray-400">Pareja</span>
+                                <span class="text-gray-600 dark:text-gray-400">{{ configStore.getNombreTipo('pareja') }}</span>
                                 <span class="text-gray-900 dark:text-white font-medium">
                                     {{ formatCurrency(sharedDashboard.resumenMes.gastos_pareja || 0) }}
                                 </span>
@@ -250,12 +250,14 @@ import SharedGastoForm from '../../Components/Shared/SharedGastoForm.vue';
 import Toast from '../../Components/UI/Toast.vue';
 import { useDataShareStore } from '../../Stores/dataShare';
 import { useSharedDashboardStore } from '../../Stores/sharedDashboard';
+import { useConfigStore } from '../../Stores/config';
 import { useCurrency } from '../../Composables/useCurrency';
 
 const route = useRoute();
 const router = useRouter();
 const dataShareStore = useDataShareStore();
 const sharedDashboard = useSharedDashboardStore();
+const configStore = useConfigStore();
 const { formatCurrency } = useCurrency();
 
 const shareId = ref(route.params.shareId);

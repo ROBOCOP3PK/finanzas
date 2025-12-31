@@ -8,7 +8,7 @@
             <!-- Solo mostrar si hay usuario 2 configurado -->
             <template v-if="tieneUsuario2">
                 <div class="flex justify-between items-center">
-                    <span class="text-gray-600 dark:text-gray-400">Gastos {{ configStore.nombre_persona_2 }} (100%)</span>
+                    <span class="text-gray-600 dark:text-gray-400">Gastos {{ configStore.nombre_persona_2 }}</span>
                     <span class="font-medium text-red-500">{{ formatCurrency(gastosPareja) }}</span>
                 </div>
                 <div class="flex justify-between items-center">

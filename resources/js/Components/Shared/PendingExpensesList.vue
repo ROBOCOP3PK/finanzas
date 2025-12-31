@@ -112,6 +112,7 @@
 import { ref } from 'vue';
 import { CheckIcon, XMarkIcon, CheckCircleIcon } from '@heroicons/vue/24/outline';
 import { useCurrency } from '../../Composables/useCurrency';
+import { useConfigStore } from '../../Stores/config';
 
 const props = defineProps({
     expenses: {
@@ -124,6 +125,7 @@ const props = defineProps({
 const emit = defineEmits(['approve', 'reject']);
 
 const { formatCurrency } = useCurrency();
+const configStore = useConfigStore();
 
 const showRejectModal = ref(false);
 const selectedExpense = ref(null);
@@ -136,14 +138,7 @@ const formatDate = (date) => {
     });
 };
 
-const getTipoLabel = (tipo) => {
-    const labels = {
-        personal: 'Personal',
-        pareja: 'Usuario 2',
-        compartido: 'Compartido'
-    };
-    return labels[tipo] || tipo;
-};
+const getTipoLabel = (tipo) => configStore.getNombreTipo(tipo);
 
 const openRejectModal = (expense) => {
     selectedExpense.value = expense;
