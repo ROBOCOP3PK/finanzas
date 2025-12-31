@@ -187,44 +187,134 @@
             </Card>
         </div>
 
-        <!-- Filtros -->
-        <Card class="mb-4">
-            <div class="space-y-3 min-w-0">
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 min-w-0">
-                    <Input
-                        v-model="filtros.desde"
-                        type="date"
-                        label="Desde"
-                        @change="aplicarFiltros"
-                    />
-                    <Input
-                        v-model="filtros.hasta"
-                        type="date"
-                        label="Hasta"
-                        @change="aplicarFiltros"
-                    />
+        <!-- Botón Filtrar y Filtros Colapsables -->
+        <div class="mb-4">
+            <!-- Botón para expandir/colapsar filtros -->
+            <button
+                @click="mostrarFiltros = !mostrarFiltros"
+                class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                :class="[
+                    hayFiltrosActivos
+                        ? 'bg-primary text-white'
+                        : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 shadow-sm'
+                ]"
+            >
+                <FunnelIcon class="w-4 h-4" />
+                <span>Filtrar</span>
+                <span v-if="hayFiltrosActivos" class="bg-white/20 px-1.5 py-0.5 rounded-full text-xs">
+                    {{ cantidadFiltrosActivos }}
+                </span>
+                <ChevronDownIcon
+                    class="w-4 h-4 transition-transform"
+                    :class="{ 'rotate-180': mostrarFiltros }"
+                />
+            </button>
+
+            <!-- Filtros expandidos -->
+            <div
+                v-if="mostrarFiltros"
+                class="mt-3 bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 space-y-4"
+            >
+                <!-- Rango de fechas -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Rango de fechas
+                    </label>
+                    <div class="grid grid-cols-2 gap-3">
+                        <Input
+                            v-model="filtros.desde"
+                            type="date"
+                            label="Desde"
+                        />
+                        <Input
+                            v-model="filtros.hasta"
+                            type="date"
+                            label="Hasta"
+                        />
+                    </div>
                 </div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 min-w-0">
-                    <Select
-                        v-model="filtros.tipo"
-                        label="Tipo"
-                        :options="tiposOptions"
-                        @change="aplicarFiltros"
-                    />
-                    <Select
-                        v-model="filtros.categoria_id"
-                        label="Categoría"
-                        :options="categoriasOptions"
-                        @change="aplicarFiltros"
-                    />
+
+                <!-- Tipo de gasto -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Tipo de gasto
+                    </label>
+                    <div class="flex flex-wrap gap-2">
+                        <button
+                            type="button"
+                            @click="filtros.tipo = ''"
+                            :class="[
+                                'px-3 py-1.5 rounded-full text-sm font-medium transition-colors',
+                                !filtros.tipo
+                                    ? 'bg-primary text-white'
+                                    : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                            ]"
+                        >
+                            Todos
+                        </button>
+                        <button
+                            v-for="tipo in configStore.tiposGasto"
+                            :key="tipo.value"
+                            type="button"
+                            @click="filtros.tipo = tipo.value"
+                            :class="[
+                                'px-3 py-1.5 rounded-full text-sm font-medium transition-colors',
+                                filtros.tipo === tipo.value
+                                    ? 'bg-primary text-white'
+                                    : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                            ]"
+                        >
+                            {{ tipo.label }}
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Categoría -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Categoría
+                    </label>
+                    <div class="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
+                        <button
+                            type="button"
+                            @click="filtros.categoria_id = ''"
+                            :class="[
+                                'px-3 py-1.5 rounded-full text-sm font-medium transition-colors',
+                                !filtros.categoria_id
+                                    ? 'bg-primary text-white'
+                                    : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                            ]"
+                        >
+                            Todas
+                        </button>
+                        <button
+                            v-for="cat in categoriasStore.activas"
+                            :key="cat.id"
+                            type="button"
+                            @click="filtros.categoria_id = cat.id"
+                            :class="[
+                                'px-3 py-1.5 rounded-full text-sm font-medium transition-colors',
+                                filtros.categoria_id === cat.id
+                                    ? 'bg-primary text-white'
+                                    : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                            ]"
+                        >
+                            {{ cat.nombre }}
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Botones de acción -->
+                <div class="flex gap-2 pt-2">
+                    <Button variant="primary" size="sm" class="flex-1" @click="aplicarFiltros">
+                        Aplicar
+                    </Button>
+                    <Button variant="ghost" size="sm" @click="limpiarFiltros">
+                        Limpiar
+                    </Button>
                 </div>
             </div>
-            <div class="mt-3 flex justify-end">
-                <Button variant="ghost" size="sm" @click="limpiarFiltros">
-                    Limpiar filtros
-                </Button>
-            </div>
-        </Card>
+        </div>
 
         <!-- Lista de gastos -->
         <HistorialSkeleton v-if="gastosStore.loading" />
@@ -266,10 +356,9 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { ShareIcon, DocumentTextIcon, TableCellsIcon } from '@heroicons/vue/24/outline';
+import { ShareIcon, DocumentTextIcon, TableCellsIcon, FunnelIcon, ChevronDownIcon } from '@heroicons/vue/24/outline';
 import Card from '../Components/UI/Card.vue';
 import Input from '../Components/UI/Input.vue';
-import Select from '../Components/UI/Select.vue';
 import Button from '../Components/UI/Button.vue';
 import GastoItem from '../Components/Gastos/GastoItem.vue';
 import HistorialSkeleton from '../Components/Historial/HistorialSkeleton.vue';
@@ -295,6 +384,20 @@ const filtros = ref({
     categoria_id: ''
 });
 
+const mostrarFiltros = ref(false);
+
+const hayFiltrosActivos = computed(() => {
+    return filtros.value.desde || filtros.value.hasta || filtros.value.tipo || filtros.value.categoria_id;
+});
+
+const cantidadFiltrosActivos = computed(() => {
+    let count = 0;
+    if (filtros.value.desde || filtros.value.hasta) count++;
+    if (filtros.value.tipo) count++;
+    if (filtros.value.categoria_id) count++;
+    return count;
+});
+
 onMounted(async () => {
     await Promise.all([
         gastosStore.cargarGastos(),
@@ -304,25 +407,17 @@ onMounted(async () => {
     ]);
 });
 
-const tiposOptions = computed(() => [
-    { value: '', label: 'Todos' },
-    ...configStore.tiposGasto
-]);
-
-const categoriasOptions = computed(() => [
-    { value: '', label: 'Todas' },
-    ...categoriasStore.activas.map(c => ({ value: c.id, label: c.nombre }))
-]);
-
 const aplicarFiltros = () => {
     gastosStore.setFiltros(filtros.value);
     gastosStore.cargarGastos(1);
+    mostrarFiltros.value = false;
 };
 
 const limpiarFiltros = () => {
     filtros.value = { desde: '', hasta: '', tipo: '', categoria_id: '' };
     gastosStore.limpiarFiltros();
     gastosStore.cargarGastos(1);
+    mostrarFiltros.value = false;
 };
 
 const editarGasto = (id) => {
