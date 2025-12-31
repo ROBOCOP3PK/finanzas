@@ -103,7 +103,7 @@ router.beforeEach((to, from, next) => {
 
     // Ruta solo para invitados (login) y ya está autenticado
     if (to.meta.guest && authStore.isAuthenticated) {
-        next({ name: 'dashboard' });
+        next({ name: 'gastos.create' });
         return;
     }
 
