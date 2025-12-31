@@ -475,7 +475,7 @@
 
                     <template v-else>
                         <!-- Ya tiene alguien con acceso -->
-                        <div v-if="dataShareStore.currentShare" class="space-y-3">
+                        <div v-if="dataShareStore.myShare" class="space-y-3">
                             <div class="bg-green-50 dark:bg-green-900/20 rounded-lg p-4 border border-green-200 dark:border-green-800">
                                 <div class="flex items-center gap-3">
                                     <div class="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/40 flex items-center justify-center">
@@ -483,13 +483,13 @@
                                     </div>
                                     <div class="flex-1">
                                         <p class="font-medium text-gray-900 dark:text-white">
-                                            {{ dataShareStore.currentShare.guest?.name || dataShareStore.currentShare.guest_email }}
+                                            {{ dataShareStore.myShare.guest?.name || dataShareStore.myShare.guest_email }}
                                         </p>
                                         <p class="text-sm text-gray-500 dark:text-gray-400">
-                                            <span v-if="dataShareStore.currentShare.status === 'pending'" class="text-amber-600 dark:text-amber-400">
+                                            <span v-if="dataShareStore.myShare.status === 'pending'" class="text-amber-600 dark:text-amber-400">
                                                 Invitacion pendiente
                                             </span>
-                                            <span v-else-if="dataShareStore.currentShare.status === 'accepted'" class="text-green-600 dark:text-green-400">
+                                            <span v-else-if="dataShareStore.myShare.status === 'accepted'" class="text-green-600 dark:text-green-400">
                                                 Acceso activo
                                             </span>
                                         </p>
@@ -1556,7 +1556,7 @@ onMounted(async () => {
         categoriasStore.cargarCategorias(),
         serviciosStore.cargarServicios(),
         configStore.cargarConfiguracion(),
-        dataShareStore.fetchShareStatus()
+        dataShareStore.fetchMyShareStatus()
     ]);
 
     // Cargar dia de restablecimiento del usuario
