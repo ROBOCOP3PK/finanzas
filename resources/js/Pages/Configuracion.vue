@@ -1440,7 +1440,7 @@ const guardarDiaRestablecimiento = async () => {
 // Gastos Compartidos
 const formCompartidos = reactive({
     nombre_persona_1: 'Yo',
-    nombre_persona_2: 'Usuario 2',
+    nombre_persona_2: '',
     porcentaje_persona_1: 50,
     porcentaje_persona_2: 50
 });

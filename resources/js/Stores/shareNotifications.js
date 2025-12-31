@@ -80,6 +80,25 @@ export const useShareNotificationsStore = defineStore('shareNotifications', {
             }
         },
 
+        async deleteNotification(notificationId) {
+            try {
+                await api.delete(`/share-notifications/${notificationId}`);
+                const index = this.notifications.findIndex(n => n.id === notificationId);
+                if (index !== -1) {
+                    const notification = this.notifications[index];
+                    if (!notification.read) {
+                        this.unreadCount = Math.max(0, this.unreadCount - 1);
+                        this.totalCount = Math.max(0, this.totalCount - 1);
+                    }
+                    this.notifications.splice(index, 1);
+                }
+                return { success: true };
+            } catch (error) {
+                console.error('Error deleting notification:', error);
+                return { success: false };
+            }
+        },
+
         // Decrementar contador cuando se aprueba/rechaza un gasto pendiente
         decrementPendingExpenses() {
             this.pendingExpensesCount = Math.max(0, this.pendingExpensesCount - 1);

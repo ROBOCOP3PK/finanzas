@@ -7,22 +7,31 @@ export const useConfigStore = defineStore('config', {
         divisa: 'COP',
         formato_divisa: 'punto',
         nombre_persona_1: 'Yo',
-        nombre_persona_2: 'Usuario 2',
+        nombre_persona_2: '',
         porcentaje_persona_1: 50,
         porcentaje_persona_2: 50
     }),
 
     getters: {
-        tiposGasto: (state) => [
-            { value: 'personal', label: 'Mío' },
-            { value: 'pareja', label: state.nombre_persona_2 },
-            { value: 'compartido', label: `${state.porcentaje_persona_1}/${state.porcentaje_persona_2}` }
-        ],
+        // Verifica si hay un usuario 2 configurado (nombre no vacio)
+        tieneUsuario2: (state) => {
+            return state.nombre_persona_2 && state.nombre_persona_2.trim() !== '';
+        },
+
+        // Tipos de gasto disponibles segun configuracion
+        tiposGasto() {
+            const tipos = [{ value: 'personal', label: 'Mio' }];
+            if (this.tieneUsuario2) {
+                tipos.push({ value: 'pareja', label: this.nombre_persona_2 });
+                tipos.push({ value: 'compartido', label: `${this.porcentaje_persona_1}/${this.porcentaje_persona_2}` });
+            }
+            return tipos;
+        },
 
         getNombreTipo: (state) => (tipo) => {
             const tipos = {
                 'personal': 'Personal',
-                'pareja': state.nombre_persona_2,
+                'pareja': state.nombre_persona_2 || 'Pareja',
                 'compartido': `Compartido (${state.porcentaje_persona_1}/${state.porcentaje_persona_2})`
             };
             return tipos[tipo] || tipo;
@@ -51,7 +60,8 @@ export const useConfigStore = defineStore('config', {
                     this.divisa = data.data.divisa || 'COP';
                     this.formato_divisa = data.data.formato_divisa || 'punto';
                     this.nombre_persona_1 = data.data.nombre_persona_1 || 'Yo';
-                    this.nombre_persona_2 = data.data.nombre_persona_2 || 'Usuario 2';
+                    // nombre_persona_2 vacio significa que no hay usuario 2 configurado
+                    this.nombre_persona_2 = data.data.nombre_persona_2 || '';
                     this.porcentaje_persona_1 = parseFloat(data.data.porcentaje_persona_1) || 50;
                     this.porcentaje_persona_2 = parseFloat(data.data.porcentaje_persona_2) || 50;
                 }

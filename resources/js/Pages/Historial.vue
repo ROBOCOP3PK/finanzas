@@ -13,8 +13,8 @@
                 <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Compartir Gastos</h2>
 
                 <div class="space-y-4">
-                    <!-- Saldo pendiente -->
-                    <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3">
+                    <!-- Saldo pendiente - solo si hay usuario 2 -->
+                    <div v-if="configStore.tieneUsuario2" class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3">
                         <div class="flex items-center justify-between">
                             <span class="text-sm text-gray-600 dark:text-gray-400">
                                 {{ configStore.nombre_persona_2 }} te debe:
@@ -57,8 +57,8 @@
                         </p>
                     </div>
 
-                    <!-- Filtros de Tipo (selección múltiple) -->
-                    <div>
+                    <!-- Filtros de Tipo (selección múltiple) - solo si hay mas de un tipo -->
+                    <div v-if="configStore.tiposGasto.length > 1">
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                             Tipo de gasto
                         </label>
@@ -234,8 +234,8 @@
                     </div>
                 </div>
 
-                <!-- Tipo de gasto -->
-                <div>
+                <!-- Tipo de gasto - solo si hay mas de un tipo -->
+                <div v-if="configStore.tiposGasto.length > 1">
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Tipo de gasto
                     </label>

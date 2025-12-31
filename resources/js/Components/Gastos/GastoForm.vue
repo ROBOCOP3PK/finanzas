@@ -192,8 +192,8 @@
                 />
             </button>
             <div v-show="showOpciones" class="p-3 space-y-3 border-t border-gray-200 dark:border-gray-700">
-                <!-- Tipo de gasto -->
-                <div>
+                <!-- Tipo de gasto - solo mostrar si hay mas de un tipo disponible -->
+                <div v-if="tiposGasto.length > 1">
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Tipo de gasto
                     </label>
@@ -219,8 +219,8 @@
                     <p v-if="errors.tipo" class="mt-1 text-sm text-red-500">{{ errors.tipo }}</p>
                 </div>
 
-                <!-- Medio de pago -->
-                <div>
+                <!-- Medio de pago - solo mostrar si hay mas de 1 medio -->
+                <div v-if="mediosPagoActivos.length > 1">
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Medio de Pago
                     </label>
@@ -457,6 +457,11 @@ onMounted(async () => {
         if (props.gasto.fecha || props.gasto.medio_pago_id || props.gasto.tipo !== 'personal' || props.gasto.concepto) {
             showOpciones.value = true;
         }
+    }
+
+    // Si hay exactamente 1 medio de pago, asignarlo automaticamente
+    if (mediosPagoStore.activos.length === 1 && !form.value.medio_pago_id) {
+        form.value.medio_pago_id = mediosPagoStore.activos[0].id;
     }
 });
 

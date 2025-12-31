@@ -4,15 +4,16 @@
         <DashboardSkeleton v-if="dashboardStore.loading && !dashboardStore.resumenMes.mes" />
 
         <template v-else>
-        <!-- Cards principales: Deuda y Gasto del Mes -->
-        <div class="grid grid-cols-2 gap-3">
-            <!-- Card Deuda - clickeable para ir a abonos -->
+        <!-- Cards principales -->
+        <div :class="configStore.tieneUsuario2 ? 'grid grid-cols-2 gap-3' : ''">
+            <!-- Card Deuda - solo si hay usuario 2 configurado -->
             <router-link
+                v-if="configStore.tieneUsuario2"
                 to="/abonos"
                 class="bg-white dark:bg-gray-800 rounded-xl shadow p-4 block hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
             >
                 <div class="flex items-center justify-between mb-1">
-                    <p class="text-xs text-gray-500 dark:text-gray-400">Deuda {{ nombrePersona2 }}</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">Deuda {{ configStore.nombre_persona_2 }}</p>
                     <ChevronRightIcon class="w-4 h-4 text-gray-400" />
                 </div>
                 <p class="text-xl font-bold" :class="dashboardStore.deudaPersona2 > 0 ? 'text-red-500' : 'text-green-500'">
@@ -48,6 +49,7 @@
             :gastosCompartido="dashboardStore.resumenMes.gastos_compartido"
             :totalAbonos="dashboardStore.resumenMes.total_abonos"
             :porcentajePersona2="dashboardStore.porcentajePersona2"
+            :tieneUsuario2="configStore.tieneUsuario2"
         />
 
         <!-- Toast -->
@@ -78,8 +80,6 @@ const dashboardStore = useDashboardStore();
 const gastosRecurrentesStore = useGastosRecurrentesStore();
 const configStore = useConfigStore();
 const { formatCurrency } = useCurrency();
-
-const nombrePersona2 = computed(() => configStore.nombre_persona_2 || 'Usuario 2');
 
 const showToast = ref(false);
 const toastMessage = ref('');

@@ -131,5 +131,6 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/unread-count', [ShareNotificationController::class, 'unreadCount']);
         Route::post('/{shareNotification}/read', [ShareNotificationController::class, 'markAsRead']);
         Route::post('/read-all', [ShareNotificationController::class, 'markAllAsRead']);
+        Route::delete('/{shareNotification}', [ShareNotificationController::class, 'destroy']);
     });
 });

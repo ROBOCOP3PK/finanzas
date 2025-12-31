@@ -128,47 +128,60 @@
                 <div
                     v-for="notification in notificationsStore.notifications"
                     :key="notification.id"
-                    :class="[
-                        'rounded-lg p-4 transition-colors',
-                        notification.read
-                            ? 'bg-gray-50 dark:bg-gray-800'
-                            : 'bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 shadow-sm'
-                    ]"
+                    class="relative overflow-hidden rounded-lg"
                 >
-                    <div class="flex items-start gap-3">
-                        <div
-                            :class="[
-                                'w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0',
-                                getNotificationStyle(notification.type).bg
-                            ]"
-                        >
-                            <component
-                                :is="getNotificationStyle(notification.type).icon"
-                                :class="['w-5 h-5', getNotificationStyle(notification.type).text]"
-                            />
-                        </div>
-                        <div class="flex-1 min-w-0">
-                            <div class="flex items-start justify-between gap-2">
-                                <p :class="['font-medium', notification.read ? 'text-gray-600 dark:text-gray-400' : 'text-gray-900 dark:text-white']">
-                                    {{ notification.title }}
-                                </p>
-                                <span v-if="!notification.read" class="w-2 h-2 bg-indigo-500 rounded-full flex-shrink-0 mt-2"></span>
-                            </div>
-                            <p :class="['text-sm mt-1', notification.read ? 'text-gray-500 dark:text-gray-500' : 'text-gray-600 dark:text-gray-300']">
-                                {{ notification.message }}
-                            </p>
-                            <p class="text-xs text-gray-400 dark:text-gray-500 mt-2">
-                                {{ formatearFecha(notification.created_at) }}
-                            </p>
-                        </div>
+                    <!-- Fondo rojo de eliminación -->
+                    <div class="absolute inset-0 bg-red-500 flex items-center justify-end px-4">
+                        <TrashIcon class="w-6 h-6 text-white" />
                     </div>
-                    <button
-                        v-if="!notification.read"
-                        @click="marcarLeida(notification.id)"
-                        class="mt-3 text-sm text-primary dark:text-indigo-400 hover:underline"
+                    <!-- Contenido deslizable -->
+                    <div
+                        :class="[
+                            'relative p-4 transition-transform duration-200',
+                            notification.read
+                                ? 'bg-gray-50 dark:bg-gray-800'
+                                : 'bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 shadow-sm'
+                        ]"
+                        :style="{ transform: `translateX(${getSwipeOffset(notification.id)}px)` }"
+                        @touchstart="handleTouchStart($event, notification.id)"
+                        @touchmove="handleTouchMove($event, notification.id)"
+                        @touchend="handleTouchEnd($event, notification.id)"
                     >
-                        Marcar como leida
-                    </button>
+                        <div class="flex items-start gap-3">
+                            <div
+                                :class="[
+                                    'w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0',
+                                    getNotificationStyle(notification.type).bg
+                                ]"
+                            >
+                                <component
+                                    :is="getNotificationStyle(notification.type).icon"
+                                    :class="['w-5 h-5', getNotificationStyle(notification.type).text]"
+                                />
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-start justify-between gap-2">
+                                    <p :class="['font-medium', notification.read ? 'text-gray-600 dark:text-gray-400' : 'text-gray-900 dark:text-white']">
+                                        {{ notification.title }}
+                                    </p>
+                                    <span v-if="!notification.read" class="w-2 h-2 bg-indigo-500 rounded-full flex-shrink-0 mt-2"></span>
+                                </div>
+                                <p :class="['text-sm mt-1', notification.read ? 'text-gray-500 dark:text-gray-500' : 'text-gray-600 dark:text-gray-300']">
+                                    {{ notification.message }}
+                                </p>
+                                <p class="text-xs text-gray-400 dark:text-gray-500 mt-2">
+                                    {{ formatearFecha(notification.created_at) }}
+                                </p>
+                            </div>
+                        </div>
+                        <button
+                            v-if="!notification.read"
+                            @click="marcarLeida(notification.id)"
+                            class="mt-3 text-sm text-primary dark:text-indigo-400 hover:underline"
+                        >
+                            Marcar como leida
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -185,7 +198,8 @@ import {
     ExclamationTriangleIcon,
     CheckCircleIcon,
     XCircleIcon,
-    ChevronRightIcon
+    ChevronRightIcon,
+    TrashIcon
 } from '@heroicons/vue/24/outline';
 import { useShareNotificationsStore } from '../Stores/shareNotifications';
 import { useDataShareStore } from '../Stores/dataShare';
@@ -198,6 +212,10 @@ const serviciosStore = useServiciosStore();
 
 const loading = ref(true);
 const processingId = ref(null);
+
+// Estado para swipe
+const swipeState = ref({});
+const SWIPE_THRESHOLD = 80;
 
 const tieneNotificaciones = computed(() => {
     return dataShareStore.pendingInvitations.length > 0 ||
@@ -288,6 +306,71 @@ const irASolicitudes = () => {
 
 const irAServicios = () => {
     router.push('/configuracion');
+};
+
+// Funciones de swipe
+const getSwipeOffset = (notificationId) => {
+    return swipeState.value[notificationId]?.offset || 0;
+};
+
+const handleTouchStart = (event, notificationId) => {
+    const touch = event.touches[0];
+    swipeState.value[notificationId] = {
+        startX: touch.clientX,
+        startY: touch.clientY,
+        offset: swipeState.value[notificationId]?.offset || 0,
+        swiping: false
+    };
+};
+
+const handleTouchMove = (event, notificationId) => {
+    const state = swipeState.value[notificationId];
+    if (!state) return;
+
+    const touch = event.touches[0];
+    const deltaX = touch.clientX - state.startX;
+    const deltaY = touch.clientY - state.startY;
+
+    // Solo procesar si el movimiento horizontal es mayor que el vertical
+    if (!state.swiping && Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 10) {
+        state.swiping = true;
+    }
+
+    if (state.swiping) {
+        event.preventDefault();
+        // Solo permitir deslizar hacia la izquierda (valores negativos)
+        const newOffset = Math.min(0, deltaX);
+        state.offset = Math.max(newOffset, -120);
+    }
+};
+
+const handleTouchEnd = async (event, notificationId) => {
+    const state = swipeState.value[notificationId];
+    if (!state) return;
+
+    if (state.offset < -SWIPE_THRESHOLD) {
+        // Eliminar notificación
+        await eliminarNotificacion(notificationId);
+    } else {
+        // Restaurar posición
+        state.offset = 0;
+    }
+
+    state.swiping = false;
+};
+
+const eliminarNotificacion = async (notificationId) => {
+    // Animación de salida
+    swipeState.value[notificationId].offset = -500;
+
+    // Esperar animación
+    await new Promise(resolve => setTimeout(resolve, 200));
+
+    // Eliminar del store
+    await notificationsStore.deleteNotification(notificationId);
+
+    // Limpiar estado
+    delete swipeState.value[notificationId];
 };
 
 onMounted(async () => {

@@ -88,4 +88,26 @@ class ShareNotificationController extends Controller
             'message' => 'Todas las notificaciones marcadas como leidas'
         ]);
     }
+
+    /**
+     * Eliminar notificacion
+     */
+    public function destroy(Request $request, ShareNotification $shareNotification): JsonResponse
+    {
+        $user = $request->user();
+
+        if ($shareNotification->user_id !== $user->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No autorizado'
+            ], 403);
+        }
+
+        $shareNotification->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Notificacion eliminada'
+        ]);
+    }
 }
