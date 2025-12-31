@@ -60,6 +60,11 @@ class ConfiguracionController extends Controller
                     ]
                 ], 422);
             }
+
+            // Sincronizar porcentaje_persona_2 con la tabla users para calculos de deuda
+            $request->user()->update([
+                'porcentaje_persona_2' => $porcentaje2
+            ]);
         }
 
         foreach ($configuraciones as $clave => $valor) {
