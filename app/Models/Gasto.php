@@ -20,7 +20,7 @@ class Gasto extends Model
 
     protected $casts = [
         'fecha' => 'date',
-        'valor' => 'decimal:2'
+        'valor' => 'integer'
     ];
 
     // Constantes para tipos

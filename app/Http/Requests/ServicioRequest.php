@@ -18,7 +18,7 @@ class ServicioRequest extends FormRequest
             'categoria_id' => 'nullable|exists:categorias,id',
             'icono' => 'nullable|string|max:50',
             'color' => 'nullable|string|max:20',
-            'valor_estimado' => 'nullable|numeric|min:0',
+            'valor_estimado' => 'nullable|integer|min:0',
             'activo' => 'boolean',
             'orden' => 'integer|min:0'
         ];

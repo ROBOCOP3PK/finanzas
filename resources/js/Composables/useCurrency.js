@@ -94,29 +94,17 @@ export function useCurrency() {
         }
     };
 
-    // Parsea un valor formateado a numero (soporta decimales)
+    // Parsea un valor formateado a numero entero
     const parseFormattedValue = (value) => {
         if (!value && value !== 0) return 0;
 
-        const formato = configStore.formatoDivisa || 'coma';
-        let str = String(value);
-
-        // Remover todo excepto números, puntos y comas
-        str = str.replace(/[^0-9.,]/g, '');
+        // Remover todo excepto números
+        const str = String(value).replace(/[^0-9]/g, '');
 
         if (!str) return 0;
 
-        if (formato === 'punto') {
-            // Formato punto: 1.234,56 -> 1234.56
-            str = str.replace(/\./g, '');  // Quitar separadores de miles
-            str = str.replace(',', '.');    // Convertir coma decimal a punto
-        } else {
-            // Formato coma: 1,234.56 -> 1234.56
-            str = str.replace(/,/g, '');   // Quitar separadores de miles
-        }
-
-        const num = parseFloat(str);
-        return isNaN(num) ? 0 : Math.round(num * 100) / 100; // Redondear a 2 decimales
+        const num = parseInt(str, 10);
+        return isNaN(num) ? 0 : num;
     };
 
     return {

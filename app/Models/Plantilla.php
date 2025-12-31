@@ -20,7 +20,7 @@ class Plantilla extends Model
     ];
 
     protected $casts = [
-        'valor' => 'decimal:2',
+        'valor' => 'integer',
         'uso_count' => 'integer',
         'activo' => 'boolean',
         'orden' => 'integer'

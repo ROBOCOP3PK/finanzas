@@ -23,7 +23,7 @@ class Servicio extends Model
     protected $casts = [
         'activo' => 'boolean',
         'orden' => 'integer',
-        'valor_estimado' => 'decimal:2'
+        'valor_estimado' => 'integer'
     ];
 
     public function user(): BelongsTo

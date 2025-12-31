@@ -20,7 +20,7 @@ class GastoRequest extends FormRequest
             'medio_pago_id' => 'nullable|exists:medios_pago,id',
             'categoria_id' => 'required|exists:categorias,id',
             'concepto' => 'nullable|string|max:255',
-            'valor' => 'required|numeric|min:0.01',
+            'valor' => 'required|integer|min:1',
             'tipo' => ['nullable', Rule::in(Gasto::TIPOS)]
         ];
     }

@@ -21,7 +21,7 @@ class PlantillaRequest extends FormRequest
             'medio_pago_id' => 'required|exists:medios_pago,id',
             'categoria_id' => 'nullable|exists:categorias,id',
             'tipo' => ['required', Rule::in(Gasto::TIPOS)],
-            'valor' => 'nullable|numeric|min:0.01',
+            'valor' => 'nullable|integer|min:1',
             'activo' => 'boolean',
             'orden' => 'integer|min:0'
         ];

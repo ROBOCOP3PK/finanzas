@@ -15,7 +15,7 @@ class AbonoRequest extends FormRequest
     {
         return [
             'fecha' => 'required|date',
-            'valor' => 'required|numeric|min:0.01',
+            'valor' => 'required|integer|min:1',
             'nota' => 'nullable|string|max:255'
         ];
     }

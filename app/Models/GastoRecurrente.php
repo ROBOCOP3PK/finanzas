@@ -21,7 +21,7 @@ class GastoRecurrente extends Model
     ];
 
     protected $casts = [
-        'valor' => 'decimal:2',
+        'valor' => 'integer',
         'dia_mes' => 'integer',
         'activo' => 'boolean',
         'ultimo_registro' => 'date'

@@ -20,7 +20,7 @@ class GastoRecurrenteRequest extends FormRequest
             'medio_pago_id' => 'required|exists:medios_pago,id',
             'categoria_id' => 'nullable|exists:categorias,id',
             'tipo' => ['required', Rule::in(Gasto::TIPOS)],
-            'valor' => 'required|numeric|min:0.01',
+            'valor' => 'required|integer|min:1',
             'dia_mes' => 'required|integer|min:1|max:31',
             'activo' => 'boolean'
         ];
