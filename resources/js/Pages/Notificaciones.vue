@@ -95,7 +95,7 @@
             </div>
 
             <!-- Servicios pendientes de pago -->
-            <div v-if="serviciosStore.tieneAlertas" class="space-y-3">
+            <div v-if="serviciosStore.serviciosPendientesCount > 0" class="space-y-3">
                 <h2 class="text-sm font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wide">
                     Servicios pendientes
                 </h2>
@@ -220,7 +220,7 @@ const SWIPE_THRESHOLD = 80;
 const tieneNotificaciones = computed(() => {
     return dataShareStore.pendingInvitations.length > 0 ||
            dataShareStore.pendingExpensesCount > 0 ||
-           serviciosStore.tieneAlertas ||
+           serviciosStore.serviciosPendientesCount > 0 ||
            notificationsStore.notifications.length > 0;
 });
 
