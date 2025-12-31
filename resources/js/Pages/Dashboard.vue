@@ -34,12 +34,6 @@
             @registrar="registrarRecurrentes"
         />
 
-        <!-- Plantillas Rápidas -->
-        <PlantillasRapidas
-            :plantillas="plantillasStore.rapidas"
-            @usar="abrirModalPlantilla"
-        />
-
         <!-- Resumen por Categorías -->
         <ResumenCategorias
             :categorias="dashboardStore.porCategoria"
@@ -56,32 +50,6 @@
             :porcentajePersona2="dashboardStore.porcentajePersona2"
         />
 
-        <!-- Modal para usar plantilla -->
-        <Modal :show="showPlantillaModal" title="Registrar Gasto" @close="showPlantillaModal = false">
-            <div class="space-y-4">
-                <p class="text-gray-600 dark:text-gray-400">
-                    {{ plantillaSeleccionada?.nombre }}
-                </p>
-                <Input
-                    v-model="plantillaFecha"
-                    type="date"
-                    label="Fecha"
-                />
-                <Input
-                    v-model="plantillaValor"
-                    type="number"
-                    label="Valor"
-                    :placeholder="plantillaSeleccionada?.valor?.toString() || '0'"
-                />
-            </div>
-            <template #footer>
-                <div class="flex gap-2 justify-end">
-                    <Button variant="secondary" @click="showPlantillaModal = false">Cancelar</Button>
-                    <Button @click="usarPlantilla" :loading="usandoPlantilla">Guardar</Button>
-                </div>
-            </template>
-        </Modal>
-
         <!-- Toast -->
         <Toast
             :show="showToast"
@@ -97,33 +65,21 @@
 import { ref, computed, onMounted } from 'vue';
 import { ChevronRightIcon } from '@heroicons/vue/24/outline';
 import AlertaRecurrentes from '../Components/Dashboard/AlertaRecurrentes.vue';
-import PlantillasRapidas from '../Components/Dashboard/PlantillasRapidas.vue';
 import ResumenMes from '../Components/Dashboard/ResumenMes.vue';
 import ResumenCategorias from '../Components/Dashboard/ResumenCategorias.vue';
 import DashboardSkeleton from '../Components/Dashboard/DashboardSkeleton.vue';
-import Modal from '../Components/UI/Modal.vue';
-import Input from '../Components/UI/Input.vue';
-import Button from '../Components/UI/Button.vue';
 import Toast from '../Components/UI/Toast.vue';
 import { useDashboardStore } from '../Stores/dashboard';
-import { usePlantillasStore } from '../Stores/plantillas';
 import { useGastosRecurrentesStore } from '../Stores/gastosRecurrentes';
 import { useConfigStore } from '../Stores/config';
 import { useCurrency } from '../Composables/useCurrency';
 
 const dashboardStore = useDashboardStore();
-const plantillasStore = usePlantillasStore();
 const gastosRecurrentesStore = useGastosRecurrentesStore();
 const configStore = useConfigStore();
 const { formatCurrency } = useCurrency();
 
 const nombrePersona2 = computed(() => configStore.nombre_persona_2 || 'Usuario 2');
-
-const showPlantillaModal = ref(false);
-const plantillaSeleccionada = ref(null);
-const plantillaFecha = ref(new Date().toISOString().split('T')[0]);
-const plantillaValor = ref('');
-const usandoPlantilla = ref(false);
 
 const showToast = ref(false);
 const toastMessage = ref('');
@@ -132,43 +88,9 @@ const toastType = ref('success');
 onMounted(async () => {
     await Promise.all([
         dashboardStore.cargarDashboard(),
-        plantillasStore.cargarRapidas(),
         configStore.cargarConfiguracion()
     ]);
 });
-
-const abrirModalPlantilla = (plantilla) => {
-    plantillaSeleccionada.value = plantilla;
-    plantillaFecha.value = new Date().toISOString().split('T')[0];
-    plantillaValor.value = plantilla.valor || '';
-    showPlantillaModal.value = true;
-};
-
-const usarPlantilla = async () => {
-    if (!plantillaSeleccionada.value) return;
-
-    usandoPlantilla.value = true;
-    try {
-        await plantillasStore.usarPlantilla(
-            plantillaSeleccionada.value.id,
-            plantillaFecha.value,
-            plantillaValor.value || null
-        );
-
-        showPlantillaModal.value = false;
-        toastMessage.value = 'Gasto registrado correctamente';
-        toastType.value = 'success';
-        showToast.value = true;
-
-        await dashboardStore.cargarDashboard();
-    } catch (error) {
-        toastMessage.value = 'Error al registrar el gasto';
-        toastType.value = 'error';
-        showToast.value = true;
-    } finally {
-        usandoPlantilla.value = false;
-    }
-};
 
 const registrarRecurrentes = async () => {
     try {

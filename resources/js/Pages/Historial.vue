@@ -269,15 +269,15 @@
                     </div>
                 </div>
 
-                <!-- Categoría -->
+                <!-- Categoría (colapsable) -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Categoría
+                        Categoria
                     </label>
-                    <div class="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
+                    <div class="flex flex-wrap gap-2">
                         <button
                             type="button"
-                            @click="filtros.categoria_id = ''"
+                            @click="filtros.categoria_id = ''; mostrarCategoriasHistorial = false"
                             :class="[
                                 'px-3 py-1.5 rounded-full text-sm font-medium transition-colors',
                                 !filtros.categoria_id
@@ -287,6 +287,17 @@
                         >
                             Todas
                         </button>
+                        <button
+                            v-if="!mostrarCategoriasHistorial && !filtros.categoria_id"
+                            type="button"
+                            @click="mostrarCategoriasHistorial = true"
+                            class="px-3 py-1.5 rounded-full text-sm font-medium bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                        >
+                            Elegir categoria...
+                        </button>
+                    </div>
+                    <!-- Categorías expandidas -->
+                    <div v-if="mostrarCategoriasHistorial || filtros.categoria_id" class="flex flex-wrap gap-2 mt-2 max-h-32 overflow-y-auto">
                         <button
                             v-for="cat in categoriasStore.activas"
                             :key="cat.id"
@@ -385,6 +396,7 @@ const filtros = ref({
 });
 
 const mostrarFiltros = ref(false);
+const mostrarCategoriasHistorial = ref(false);
 
 const hayFiltrosActivos = computed(() => {
     return filtros.value.desde || filtros.value.hasta || filtros.value.tipo || filtros.value.categoria_id;
@@ -415,6 +427,7 @@ const aplicarFiltros = () => {
 
 const limpiarFiltros = () => {
     filtros.value = { desde: '', hasta: '', tipo: '', categoria_id: '' };
+    mostrarCategoriasHistorial.value = false;
     gastosStore.limpiarFiltros();
     gastosStore.cargarGastos(1);
     mostrarFiltros.value = false;
