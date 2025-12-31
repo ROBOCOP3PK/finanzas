@@ -1,5 +1,12 @@
 <template>
     <div class="p-4 space-y-4 max-w-full overflow-hidden">
+        <!-- Loading inicial -->
+        <div v-if="dashboardStore.loading && !dashboardStore.resumenMes.mes" class="flex flex-col items-center justify-center py-12">
+            <div class="animate-spin w-10 h-10 border-4 border-primary border-t-transparent rounded-full mb-4"></div>
+            <p class="text-gray-500 dark:text-gray-400">Cargando datos...</p>
+        </div>
+
+        <template v-else>
         <!-- Cards principales: Deuda y Gasto del Mes -->
         <div class="grid grid-cols-2 gap-3">
             <!-- Card Deuda - clickeable para ir a abonos -->
@@ -88,6 +95,7 @@
             :type="toastType"
             @close="showToast = false"
         />
+        </template>
     </div>
 </template>
 
