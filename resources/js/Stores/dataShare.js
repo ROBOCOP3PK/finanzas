@@ -27,7 +27,8 @@ export const useDataShareStore = defineStore('dataShare', {
         isOwner: (state) => state.hasActiveShare,
         isGuest: (state) => state.activeShares.length > 0,
         hasPendingInvitations: (state) => state.pendingInvitations.length > 0,
-        totalPendingCount: (state) => state.pendingExpensesCount
+        totalPendingCount: (state) => state.pendingExpensesCount,
+        pendingExpensesToApprove: (state) => state.pendingExpenses
     },
 
     actions: {
@@ -88,6 +89,11 @@ export const useDataShareStore = defineStore('dataShare', {
                 console.error('Error fetching pending expenses:', error);
                 return { success: false };
             }
+        },
+
+        // Alias para fetchPendingExpenses (usado en AppLayout)
+        async fetchPendingExpensesToApprove() {
+            return this.fetchPendingExpenses();
         },
 
         async approveExpense(id) {

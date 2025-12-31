@@ -31,26 +31,47 @@
 <script setup>
 import { computed, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
-import { HomeIcon, PlusCircleIcon, ClockIcon, Cog6ToothIcon, UsersIcon } from '@heroicons/vue/24/outline';
+import { HomeIcon, PlusCircleIcon, ClockIcon, Cog6ToothIcon, UsersIcon, BellIcon } from '@heroicons/vue/24/outline';
 import { useDataShareStore } from '../../Stores/dataShare';
 import { useShareNotificationsStore } from '../../Stores/shareNotifications';
+import { useServiciosStore } from '../../Stores/servicios';
 
 const route = useRoute();
 const dataShareStore = useDataShareStore();
 const notificationsStore = useShareNotificationsStore();
+const serviciosStore = useServiciosStore();
 
 onMounted(async () => {
-    await dataShareStore.fetchSharedWithMe();
-    await notificationsStore.fetchUnreadCount();
+    await Promise.all([
+        dataShareStore.fetchSharedWithMe(),
+        dataShareStore.fetchPendingExpenses(),
+        notificationsStore.fetchUnreadCount(),
+        serviciosStore.cargarAlertas()
+    ]);
 });
 
 const hasSharedAccess = computed(() => dataShareStore.activeShares.length > 0);
+
+// Contador total de notificaciones pendientes
+const totalNotificaciones = computed(() => {
+    let total = 0;
+    // Notificaciones sin leer
+    total += notificationsStore.unreadCount || 0;
+    // Invitaciones pendientes
+    total += dataShareStore.pendingInvitations?.length || 0;
+    // Gastos pendientes de aprobar
+    total += dataShareStore.pendingExpensesCount || 0;
+    // Servicios pendientes
+    total += serviciosStore.serviciosPendientesCount || 0;
+    return total;
+});
 
 const navItems = computed(() => [
     { to: '/gastos/nuevo', label: 'Nuevo', icon: PlusCircleIcon },
     { to: '/dashboard', label: 'Resumen', icon: HomeIcon },
     { to: '/historial', label: 'Historial', icon: ClockIcon },
     ...(hasSharedAccess.value ? [{ to: '/shared-data', label: 'Compartido', icon: UsersIcon }] : []),
+    { to: '/notificaciones', label: 'Alertas', icon: BellIcon, badge: totalNotificaciones.value },
     { to: '/configuracion', label: 'Config', icon: Cog6ToothIcon },
 ]);
 

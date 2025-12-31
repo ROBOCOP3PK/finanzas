@@ -63,8 +63,8 @@ class DataShareController extends Controller
             ], 422);
         }
 
-        // Buscar si el invitado ya tiene cuenta
-        $guest = User::where('email', $guestEmail)->first();
+        // Buscar si el invitado ya tiene cuenta (case insensitive)
+        $guest = User::whereRaw('LOWER(email) = ?', [$guestEmail])->first();
 
         $share = DataShare::create([
             'owner_id' => $user->id,
@@ -130,10 +130,11 @@ class DataShareController extends Controller
     {
         $user = $request->user();
 
-        // Buscar por guest_id o por email (para cuando no tenia cuenta al ser invitado)
-        $shares = DataShare::where(function ($q) use ($user) {
+        // Buscar por guest_id o por email (case insensitive para cuando no tenia cuenta al ser invitado)
+        $userEmailLower = strtolower($user->email);
+        $shares = DataShare::where(function ($q) use ($user, $userEmailLower) {
                 $q->where('guest_id', $user->id)
-                  ->orWhere('guest_email', strtolower($user->email));
+                  ->orWhereRaw('LOWER(guest_email) = ?', [$userEmailLower]);
             })
             ->with('owner:id,name,email')
             ->orderByDesc('created_at')

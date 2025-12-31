@@ -46,6 +46,7 @@ class AuthController extends Controller
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
+                'dia_restablecimiento_servicios' => $user->dia_restablecimiento_servicios,
             ],
             'token' => $token,
         ]);
@@ -164,6 +165,7 @@ class AuthController extends Controller
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
+                'dia_restablecimiento_servicios' => $user->dia_restablecimiento_servicios,
             ],
             'token' => $token,
         ], 201);
@@ -336,11 +338,13 @@ class AuthController extends Controller
      */
     public function me(Request $request)
     {
+        $user = $request->user();
         return response()->json([
             'user' => [
-                'id' => $request->user()->id,
-                'name' => $request->user()->name,
-                'email' => $request->user()->email,
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'dia_restablecimiento_servicios' => $user->dia_restablecimiento_servicios,
             ],
         ]);
     }

@@ -73,6 +73,12 @@ const routes = [
         meta: { requiresAuth: true }
     },
     {
+        path: '/notificaciones',
+        name: 'notificaciones',
+        component: () => import('./Pages/Notificaciones.vue'),
+        meta: { requiresAuth: true }
+    },
+    {
         path: '/shared-data',
         name: 'shared-data.list',
         component: () => import('./Pages/SharedData/List.vue'),
