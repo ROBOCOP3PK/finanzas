@@ -327,21 +327,22 @@
             </div>
         </div>
 
-        <!-- Lista de gastos -->
-        <HistorialSkeleton v-if="gastosStore.loading" />
+        <!-- Lista de gastos y abonos -->
+        <HistorialSkeleton v-if="gastosStore.loading || abonosStore.loading" />
 
-        <div v-else-if="gastosStore.gastos.length === 0" class="text-center py-8 text-gray-500 dark:text-gray-400">
-            No hay gastos que coincidan con los filtros
+        <div v-else-if="historialCombinado.length === 0" class="text-center py-8 text-gray-500 dark:text-gray-400">
+            No hay registros que coincidan con los filtros
         </div>
 
         <div v-else class="bg-white dark:bg-gray-800 rounded-xl shadow-sm">
             <div
-                v-for="gasto in gastosStore.gastos"
-                :key="gasto.id"
-                @click="editarGasto(gasto.id)"
+                v-for="item in historialCombinado"
+                :key="item._tipo + '-' + item.id"
+                @click="item._tipo === 'gasto' ? editarGasto(item.id) : irAAbonos()"
                 class="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 px-4"
             >
-                <GastoItem :gasto="gasto" />
+                <GastoItem v-if="item._tipo === 'gasto'" :gasto="item" />
+                <AbonoItem v-else :abono="item" />
             </div>
         </div>
 
@@ -358,8 +359,8 @@
         </div>
 
         <!-- Info de registros -->
-        <p v-if="gastosStore.gastos.length > 0" class="text-center text-xs text-gray-400 dark:text-gray-500 mt-2">
-            Mostrando {{ gastosStore.gastos.length }} de {{ gastosStore.meta.total }} registros
+        <p v-if="historialCombinado.length > 0" class="text-center text-xs text-gray-400 dark:text-gray-500 mt-2">
+            Mostrando {{ historialCombinado.length }} registros
         </p>
     </div>
 </template>
@@ -372,11 +373,13 @@ import Card from '../Components/UI/Card.vue';
 import Input from '../Components/UI/Input.vue';
 import Button from '../Components/UI/Button.vue';
 import GastoItem from '../Components/Gastos/GastoItem.vue';
+import AbonoItem from '../Components/Abonos/AbonoItem.vue';
 import HistorialSkeleton from '../Components/Historial/HistorialSkeleton.vue';
 import { useGastosStore } from '../Stores/gastos';
 import { useCategoriasStore } from '../Stores/categorias';
 import { useConfigStore } from '../Stores/config';
 import { useDashboardStore } from '../Stores/dashboard';
+import { useAbonosStore } from '../Stores/abonos';
 import { useCurrency } from '../Composables/useCurrency';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -386,6 +389,7 @@ const gastosStore = useGastosStore();
 const categoriasStore = useCategoriasStore();
 const configStore = useConfigStore();
 const dashboardStore = useDashboardStore();
+const abonosStore = useAbonosStore();
 const { formatCurrency } = useCurrency();
 
 const filtros = ref({
@@ -415,8 +419,30 @@ onMounted(async () => {
         gastosStore.cargarGastos(),
         categoriasStore.cargarCategorias(true),
         configStore.cargarConfiguracion(),
-        dashboardStore.cargarDashboard()
+        dashboardStore.cargarDashboard(),
+        abonosStore.cargarAbonos()
     ]);
+});
+
+// Combinar gastos y abonos ordenados por fecha
+const historialCombinado = computed(() => {
+    const gastos = gastosStore.gastos.map(g => ({
+        ...g,
+        _tipo: 'gasto'
+    }));
+
+    // Solo incluir abonos si hay usuario 2 configurado
+    const abonos = configStore.tieneUsuario2
+        ? abonosStore.abonos.map(a => ({
+            id: a.id,
+            fecha: a.fecha,
+            concepto: a.nota || 'Abono',
+            valor: a.valor,
+            _tipo: 'abono'
+        }))
+        : [];
+
+    return [...gastos, ...abonos].sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
 });
 
 const aplicarFiltros = () => {
@@ -435,6 +461,10 @@ const limpiarFiltros = () => {
 
 const editarGasto = (id) => {
     router.push(`/gastos/${id}/editar`);
+};
+
+const irAAbonos = () => {
+    router.push('/abonos');
 };
 
 // Funciones de compartir
