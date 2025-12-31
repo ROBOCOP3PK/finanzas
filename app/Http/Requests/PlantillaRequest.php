@@ -13,6 +13,15 @@ class PlantillaRequest extends FormRequest
         return true;
     }
 
+    protected function prepareForValidation(): void
+    {
+        if ($this->has('valor') && $this->valor !== null) {
+            $this->merge([
+                'valor' => (int) $this->valor
+            ]);
+        }
+    }
+
     public function rules(): array
     {
         return [
@@ -21,7 +30,7 @@ class PlantillaRequest extends FormRequest
             'medio_pago_id' => 'required|exists:medios_pago,id',
             'categoria_id' => 'nullable|exists:categorias,id',
             'tipo' => ['required', Rule::in(Gasto::TIPOS)],
-            'valor' => 'nullable|integer|min:1',
+            'valor' => 'nullable|numeric|min:1',
             'activo' => 'boolean',
             'orden' => 'integer|min:0'
         ];

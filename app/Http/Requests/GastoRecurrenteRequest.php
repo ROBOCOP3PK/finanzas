@@ -13,6 +13,15 @@ class GastoRecurrenteRequest extends FormRequest
         return true;
     }
 
+    protected function prepareForValidation(): void
+    {
+        if ($this->has('valor')) {
+            $this->merge([
+                'valor' => (int) $this->valor
+            ]);
+        }
+    }
+
     public function rules(): array
     {
         return [
@@ -20,7 +29,7 @@ class GastoRecurrenteRequest extends FormRequest
             'medio_pago_id' => 'required|exists:medios_pago,id',
             'categoria_id' => 'nullable|exists:categorias,id',
             'tipo' => ['required', Rule::in(Gasto::TIPOS)],
-            'valor' => 'required|integer|min:1',
+            'valor' => 'required|numeric|min:1',
             'dia_mes' => 'required|integer|min:1|max:31',
             'activo' => 'boolean'
         ];

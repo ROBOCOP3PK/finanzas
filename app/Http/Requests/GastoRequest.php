@@ -13,6 +13,15 @@ class GastoRequest extends FormRequest
         return true;
     }
 
+    protected function prepareForValidation(): void
+    {
+        if ($this->has('valor')) {
+            $this->merge([
+                'valor' => (int) $this->valor
+            ]);
+        }
+    }
+
     public function rules(): array
     {
         return [
@@ -20,7 +29,7 @@ class GastoRequest extends FormRequest
             'medio_pago_id' => 'nullable|exists:medios_pago,id',
             'categoria_id' => 'required|exists:categorias,id',
             'concepto' => 'nullable|string|max:255',
-            'valor' => 'required|integer|min:1',
+            'valor' => 'required|numeric|min:1',
             'tipo' => ['nullable', Rule::in(Gasto::TIPOS)]
         ];
     }

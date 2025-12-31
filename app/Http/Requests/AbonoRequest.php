@@ -11,11 +11,20 @@ class AbonoRequest extends FormRequest
         return true;
     }
 
+    protected function prepareForValidation(): void
+    {
+        if ($this->has('valor')) {
+            $this->merge([
+                'valor' => (int) $this->valor
+            ]);
+        }
+    }
+
     public function rules(): array
     {
         return [
             'fecha' => 'required|date',
-            'valor' => 'required|integer|min:1',
+            'valor' => 'required|numeric|min:1',
             'nota' => 'nullable|string|max:255'
         ];
     }

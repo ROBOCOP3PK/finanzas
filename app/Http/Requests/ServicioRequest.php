@@ -11,6 +11,15 @@ class ServicioRequest extends FormRequest
         return true;
     }
 
+    protected function prepareForValidation(): void
+    {
+        if ($this->has('valor_estimado') && $this->valor_estimado !== null) {
+            $this->merge([
+                'valor_estimado' => (int) $this->valor_estimado
+            ]);
+        }
+    }
+
     public function rules(): array
     {
         return [
@@ -18,7 +27,7 @@ class ServicioRequest extends FormRequest
             'categoria_id' => 'nullable|exists:categorias,id',
             'icono' => 'nullable|string|max:50',
             'color' => 'nullable|string|max:20',
-            'valor_estimado' => 'nullable|integer|min:0',
+            'valor_estimado' => 'nullable|numeric|min:0',
             'activo' => 'boolean',
             'orden' => 'integer|min:0'
         ];
