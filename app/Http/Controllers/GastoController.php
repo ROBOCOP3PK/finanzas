@@ -40,7 +40,7 @@ class GastoController extends Controller
             $query->categoria($request->categoria_id);
         }
 
-        $perPage = $request->input('per_page', 20);
+        $perPage = $request->input('per_page', 15);
         $gastos = $query->paginate($perPage);
 
         return response()->json([

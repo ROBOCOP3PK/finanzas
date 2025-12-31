@@ -5,11 +5,12 @@ export const useGastosStore = defineStore('gastos', {
     state: () => ({
         gastos: [],
         loading: false,
+        loadingMore: false,
         error: null,
         meta: {
             current_page: 1,
             last_page: 1,
-            per_page: 20,
+            per_page: 15,
             total: 0
         },
         filtros: {
@@ -20,6 +21,10 @@ export const useGastosStore = defineStore('gastos', {
             categoria_id: null
         }
     }),
+
+    getters: {
+        hayMas: (state) => state.meta.current_page < state.meta.last_page
+    },
 
     actions: {
         async cargarGastos(page = 1) {
@@ -46,6 +51,34 @@ export const useGastosStore = defineStore('gastos', {
                 console.error(error);
             } finally {
                 this.loading = false;
+            }
+        },
+
+        async cargarMas() {
+            if (!this.hayMas || this.loadingMore) return;
+
+            this.loadingMore = true;
+            try {
+                const params = {
+                    page: this.meta.current_page + 1,
+                    ...this.filtros
+                };
+
+                // Remove null values
+                Object.keys(params).forEach(key => {
+                    if (params[key] === null || params[key] === '') {
+                        delete params[key];
+                    }
+                });
+
+                const response = await api.get('/gastos', { params });
+                this.gastos = [...this.gastos, ...response.data.data];
+                this.meta = response.data.meta;
+            } catch (error) {
+                this.error = 'Error cargando más gastos';
+                console.error(error);
+            } finally {
+                this.loadingMore = false;
             }
         },
 

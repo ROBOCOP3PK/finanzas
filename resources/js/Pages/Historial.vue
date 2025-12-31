@@ -244,28 +244,22 @@
             </div>
         </div>
 
-        <!-- Paginación -->
-        <div v-if="gastosStore.meta.last_page > 1" class="flex justify-center gap-2 mt-4">
+        <!-- Cargar más -->
+        <div v-if="gastosStore.hayMas" class="flex justify-center mt-4">
             <Button
                 variant="secondary"
                 size="sm"
-                :disabled="gastosStore.meta.current_page === 1"
-                @click="cargarPagina(gastosStore.meta.current_page - 1)"
+                :loading="gastosStore.loadingMore"
+                @click="gastosStore.cargarMas()"
             >
-                Anterior
-            </Button>
-            <span class="py-2 px-3 text-sm text-gray-600 dark:text-gray-400">
-                {{ gastosStore.meta.current_page }} / {{ gastosStore.meta.last_page }}
-            </span>
-            <Button
-                variant="secondary"
-                size="sm"
-                :disabled="gastosStore.meta.current_page === gastosStore.meta.last_page"
-                @click="cargarPagina(gastosStore.meta.current_page + 1)"
-            >
-                Siguiente
+                Cargar más
             </Button>
         </div>
+
+        <!-- Info de registros -->
+        <p v-if="gastosStore.gastos.length > 0" class="text-center text-xs text-gray-400 dark:text-gray-500 mt-2">
+            Mostrando {{ gastosStore.gastos.length }} de {{ gastosStore.meta.total }} registros
+        </p>
     </div>
 </template>
 
@@ -329,10 +323,6 @@ const limpiarFiltros = () => {
     filtros.value = { desde: '', hasta: '', tipo: '', categoria_id: '' };
     gastosStore.limpiarFiltros();
     gastosStore.cargarGastos(1);
-};
-
-const cargarPagina = (page) => {
-    gastosStore.cargarGastos(page);
 };
 
 const editarGasto = (id) => {

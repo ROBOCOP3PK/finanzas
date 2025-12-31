@@ -56,9 +56,6 @@
             :porcentajePersona2="dashboardStore.porcentajePersona2"
         />
 
-        <!-- Últimos Movimientos -->
-        <UltimosMovimientos :movimientos="dashboardStore.ultimosMovimientos" />
-
         <!-- Modal para usar plantilla -->
         <Modal :show="showPlantillaModal" title="Registrar Gasto" @close="showPlantillaModal = false">
             <div class="space-y-4">
@@ -103,7 +100,6 @@ import AlertaRecurrentes from '../Components/Dashboard/AlertaRecurrentes.vue';
 import PlantillasRapidas from '../Components/Dashboard/PlantillasRapidas.vue';
 import ResumenMes from '../Components/Dashboard/ResumenMes.vue';
 import ResumenCategorias from '../Components/Dashboard/ResumenCategorias.vue';
-import UltimosMovimientos from '../Components/Dashboard/UltimosMovimientos.vue';
 import DashboardSkeleton from '../Components/Dashboard/DashboardSkeleton.vue';
 import Modal from '../Components/UI/Modal.vue';
 import Input from '../Components/UI/Input.vue';
