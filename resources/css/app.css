@@ -98,7 +98,7 @@ body {
 
 /* Main content padding to avoid bottom nav overlap */
 .main-content-padding {
-    padding-bottom: calc(5rem + env(safe-area-inset-bottom, 0px));
+    padding-bottom: calc(6rem + env(safe-area-inset-bottom, 0px));
 }
 
 /* Top content padding to avoid floating buttons overlap */
@@ -211,7 +211,7 @@ input:focus, select:focus, textarea:focus, button:focus {
     }
 
     .main-content-padding {
-        padding-bottom: 4rem;
+        padding-bottom: 5rem;
     }
 }
 
