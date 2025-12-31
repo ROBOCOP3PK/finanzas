@@ -66,16 +66,17 @@ export function useCurrency() {
     const formatInputValue = (value) => {
         if (!value && value !== 0) return '';
 
-        const formato = configStore.formatoDivisa;
+        const formato = configStore.formatoDivisa || 'coma'; // Default a 'coma' si no está definido
         const separadorDecimal = formato === 'punto' ? ',' : '.';
-        const separadorMiles = formato === 'punto' ? '.' : ',';
 
-        // Convertir a string y normalizar el separador decimal
+        // Convertir a string
         let str = String(value);
 
         // Si el valor viene como número o string numérico con punto decimal, convertir al formato correcto
         if (typeof value === 'number' || (typeof value === 'string' && /^\d+\.?\d*$/.test(value))) {
             const numValue = typeof value === 'number' ? value : parseFloat(value);
+            if (isNaN(numValue)) return '';
+
             const partes = numValue.toFixed(2).split('.');
             const entero = parseInt(partes[0], 10);
             const decimal = partes[1];
@@ -92,46 +93,22 @@ export function useCurrency() {
                 : enteroFormateado;
         }
 
-        // Para strings, permitir dígitos y el separador decimal correcto
-        const regexPermitidos = formato === 'punto'
-            ? /[^0-9,]/g  // Punto: solo números y coma como decimal
-            : /[^0-9.]/g; // Coma: solo números y punto como decimal
+        // Para strings, solo permitir dígitos (sin separadores decimales para simplificar)
+        // Remover todo excepto números
+        str = str.replace(/[^0-9]/g, '');
 
-        str = str.replace(regexPermitidos, '');
+        // Si no queda nada, retornar vacío
+        if (!str) return '';
 
-        // Asegurar solo un separador decimal
-        const partes = str.split(separadorDecimal);
-        if (partes.length > 2) {
-            str = partes[0] + separadorDecimal + partes.slice(1).join('');
-        }
-
-        // Limitar a 2 decimales
-        if (partes.length === 2 && partes[1].length > 2) {
-            str = partes[0] + separadorDecimal + partes[1].substring(0, 2);
-        }
-
-        // Formatear la parte entera con separadores de miles
-        const [parteEntera, parteDecimal] = str.split(separadorDecimal);
-        if (!parteEntera) return str;
-
-        const entero = parseInt(parteEntera.replace(/\D/g, ''), 10);
+        const entero = parseInt(str, 10);
         if (isNaN(entero)) return '';
 
+        // Formatear con separadores de miles
         let enteroFormateado;
         if (formato === 'punto') {
             enteroFormateado = entero.toLocaleString('de-DE');
         } else {
             enteroFormateado = entero.toLocaleString('en-US');
-        }
-
-        // Si hay parte decimal o el usuario escribió el separador, incluirla
-        if (parteDecimal !== undefined) {
-            return `${enteroFormateado}${separadorDecimal}${parteDecimal}`;
-        }
-
-        // Verificar si el string original terminaba con el separador decimal
-        if (str.endsWith(separadorDecimal)) {
-            return `${enteroFormateado}${separadorDecimal}`;
         }
 
         return enteroFormateado;
@@ -141,8 +118,13 @@ export function useCurrency() {
     const parseFormattedValue = (value) => {
         if (!value && value !== 0) return 0;
 
-        const formato = configStore.formatoDivisa;
+        const formato = configStore.formatoDivisa || 'coma';
         let str = String(value);
+
+        // Remover todo excepto números, puntos y comas
+        str = str.replace(/[^0-9.,]/g, '');
+
+        if (!str) return 0;
 
         if (formato === 'punto') {
             // Formato punto: 1.234,56 -> 1234.56
