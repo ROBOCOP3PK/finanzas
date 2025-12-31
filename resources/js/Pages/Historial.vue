@@ -242,10 +242,10 @@
                     <div class="flex flex-wrap gap-2">
                         <button
                             type="button"
-                            @click="filtros.tipo = ''"
+                            @click="seleccionarTodosTipos"
                             :class="[
                                 'px-3 py-1.5 rounded-full text-sm font-medium transition-colors',
-                                !filtros.tipo
+                                filtros.tipos.length === 0
                                     ? 'bg-primary text-white'
                                     : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                             ]"
@@ -256,10 +256,10 @@
                             v-for="tipo in configStore.tiposGasto"
                             :key="tipo.value"
                             type="button"
-                            @click="filtros.tipo = tipo.value"
+                            @click="toggleTipoFiltro(tipo.value)"
                             :class="[
                                 'px-3 py-1.5 rounded-full text-sm font-medium transition-colors',
-                                filtros.tipo === tipo.value
+                                filtros.tipos.includes(tipo.value)
                                     ? 'bg-primary text-white'
                                     : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                             ]"
@@ -277,10 +277,10 @@
                     <div class="flex flex-wrap gap-2">
                         <button
                             type="button"
-                            @click="filtros.categoria_id = ''; mostrarCategoriasHistorial = false"
+                            @click="seleccionarTodasCategorias"
                             :class="[
                                 'px-3 py-1.5 rounded-full text-sm font-medium transition-colors',
-                                !filtros.categoria_id
+                                filtros.categorias.length === 0
                                     ? 'bg-primary text-white'
                                     : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                             ]"
@@ -288,7 +288,7 @@
                             Todas
                         </button>
                         <button
-                            v-if="!mostrarCategoriasHistorial && !filtros.categoria_id"
+                            v-if="!mostrarCategoriasHistorial && filtros.categorias.length === 0"
                             type="button"
                             @click="mostrarCategoriasHistorial = true"
                             class="px-3 py-1.5 rounded-full text-sm font-medium bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
@@ -297,15 +297,15 @@
                         </button>
                     </div>
                     <!-- Categorías expandidas -->
-                    <div v-if="mostrarCategoriasHistorial || filtros.categoria_id" class="flex flex-wrap gap-2 mt-2 max-h-32 overflow-y-auto">
+                    <div v-if="mostrarCategoriasHistorial || filtros.categorias.length > 0" class="flex flex-wrap gap-2 mt-2 max-h-32 overflow-y-auto">
                         <button
                             v-for="cat in categoriasStore.activas"
                             :key="cat.id"
                             type="button"
-                            @click="filtros.categoria_id = cat.id"
+                            @click="toggleCategoriaFiltro(cat.id)"
                             :class="[
                                 'px-3 py-1.5 rounded-full text-sm font-medium transition-colors',
-                                filtros.categoria_id === cat.id
+                                filtros.categorias.includes(cat.id)
                                     ? 'bg-primary text-white'
                                     : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                             ]"
@@ -395,24 +395,59 @@ const { formatCurrency } = useCurrency();
 const filtros = ref({
     desde: '',
     hasta: '',
-    tipo: '',
-    categoria_id: ''
+    tipos: [], // Array para selección múltiple
+    categorias: [] // Array para selección múltiple
 });
 
 const mostrarFiltros = ref(false);
 const mostrarCategoriasHistorial = ref(false);
 
 const hayFiltrosActivos = computed(() => {
-    return filtros.value.desde || filtros.value.hasta || filtros.value.tipo || filtros.value.categoria_id;
+    return filtros.value.desde || filtros.value.hasta || filtros.value.tipos.length > 0 || filtros.value.categorias.length > 0;
 });
 
 const cantidadFiltrosActivos = computed(() => {
     let count = 0;
     if (filtros.value.desde || filtros.value.hasta) count++;
-    if (filtros.value.tipo) count++;
-    if (filtros.value.categoria_id) count++;
+    if (filtros.value.tipos.length > 0) count++;
+    if (filtros.value.categorias.length > 0) count++;
     return count;
 });
+
+// Toggle para selección múltiple de tipos en filtros
+const toggleTipoFiltro = (tipo) => {
+    const index = filtros.value.tipos.indexOf(tipo);
+    if (index > -1) {
+        // Ya está seleccionado, quitarlo
+        filtros.value.tipos.splice(index, 1);
+    } else {
+        // Agregarlo
+        filtros.value.tipos.push(tipo);
+    }
+};
+
+// Toggle para selección múltiple de categorías en filtros
+const toggleCategoriaFiltro = (catId) => {
+    const index = filtros.value.categorias.indexOf(catId);
+    if (index > -1) {
+        // Ya está seleccionada, quitarla
+        filtros.value.categorias.splice(index, 1);
+    } else {
+        // Agregarla
+        filtros.value.categorias.push(catId);
+    }
+};
+
+// Seleccionar/deseleccionar todos los tipos
+const seleccionarTodosTipos = () => {
+    filtros.value.tipos = [];
+};
+
+// Seleccionar/deseleccionar todas las categorías
+const seleccionarTodasCategorias = () => {
+    filtros.value.categorias = [];
+    mostrarCategoriasHistorial.value = false;
+};
 
 onMounted(async () => {
     await Promise.all([
@@ -446,13 +481,20 @@ const historialCombinado = computed(() => {
 });
 
 const aplicarFiltros = () => {
-    gastosStore.setFiltros(filtros.value);
+    // Convertir arrays a formato que el store/backend espera
+    const filtrosParaEnviar = {
+        desde: filtros.value.desde,
+        hasta: filtros.value.hasta,
+        tipos: filtros.value.tipos.length > 0 ? filtros.value.tipos : null,
+        categorias: filtros.value.categorias.length > 0 ? filtros.value.categorias : null
+    };
+    gastosStore.setFiltros(filtrosParaEnviar);
     gastosStore.cargarGastos(1);
     mostrarFiltros.value = false;
 };
 
 const limpiarFiltros = () => {
-    filtros.value = { desde: '', hasta: '', tipo: '', categoria_id: '' };
+    filtros.value = { desde: '', hasta: '', tipos: [], categorias: [] };
     mostrarCategoriasHistorial.value = false;
     gastosStore.limpiarFiltros();
     gastosStore.cargarGastos(1);

@@ -16,9 +16,9 @@ export const useGastosStore = defineStore('gastos', {
         filtros: {
             desde: null,
             hasta: null,
-            tipo: null,
-            medio_pago_id: null,
-            categoria_id: null
+            tipos: null, // Array para selección múltiple
+            categorias: null, // Array para selección múltiple
+            medio_pago_id: null
         }
     }),
 
@@ -114,9 +114,9 @@ export const useGastosStore = defineStore('gastos', {
             this.filtros = {
                 desde: null,
                 hasta: null,
-                tipo: null,
-                medio_pago_id: null,
-                categoria_id: null
+                tipos: null,
+                categorias: null,
+                medio_pago_id: null
             };
         },
 

@@ -25,9 +25,10 @@ class GastoController extends Controller
             $query->fecha($request->desde, $request->hasta);
         }
 
-        // Filtro por tipo
-        if ($request->filled('tipo')) {
-            $query->tipo($request->tipo);
+        // Filtro por tipos (múltiple)
+        if ($request->filled('tipos')) {
+            $tipos = is_array($request->tipos) ? $request->tipos : [$request->tipos];
+            $query->whereIn('tipo', $tipos);
         }
 
         // Filtro por medio de pago
@@ -35,9 +36,10 @@ class GastoController extends Controller
             $query->medioPago($request->medio_pago_id);
         }
 
-        // Filtro por categoría
-        if ($request->filled('categoria_id')) {
-            $query->categoria($request->categoria_id);
+        // Filtro por categorías (múltiple)
+        if ($request->filled('categorias')) {
+            $categorias = is_array($request->categorias) ? $request->categorias : [$request->categorias];
+            $query->whereIn('categoria_id', $categorias);
         }
 
         $perPage = $request->input('per_page', 15);
