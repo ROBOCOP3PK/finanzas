@@ -1,10 +1,7 @@
 <template>
     <div class="p-4 space-y-4 max-w-full overflow-hidden">
-        <!-- Loading inicial -->
-        <div v-if="dashboardStore.loading && !dashboardStore.resumenMes.mes" class="flex flex-col items-center justify-center py-12">
-            <div class="animate-spin w-10 h-10 border-4 border-primary border-t-transparent rounded-full mb-4"></div>
-            <p class="text-gray-500 dark:text-gray-400">Cargando datos...</p>
-        </div>
+        <!-- Skeleton mientras carga -->
+        <DashboardSkeleton v-if="dashboardStore.loading && !dashboardStore.resumenMes.mes" />
 
         <template v-else>
         <!-- Cards principales: Deuda y Gasto del Mes -->
@@ -107,6 +104,7 @@ import PlantillasRapidas from '../Components/Dashboard/PlantillasRapidas.vue';
 import ResumenMes from '../Components/Dashboard/ResumenMes.vue';
 import ResumenCategorias from '../Components/Dashboard/ResumenCategorias.vue';
 import UltimosMovimientos from '../Components/Dashboard/UltimosMovimientos.vue';
+import DashboardSkeleton from '../Components/Dashboard/DashboardSkeleton.vue';
 import Modal from '../Components/UI/Modal.vue';
 import Input from '../Components/UI/Input.vue';
 import Button from '../Components/UI/Button.vue';

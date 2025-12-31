@@ -10,9 +10,7 @@
             </router-link>
         </div>
 
-        <div v-if="abonosStore.loading" class="text-center py-8">
-            <div class="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto"></div>
-        </div>
+        <AbonosSkeleton v-if="abonosStore.loading" />
 
         <div v-else-if="abonosStore.abonos.length === 0" class="text-center py-8 text-gray-500 dark:text-gray-400">
             No hay abonos registrados
@@ -40,6 +38,7 @@
 import { onMounted } from 'vue';
 import { PlusIcon } from '@heroicons/vue/24/outline';
 import Button from '../../Components/UI/Button.vue';
+import AbonosSkeleton from '../../Components/Abonos/AbonosSkeleton.vue';
 import { useAbonosStore } from '../../Stores/abonos';
 import { useCurrency } from '../../Composables/useCurrency';
 

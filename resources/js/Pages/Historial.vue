@@ -227,9 +227,7 @@
         </Card>
 
         <!-- Lista de gastos -->
-        <div v-if="gastosStore.loading" class="text-center py-8">
-            <div class="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto"></div>
-        </div>
+        <HistorialSkeleton v-if="gastosStore.loading" />
 
         <div v-else-if="gastosStore.gastos.length === 0" class="text-center py-8 text-gray-500 dark:text-gray-400">
             No hay gastos que coincidan con los filtros
@@ -280,6 +278,7 @@ import Input from '../Components/UI/Input.vue';
 import Select from '../Components/UI/Select.vue';
 import Button from '../Components/UI/Button.vue';
 import GastoItem from '../Components/Gastos/GastoItem.vue';
+import HistorialSkeleton from '../Components/Historial/HistorialSkeleton.vue';
 import { useGastosStore } from '../Stores/gastos';
 import { useCategoriasStore } from '../Stores/categorias';
 import { useConfigStore } from '../Stores/config';

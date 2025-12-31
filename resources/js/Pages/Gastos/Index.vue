@@ -10,9 +10,7 @@
             </router-link>
         </div>
 
-        <div v-if="gastosStore.loading" class="text-center py-8">
-            <div class="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto"></div>
-        </div>
+        <GastosSkeleton v-if="gastosStore.loading" />
 
         <div v-else-if="gastosStore.gastos.length === 0" class="text-center py-8 text-gray-500 dark:text-gray-400">
             No hay gastos registrados
@@ -59,6 +57,7 @@ import { useRouter } from 'vue-router';
 import { PlusIcon } from '@heroicons/vue/24/outline';
 import Button from '../../Components/UI/Button.vue';
 import GastoItem from '../../Components/Gastos/GastoItem.vue';
+import GastosSkeleton from '../../Components/Gastos/GastosSkeleton.vue';
 import { useGastosStore } from '../../Stores/gastos';
 
 const router = useRouter();
