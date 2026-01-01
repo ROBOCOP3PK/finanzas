@@ -1,6 +1,27 @@
 <template>
     <div class="p-4 max-w-full overflow-hidden">
-        <div class="flex justify-end mb-4">
+        <div class="flex justify-between items-center mb-4">
+            <!-- Botón Filtrar -->
+            <button
+                @click="mostrarFiltros = !mostrarFiltros"
+                class="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors"
+                :class="[
+                    hayFiltrosActivos
+                        ? 'bg-primary text-white'
+                        : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                ]"
+            >
+                <FunnelIcon class="w-4 h-4" />
+                <span>Filtrar</span>
+                <span v-if="hayFiltrosActivos" class="bg-white/20 px-1.5 py-0.5 rounded-full text-xs">
+                    {{ cantidadFiltrosActivos }}
+                </span>
+                <ChevronDownIcon
+                    class="w-4 h-4 transition-transform"
+                    :class="mostrarFiltros ? 'rotate-180' : ''"
+                />
+            </button>
+
             <Button variant="secondary" size="sm" @click="abrirModalCompartir">
                 <ShareIcon class="w-4 h-4 mr-1" />
                 Compartir
@@ -189,34 +210,9 @@
             </Card>
         </div>
 
-        <!-- Botón Filtrar y Filtros Colapsables -->
-        <div class="mb-4">
-            <!-- Botón para expandir/colapsar filtros -->
-            <button
-                @click="mostrarFiltros = !mostrarFiltros"
-                class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-                :class="[
-                    hayFiltrosActivos
-                        ? 'bg-primary text-white'
-                        : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 shadow-sm'
-                ]"
-            >
-                <FunnelIcon class="w-4 h-4" />
-                <span>Filtrar</span>
-                <span v-if="hayFiltrosActivos" class="bg-white/20 px-1.5 py-0.5 rounded-full text-xs">
-                    {{ cantidadFiltrosActivos }}
-                </span>
-                <ChevronDownIcon
-                    class="w-4 h-4 transition-transform"
-                    :class="{ 'rotate-180': mostrarFiltros }"
-                />
-            </button>
-
-            <!-- Filtros expandidos -->
-            <div
-                v-if="mostrarFiltros"
-                class="mt-3 bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 space-y-4"
-            >
+        <!-- Filtros Colapsables -->
+        <div v-if="mostrarFiltros" class="mb-4">
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 space-y-4">
                 <!-- Rango de fechas -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
