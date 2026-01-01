@@ -307,15 +307,9 @@
                                         cada {{ serv.frecuencia_meses }} meses
                                     </span>
                                 </div>
-                                <div v-if="serv.referencia" class="flex items-center gap-1 mt-0.5">
-                                    <ClipboardDocumentIcon class="w-3 h-3 text-gray-400" />
-                                    <span class="text-xs text-gray-500 dark:text-gray-400 truncate">
-                                        {{ serv.referencia }}
-                                    </span>
-                                    <span class="text-xs text-indigo-500 dark:text-indigo-400 flex-shrink-0">
-                                        (mantener 2s para copiar)
-                                    </span>
-                                </div>
+                                <span v-if="serv.referencia" class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                                    Ref: {{ serv.referencia }}
+                                </span>
                             </div>
                         </div>
                         <div class="flex items-center gap-1 flex-shrink-0">
