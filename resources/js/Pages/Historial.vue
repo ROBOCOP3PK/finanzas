@@ -891,7 +891,7 @@ const generarPDF = async () => {
                 saldoTexto = 'Estan a paz y salvo';
             }
 
-            doc.setFillColor(67, 56, 202); // Morado oscuro
+            doc.setFillColor(220, 38, 38); // Rojo
             doc.roundedRect(14, yPos - 5, pageWidth - 28, 18, 3, 3, 'F');
             doc.setTextColor(255, 255, 255);
             doc.setFontSize(12);
@@ -982,8 +982,8 @@ const generarPDF = async () => {
             doc.text(formatCurrency(porcionCompartidaP2), pageWidth - 20, yPos, { align: 'right' });
             yPos += 8;
 
-            // Total persona 2 con fondo morado oscuro
-            doc.setFillColor(67, 56, 202); // Morado oscuro
+            // Total persona 2 con fondo morado
+            doc.setFillColor(126, 34, 206); // Morado/violeta
             doc.roundedRect(14, yPos - 5, pageWidth - 28, 12, 2, 2, 'F');
             doc.setTextColor(255, 255, 255);
             doc.setFontSize(12);
@@ -1011,7 +1011,7 @@ const generarPDF = async () => {
             const porcP1 = parseFloat(configStore.porcentaje_persona_1);
             const porcP2 = parseFloat(configStore.porcentaje_persona_2);
 
-            tableHeaders = [['Fecha', 'Concepto', 'Categoria', 'Tipo', 'Medio Pago', nombreP1, nombreP2, 'Total']];
+            tableHeaders = [['Fecha', 'Concepto', 'Categoria', 'Medio Pago', 'Tipo', nombreP1, nombreP2, 'Total']];
 
             tableData = gastos.map(g => {
                 const valor = parseFloat(g.valor);
@@ -1037,8 +1037,8 @@ const generarPDF = async () => {
                     formatDateShort(g.fecha),
                     g.concepto || '-',
                     g.categoria?.nombre || '-',
-                    tipoLabel,
                     g.medio_pago?.nombre || '-',
+                    tipoLabel,
                     formatCurrency(valorP1),
                     formatCurrency(valorP2),
                     formatCurrency(valor)
@@ -1047,7 +1047,7 @@ const generarPDF = async () => {
 
             columnStyles = {
                 0: { cellWidth: 18 },
-                3: { cellWidth: 18 },
+                4: { cellWidth: 18 },
                 5: { halign: 'right' },
                 6: { halign: 'right' },
                 7: { halign: 'right', fontStyle: 'bold' }
@@ -1161,7 +1161,7 @@ const exportarCSV = async () => {
             const porcP1 = parseFloat(configStore.porcentaje_persona_1);
             const porcP2 = parseFloat(configStore.porcentaje_persona_2);
 
-            headers = ['Fecha', 'Concepto', 'Categoria', 'Tipo', 'Medio de Pago', nombreP1, nombreP2, 'Total'];
+            headers = ['Fecha', 'Concepto', 'Categoria', 'Medio de Pago', 'Tipo', nombreP1, nombreP2, 'Total'];
 
             rows = gastos.map(g => {
                 const valor = parseFloat(g.valor);
@@ -1187,8 +1187,8 @@ const exportarCSV = async () => {
                     g.fecha,
                     `"${(g.concepto || '').replace(/"/g, '""')}"`,
                     `"${(g.categoria?.nombre || '').replace(/"/g, '""')}"`,
-                    tipoLabel,
                     `"${(g.medio_pago?.nombre || '').replace(/"/g, '""')}"`,
+                    tipoLabel,
                     valorP1,
                     valorP2,
                     valor
