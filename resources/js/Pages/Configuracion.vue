@@ -272,27 +272,47 @@
                     <div
                         v-for="serv in serviciosStore.servicios"
                         :key="serv.id"
-                        class="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-700 last:border-0"
+                        :class="[
+                            'flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-700 last:border-0 transition-colors',
+                            longPressServiceId === serv.id ? 'bg-indigo-50 dark:bg-indigo-900/30' : ''
+                        ]"
+                        @touchstart="handleServiceTouchStart(serv)"
+                        @touchend="handleServiceTouchEnd"
+                        @touchcancel="handleServiceTouchEnd"
+                        @mousedown="handleServiceTouchStart(serv)"
+                        @mouseup="handleServiceTouchEnd"
+                        @mouseleave="handleServiceTouchEnd"
                     >
-                        <div class="flex items-center gap-3">
+                        <div class="flex items-center gap-3 flex-1 min-w-0">
                             <div
-                                class="w-8 h-8 rounded-lg flex items-center justify-center"
+                                class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
                                 :style="{ backgroundColor: serv.color + '20' }"
                             >
                                 <i v-if="serv.icono" :class="serv.icono" :style="{ color: serv.color }"></i>
                                 <i v-else class="pi pi-file" :style="{ color: serv.color }"></i>
                             </div>
-                            <div>
-                                <span :class="['text-gray-900 dark:text-white', !serv.activo && 'opacity-50']">
-                                    {{ serv.nombre }}
-                                </span>
-                                <span v-if="serv.categoria" class="text-xs text-gray-500 dark:text-gray-400 ml-2">
-                                    ({{ serv.categoria.nombre }})
-                                </span>
-                                <span v-if="!serv.activo" class="text-xs text-gray-400 ml-2">(inactivo)</span>
+                            <div class="min-w-0 flex-1">
+                                <div class="flex items-center gap-2">
+                                    <span :class="['text-gray-900 dark:text-white truncate', !serv.activo && 'opacity-50']">
+                                        {{ serv.nombre }}
+                                    </span>
+                                    <span v-if="serv.categoria" class="text-xs text-gray-500 dark:text-gray-400 flex-shrink-0">
+                                        ({{ serv.categoria.nombre }})
+                                    </span>
+                                    <span v-if="!serv.activo" class="text-xs text-gray-400 flex-shrink-0">(inactivo)</span>
+                                </div>
+                                <div v-if="serv.referencia" class="flex items-center gap-1 mt-0.5">
+                                    <ClipboardDocumentIcon class="w-3 h-3 text-gray-400" />
+                                    <span class="text-xs text-gray-500 dark:text-gray-400 truncate">
+                                        {{ serv.referencia }}
+                                    </span>
+                                    <span class="text-xs text-indigo-500 dark:text-indigo-400 flex-shrink-0">
+                                        (mantener 2s para copiar)
+                                    </span>
+                                </div>
                             </div>
                         </div>
-                        <div class="flex items-center gap-1">
+                        <div class="flex items-center gap-1 flex-shrink-0">
                             <Button
                                 variant="ghost"
                                 size="sm"
@@ -787,6 +807,11 @@
                         </button>
                     </div>
                 </div>
+                <Input
+                    v-model="formServicio.referencia"
+                    label="Referencia de pago (opcional)"
+                    placeholder="Ej: 123456789"
+                />
                 <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Icono
@@ -923,7 +948,8 @@ import {
     ArrowRightOnRectangleIcon,
     ExclamationTriangleIcon,
     XCircleIcon,
-    ShareIcon
+    ShareIcon,
+    ClipboardDocumentIcon
 } from '@heroicons/vue/24/outline';
 import Card from '../Components/UI/Card.vue';
 import Input from '../Components/UI/Input.vue';
@@ -1274,6 +1300,44 @@ const erroresServicio = reactive({});
 const diaRestablecimiento = ref(1);
 const guardandoDia = ref(false);
 
+// Long-press para copiar referencia
+const longPressTimer = ref(null);
+const longPressServiceId = ref(null);
+const LONG_PRESS_DURATION = 2000;
+
+const handleServiceTouchStart = (servicio) => {
+    if (!servicio.referencia) return;
+
+    longPressServiceId.value = servicio.id;
+    longPressTimer.value = setTimeout(() => {
+        copiarReferencia(servicio);
+    }, LONG_PRESS_DURATION);
+};
+
+const handleServiceTouchEnd = () => {
+    if (longPressTimer.value) {
+        clearTimeout(longPressTimer.value);
+        longPressTimer.value = null;
+    }
+    longPressServiceId.value = null;
+};
+
+const copiarReferencia = async (servicio) => {
+    try {
+        await navigator.clipboard.writeText(servicio.referencia);
+
+        // Vibrar si esta disponible
+        if (navigator.vibrate) {
+            navigator.vibrate(100);
+        }
+
+        mostrarToast(`Referencia copiada: ${servicio.referencia}`);
+    } catch (error) {
+        mostrarToast('Error al copiar referencia', 'error');
+    }
+    longPressServiceId.value = null;
+};
+
 const iconosServicios = [
     'pi pi-bolt',
     'pi pi-sun',
@@ -1303,6 +1367,7 @@ const formServicio = reactive({
     icono: 'pi pi-file',
     color: '#06B6D4',
     valor_estimado: null,
+    referencia: '',
     activo: true
 });
 
@@ -1333,6 +1398,7 @@ const abrirModalServicio = (servicio = null) => {
         formServicio.icono = servicio.icono || 'pi pi-file';
         formServicio.color = servicio.color || '#06B6D4';
         formServicio.valor_estimado = servicio.valor_estimado;
+        formServicio.referencia = servicio.referencia || '';
         formServicio.activo = servicio.activo;
         valorEstimadoFormateado.value = servicio.valor_estimado ? formatInputValue(servicio.valor_estimado) : '';
     } else {
@@ -1341,6 +1407,7 @@ const abrirModalServicio = (servicio = null) => {
         formServicio.icono = 'pi pi-file';
         formServicio.color = '#06B6D4';
         formServicio.valor_estimado = null;
+        formServicio.referencia = '';
         formServicio.activo = true;
         valorEstimadoFormateado.value = '';
     }
@@ -1369,6 +1436,7 @@ const guardarServicio = async () => {
             icono: formServicio.icono,
             color: formServicio.color,
             valor_estimado: formServicio.valor_estimado || null,
+            referencia: formServicio.referencia || null,
             activo: formServicio.activo
         };
 

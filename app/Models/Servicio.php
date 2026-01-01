@@ -16,6 +16,7 @@ class Servicio extends Model
         'icono',
         'color',
         'valor_estimado',
+        'referencia',
         'activo',
         'orden'
     ];
