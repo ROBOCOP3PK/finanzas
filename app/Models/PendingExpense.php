@@ -117,18 +117,19 @@ class PendingExpense extends Model
 
     /**
      * Aprobar la solicitud y crear el gasto
+     * @param array|null $editedData Datos editados opcionales para sobrescribir los originales
      */
-    public function approve(): Gasto
+    public function approve(?array $editedData = null): Gasto
     {
         $gasto = Gasto::create([
             'user_id' => $this->owner_id,
             'registrado_por' => $this->created_by,
-            'fecha' => $this->fecha,
-            'medio_pago_id' => $this->medio_pago_id,
-            'categoria_id' => $this->categoria_id,
-            'concepto' => $this->concepto,
-            'valor' => $this->valor,
-            'tipo' => $this->tipo
+            'fecha' => $editedData['fecha'] ?? $this->fecha,
+            'medio_pago_id' => $editedData['medio_pago_id'] ?? $this->medio_pago_id,
+            'categoria_id' => $editedData['categoria_id'] ?? $this->categoria_id,
+            'concepto' => $editedData['concepto'] ?? $this->concepto,
+            'valor' => $editedData['valor'] ?? $this->valor,
+            'tipo' => $editedData['tipo'] ?? $this->tipo
         ]);
 
         $this->update([

@@ -6,7 +6,7 @@ export const useConfigStore = defineStore('config', {
         loaded: false,
         divisa: 'COP',
         formato_divisa: 'punto',
-        nombre_persona_1: 'Yo',
+        nombre_persona_1: 'Persona 1',
         nombre_persona_2: '',
         porcentaje_persona_1: 50,
         porcentaje_persona_2: 50
@@ -30,8 +30,8 @@ export const useConfigStore = defineStore('config', {
 
         getNombreTipo: (state) => (tipo) => {
             const tipos = {
-                'personal': state.nombre_persona_1 || 'Yo',
-                'pareja': state.nombre_persona_2 || 'Pareja',
+                'personal': state.nombre_persona_1 || 'Persona 1',
+                'pareja': state.nombre_persona_2 || 'Persona 2',
                 'compartido': `${state.porcentaje_persona_1}/${state.porcentaje_persona_2}`
             };
             return tipos[tipo] || tipo;
@@ -59,8 +59,8 @@ export const useConfigStore = defineStore('config', {
                 if (data.success && data.data) {
                     this.divisa = data.data.divisa || 'COP';
                     this.formato_divisa = data.data.formato_divisa || 'punto';
-                    this.nombre_persona_1 = data.data.nombre_persona_1 || 'Yo';
-                    // nombre_persona_2 vacio significa que no hay usuario 2 configurado
+                    this.nombre_persona_1 = data.data.nombre_persona_1 || 'Persona 1';
+                    // nombre_persona_2 vacio significa que no hay usuario 2 configurado (modo individual)
                     this.nombre_persona_2 = data.data.nombre_persona_2 || '';
                     this.porcentaje_persona_1 = parseFloat(data.data.porcentaje_persona_1) || 50;
                     this.porcentaje_persona_2 = parseFloat(data.data.porcentaje_persona_2) || 50;

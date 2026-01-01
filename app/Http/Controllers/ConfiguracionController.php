@@ -20,7 +20,7 @@ class ConfiguracionController extends Controller
     {
         $request->validate([
             'nombre_persona_1' => 'sometimes|string|max:50',
-            'nombre_persona_2' => 'sometimes|string|max:50',
+            'nombre_persona_2' => 'sometimes|nullable|string|max:50',
             'porcentaje_persona_1' => 'sometimes|numeric|min:0|max:100',
             'porcentaje_persona_2' => 'sometimes|numeric|min:0|max:100',
             'tema' => 'sometimes|in:light,dark,system',

@@ -53,10 +53,10 @@ class Configuracion extends Model
         return self::obtener('nombre_persona_1', 'Persona 1');
     }
 
-    // Obtener nombre persona 2
+    // Obtener nombre persona 2 (vacio por defecto = modo individual)
     public static function nombrePersona2(): string
     {
-        return self::obtener('nombre_persona_2', 'Persona 2');
+        return self::obtener('nombre_persona_2', '');
     }
 
     // Obtener tema

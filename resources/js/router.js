@@ -89,6 +89,12 @@ const routes = [
         name: 'shared-data.view',
         component: () => import('./Pages/SharedData/Index.vue'),
         meta: { requiresAuth: true }
+    },
+    {
+        path: '/solicitudes/:id/revisar',
+        name: 'solicitud.review',
+        component: () => import('./Pages/SolicitudReview.vue'),
+        meta: { requiresAuth: true }
     }
 ];
 

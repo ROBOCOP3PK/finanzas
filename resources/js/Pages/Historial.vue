@@ -340,7 +340,7 @@
                     <!-- Total Persona 1 -->
                     <div class="border-t border-gray-200 dark:border-gray-700 pt-2 mt-2">
                         <div class="flex justify-between items-center text-sm text-gray-500 dark:text-gray-400">
-                            <span>{{ configStore.nombre_persona_1 || 'Yo' }} (100%)</span>
+                            <span>{{ configStore.nombre_persona_1 || 'Persona 1' }} (100%)</span>
                             <span>{{ formatCurrency(resumenFiltrado.gastosPersonales) }}</span>
                         </div>
                         <div class="flex justify-between items-center text-sm text-gray-500 dark:text-gray-400">
@@ -348,7 +348,7 @@
                             <span>{{ formatCurrency(resumenFiltrado.porcionCompartidaP1) }}</span>
                         </div>
                         <div class="flex justify-between items-center mt-1">
-                            <span class="font-medium text-gray-700 dark:text-gray-300">Total {{ configStore.nombre_persona_1 || 'Yo' }}</span>
+                            <span class="font-medium text-gray-700 dark:text-gray-300">Total {{ configStore.nombre_persona_1 || 'Persona 1' }}</span>
                             <span class="text-lg font-bold text-green-600">{{ formatCurrency(resumenFiltrado.totalPersona1) }}</span>
                         </div>
                     </div>
@@ -927,7 +927,7 @@ const generarPDF = async () => {
 
         // Totales por persona - Solo si hay usuario 2 configurado
         if (configStore.tieneUsuario2) {
-            const nombrePersona1 = configStore.nombre_persona_1 || 'Yo';
+            const nombrePersona1 = configStore.nombre_persona_1 || 'Persona 1';
             const nombrePersona2 = configStore.nombre_persona_2;
             const porcentajePersona1 = parseFloat(configStore.porcentaje_persona_1);
             const porcentajePersona2 = parseFloat(configStore.porcentaje_persona_2);
@@ -1006,7 +1006,7 @@ const generarPDF = async () => {
         let columnStyles;
 
         if (configStore.tieneUsuario2) {
-            const nombreP1 = configStore.nombre_persona_1 || 'Yo';
+            const nombreP1 = configStore.nombre_persona_1 || 'Persona 1';
             const nombreP2 = configStore.nombre_persona_2;
             const porcP1 = parseFloat(configStore.porcentaje_persona_1);
             const porcP2 = parseFloat(configStore.porcentaje_persona_2);
@@ -1156,7 +1156,7 @@ const exportarCSV = async () => {
         let rows;
 
         if (configStore.tieneUsuario2) {
-            const nombreP1 = configStore.nombre_persona_1 || 'Yo';
+            const nombreP1 = configStore.nombre_persona_1 || 'Persona 1';
             const nombreP2 = configStore.nombre_persona_2;
             const porcP1 = parseFloat(configStore.porcentaje_persona_1);
             const porcP2 = parseFloat(configStore.porcentaje_persona_2);

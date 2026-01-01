@@ -78,7 +78,28 @@ class PendingExpenseController extends Controller
     }
 
     /**
+     * Obtener una solicitud específica (como propietario)
+     */
+    public function show(Request $request, PendingExpense $pendingExpense): JsonResponse
+    {
+        $user = $request->user();
+
+        if ($pendingExpense->owner_id !== $user->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No autorizado'
+            ], 403);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $pendingExpense->load(['createdBy:id,name,email', 'medioPago', 'categoria'])
+        ]);
+    }
+
+    /**
      * Aprobar solicitud (como propietario)
+     * Acepta datos editados opcionales para modificar el gasto antes de aprobarlo
      */
     public function approve(Request $request, PendingExpense $pendingExpense): JsonResponse
     {
@@ -98,7 +119,20 @@ class PendingExpenseController extends Controller
             ], 422);
         }
 
-        $gasto = $pendingExpense->approve();
+        // Validar datos editados si se envían
+        $editedData = null;
+        if ($request->has('fecha') || $request->has('concepto') || $request->has('valor')) {
+            $editedData = $request->validate([
+                'fecha' => 'nullable|date',
+                'medio_pago_id' => 'nullable|integer|exists:medios_pago,id',
+                'categoria_id' => 'nullable|integer|exists:categorias,id',
+                'concepto' => 'nullable|string|max:255',
+                'valor' => 'nullable|numeric|min:0.01',
+                'tipo' => 'nullable|in:personal,pareja,compartido'
+            ]);
+        }
+
+        $gasto = $pendingExpense->approve($editedData);
 
         // Notificar al invitado
         ShareNotification::createExpenseApproved($pendingExpense);

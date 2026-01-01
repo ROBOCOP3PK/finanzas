@@ -96,9 +96,18 @@ export const useDataShareStore = defineStore('dataShare', {
             return this.fetchPendingExpenses();
         },
 
-        async approveExpense(id) {
+        async fetchPendingExpense(id) {
             try {
-                const response = await api.post(`/pending-expenses/${id}/approve`);
+                const response = await api.get(`/pending-expenses/${id}`);
+                return { success: true, data: response.data.data };
+            } catch (error) {
+                return { success: false, error: error.response?.data?.message || 'Error al obtener solicitud' };
+            }
+        },
+
+        async approveExpense(id, editedData = null) {
+            try {
+                const response = await api.post(`/pending-expenses/${id}/approve`, editedData || {});
                 this.pendingExpenses = this.pendingExpenses.filter(e => e.id !== id);
                 this.pendingExpensesCount = this.pendingExpenses.length;
                 return { success: true, gasto: response.data.data, message: response.data.message };

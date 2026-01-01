@@ -372,31 +372,34 @@
                                 type="text"
                                 v-model="formCompartidos.nombre_persona_1"
                                 class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent"
-                                placeholder="Yo"
+                                placeholder="Persona 1"
                             />
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                Nombre usuario 2
+                                Nombre usuario 2 <span class="text-gray-400 font-normal">(opcional)</span>
                             </label>
                             <input
                                 type="text"
                                 v-model="formCompartidos.nombre_persona_2"
                                 class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent"
-                                placeholder="Usuario 2"
+                                placeholder="Dejar vacio para uso individual"
                             />
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                Si no tienes un segundo usuario, deja este campo vacio
+                            </p>
                         </div>
                     </div>
 
-                    <!-- Porcentajes -->
-                    <div class="mb-4">
+                    <!-- Porcentajes (solo si hay usuario 2) -->
+                    <div v-if="formCompartidos.nombre_persona_2 && formCompartidos.nombre_persona_2.trim()" class="mb-4">
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                             Porcentajes de division
                         </label>
                         <div class="flex items-center gap-4">
                             <div class="flex-1">
                                 <div class="flex items-center justify-between mb-1">
-                                    <span class="text-sm text-gray-600 dark:text-gray-400">{{ formCompartidos.nombre_persona_1 || 'Yo' }}</span>
+                                    <span class="text-sm text-gray-600 dark:text-gray-400">{{ formCompartidos.nombre_persona_1 || 'Persona 1' }}</span>
                                     <span class="text-sm font-medium text-gray-900 dark:text-white">{{ formCompartidos.porcentaje_persona_1 }}%</span>
                                 </div>
                                 <input
@@ -433,15 +436,15 @@
                         </p>
                     </div>
 
-                    <!-- Vista previa -->
-                    <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 mb-4">
+                    <!-- Vista previa (solo si hay usuario 2) -->
+                    <div v-if="formCompartidos.nombre_persona_2 && formCompartidos.nombre_persona_2.trim()" class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 mb-4">
                         <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">Vista previa:</p>
                         <p class="text-sm text-gray-900 dark:text-white">
                             Si registras un gasto compartido de <strong>$100.000</strong>:
                         </p>
                         <ul class="text-sm mt-1 space-y-1">
                             <li class="text-gray-700 dark:text-gray-300">
-                                <span class="font-medium">{{ formCompartidos.nombre_persona_1 || 'Yo' }}</span> asume
+                                <span class="font-medium">{{ formCompartidos.nombre_persona_1 || 'Persona 1' }}</span> asume
                                 <span class="font-medium text-primary">${{ (100000 * formCompartidos.porcentaje_persona_1 / 100).toLocaleString() }}</span>
                             </li>
                             <li class="text-gray-700 dark:text-gray-300">
@@ -451,10 +454,17 @@
                         </ul>
                     </div>
 
+                    <!-- Mensaje cuando es uso individual -->
+                    <div v-if="!formCompartidos.nombre_persona_2 || !formCompartidos.nombre_persona_2.trim()" class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 mb-4">
+                        <p class="text-sm text-blue-700 dark:text-blue-300">
+                            Modo individual: Todos los gastos seran registrados solo para ti.
+                        </p>
+                    </div>
+
                     <Button
                         @click="guardarGastosCompartidos"
                         :loading="guardandoCompartidos"
-                        :disabled="formCompartidos.porcentaje_persona_1 + formCompartidos.porcentaje_persona_2 !== 100"
+                        :disabled="tieneUsuario2Form && formCompartidos.porcentaje_persona_1 + formCompartidos.porcentaje_persona_2 !== 100"
                         class="w-full"
                     >
                         Guardar configuracion
@@ -1538,12 +1548,16 @@ const guardarDiaRestablecimiento = async () => {
 
 // Gastos Compartidos
 const formCompartidos = reactive({
-    nombre_persona_1: 'Yo',
+    nombre_persona_1: 'Persona 1',
     nombre_persona_2: '',
     porcentaje_persona_1: 50,
     porcentaje_persona_2: 50
 });
 const guardandoCompartidos = ref(false);
+
+const tieneUsuario2Form = computed(() => {
+    return formCompartidos.nombre_persona_2 && formCompartidos.nombre_persona_2.trim() !== '';
+});
 
 const ajustarPorcentaje1 = () => {
     formCompartidos.porcentaje_persona_2 = 100 - formCompartidos.porcentaje_persona_1;
@@ -1554,7 +1568,8 @@ const ajustarPorcentaje2 = () => {
 };
 
 const guardarGastosCompartidos = async () => {
-    if (formCompartidos.porcentaje_persona_1 + formCompartidos.porcentaje_persona_2 !== 100) {
+    // Solo validar porcentajes si hay usuario 2
+    if (tieneUsuario2Form.value && formCompartidos.porcentaje_persona_1 + formCompartidos.porcentaje_persona_2 !== 100) {
         mostrarToast('Los porcentajes deben sumar 100%', 'error');
         return;
     }

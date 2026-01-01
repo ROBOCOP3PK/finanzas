@@ -13,6 +13,12 @@
                     <h2 class="font-semibold text-gray-900 dark:text-white">{{ ownerName }}</h2>
                 </div>
             </div>
+            <button
+                @click="$emit('share')"
+                class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+            >
+                <ShareIcon class="w-5 h-5 text-gray-600 dark:text-gray-400" />
+            </button>
         </div>
 
         <!-- Tabs -->
@@ -35,7 +41,7 @@
 </template>
 
 <script setup>
-import { ArrowLeftIcon } from '@heroicons/vue/24/outline';
+import { ArrowLeftIcon, ShareIcon } from '@heroicons/vue/24/outline';
 
 defineProps({
     ownerName: {
@@ -48,7 +54,7 @@ defineProps({
     }
 });
 
-defineEmits(['back', 'tab-change']);
+defineEmits(['back', 'tab-change', 'share']);
 
 const tabs = [
     { id: 'nuevo', label: 'Nuevo' },

@@ -119,6 +119,7 @@ Route::middleware('auth:sanctum')->group(function () {
         // Como propietario
         Route::get('/pending', [PendingExpenseController::class, 'pending']);
         Route::get('/history', [PendingExpenseController::class, 'history']);
+        Route::get('/{pendingExpense}', [PendingExpenseController::class, 'show']);
         Route::post('/{pendingExpense}/approve', [PendingExpenseController::class, 'approve']);
         Route::post('/{pendingExpense}/reject', [PendingExpenseController::class, 'reject']);
 

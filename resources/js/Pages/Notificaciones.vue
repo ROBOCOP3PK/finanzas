@@ -69,27 +69,32 @@
             </div>
 
             <!-- Gastos pendientes de aprobar (como propietario) -->
-            <div v-if="dataShareStore.pendingExpensesCount > 0" class="space-y-3">
+            <div v-if="dataShareStore.pendingExpenses.length > 0" class="space-y-3">
                 <h2 class="text-sm font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wide">
                     Solicitudes de gastos
                 </h2>
                 <div
-                    @click="irASolicitudes"
+                    v-for="expense in dataShareStore.pendingExpenses"
+                    :key="'expense-' + expense.id"
+                    @click="irARevisarSolicitud(expense.id)"
                     class="bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 rounded-lg p-4 cursor-pointer hover:bg-amber-100 dark:hover:bg-amber-900/50 transition-colors"
                 >
                     <div class="flex items-center gap-3">
                         <div class="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-800 flex items-center justify-center flex-shrink-0">
                             <ClipboardDocumentListIcon class="w-5 h-5 text-amber-600 dark:text-amber-400" />
                         </div>
-                        <div class="flex-1">
-                            <p class="font-medium text-gray-900 dark:text-white">
-                                {{ dataShareStore.pendingExpensesCount }} solicitud{{ dataShareStore.pendingExpensesCount > 1 ? 'es' : '' }} pendiente{{ dataShareStore.pendingExpensesCount > 1 ? 's' : '' }}
+                        <div class="flex-1 min-w-0">
+                            <p class="font-medium text-gray-900 dark:text-white truncate">
+                                {{ expense.concepto }}
                             </p>
                             <p class="text-sm text-gray-600 dark:text-gray-300">
-                                Tienes gastos esperando tu aprobacion
+                                {{ formatCurrency(expense.valor) }} - {{ expense.created_by?.name || 'Usuario' }}
+                            </p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                {{ formatearFecha(expense.created_at) }}
                             </p>
                         </div>
-                        <ChevronRightIcon class="w-5 h-5 text-gray-400" />
+                        <ChevronRightIcon class="w-5 h-5 text-gray-400 flex-shrink-0" />
                     </div>
                 </div>
             </div>
@@ -361,7 +366,7 @@ const SWIPE_THRESHOLD = 80;
 
 const tieneNotificaciones = computed(() => {
     return dataShareStore.pendingInvitations.length > 0 ||
-           dataShareStore.pendingExpensesCount > 0 ||
+           dataShareStore.pendingExpenses.length > 0 ||
            serviciosStore.serviciosPendientesCount > 0 ||
            offlineStore.hasConflicts ||
            offlineStore.hasFailedOperations ||
@@ -444,8 +449,8 @@ const marcarTodasLeidas = async () => {
     await notificationsStore.markAllAsRead();
 };
 
-const irASolicitudes = () => {
-    router.push('/configuracion');
+const irARevisarSolicitud = (id) => {
+    router.push(`/solicitudes/${id}/revisar`);
 };
 
 const irAServicios = () => {

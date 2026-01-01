@@ -2,7 +2,7 @@
     <Card title="Resumen del Mes">
         <div class="space-y-3">
             <div class="flex justify-between items-center">
-                <span class="text-gray-600 dark:text-gray-400">Gastos {{ configStore.nombre_persona_1 || 'Yo' }}</span>
+                <span class="text-gray-600 dark:text-gray-400">Gastos {{ configStore.nombre_persona_1 || 'Persona 1' }}</span>
                 <span class="font-medium text-gray-900 dark:text-white">{{ formatCurrency(gastosPersonal) }}</span>
             </div>
             <!-- Solo mostrar si hay usuario 2 configurado -->
@@ -12,7 +12,7 @@
                     <span class="font-medium text-red-500">{{ formatCurrency(gastosPareja) }}</span>
                 </div>
                 <div class="flex justify-between items-center">
-                    <span class="text-gray-600 dark:text-gray-400">Compartidos ({{ porcentajePersona1 }}% {{ configStore.nombre_persona_1 || 'Yo' }})</span>
+                    <span class="text-gray-600 dark:text-gray-400">Compartidos ({{ porcentajePersona1 }}% {{ configStore.nombre_persona_1 || 'Persona 1' }})</span>
                     <span class="font-medium text-gray-900 dark:text-white">{{ formatCurrency(compartidoPersona1) }}</span>
                 </div>
                 <div class="flex justify-between items-center">

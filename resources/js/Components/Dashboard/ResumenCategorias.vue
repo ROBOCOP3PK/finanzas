@@ -240,7 +240,7 @@ const formatFecha = (fecha) => {
 
 const tipoLabel = (tipo) => {
     const tipos = {
-        'personal': configStore.nombre_persona_1 || 'Yo',
+        'personal': configStore.nombre_persona_1 || 'Persona 1',
         'pareja': configStore.nombre_persona_2 || 'Pareja',
         'compartido': `${configStore.porcentaje_persona_1}/${configStore.porcentaje_persona_2}`
     };
