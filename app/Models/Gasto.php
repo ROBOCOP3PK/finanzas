@@ -63,7 +63,8 @@ class Gasto extends Model
 
     public function scopeFecha($query, $desde, $hasta)
     {
-        return $query->whereBetween('fecha', [$desde, $hasta]);
+        return $query->whereDate('fecha', '>=', $desde)
+                     ->whereDate('fecha', '<=', $hasta);
     }
 
     public function scopeTipo($query, $tipo)

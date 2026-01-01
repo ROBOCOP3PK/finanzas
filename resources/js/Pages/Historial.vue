@@ -325,6 +325,53 @@
             </div>
         </div>
 
+        <!-- Resumen de totales cuando hay filtros activos -->
+        <div v-if="resumenFiltrado && !gastosStore.loading" class="mb-4 bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4">
+            <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-3">Resumen del filtro</h3>
+            <div class="space-y-2">
+                <!-- Total General -->
+                <div class="flex justify-between items-center">
+                    <span class="text-gray-700 dark:text-gray-300">Total General</span>
+                    <span class="text-lg font-bold text-primary">{{ formatCurrency(resumenFiltrado.totalGeneral) }}</span>
+                </div>
+
+                <!-- Totales por persona - solo si hay usuario 2 -->
+                <template v-if="configStore.tieneUsuario2">
+                    <!-- Total Persona 1 -->
+                    <div class="border-t border-gray-200 dark:border-gray-700 pt-2 mt-2">
+                        <div class="flex justify-between items-center text-sm text-gray-500 dark:text-gray-400">
+                            <span>{{ configStore.nombre_persona_1 || 'Yo' }} (100%)</span>
+                            <span>{{ formatCurrency(resumenFiltrado.gastosPersonales) }}</span>
+                        </div>
+                        <div class="flex justify-between items-center text-sm text-gray-500 dark:text-gray-400">
+                            <span>Compartido ({{ resumenFiltrado.porcentajeP1 }}%)</span>
+                            <span>{{ formatCurrency(resumenFiltrado.porcionCompartidaP1) }}</span>
+                        </div>
+                        <div class="flex justify-between items-center mt-1">
+                            <span class="font-medium text-gray-700 dark:text-gray-300">Total {{ configStore.nombre_persona_1 || 'Yo' }}</span>
+                            <span class="text-lg font-bold text-green-600">{{ formatCurrency(resumenFiltrado.totalPersona1) }}</span>
+                        </div>
+                    </div>
+
+                    <!-- Total Persona 2 -->
+                    <div class="border-t border-gray-200 dark:border-gray-700 pt-2 mt-2">
+                        <div class="flex justify-between items-center text-sm text-gray-500 dark:text-gray-400">
+                            <span>{{ configStore.nombre_persona_2 }} (100%)</span>
+                            <span>{{ formatCurrency(resumenFiltrado.gastosPareja) }}</span>
+                        </div>
+                        <div class="flex justify-between items-center text-sm text-gray-500 dark:text-gray-400">
+                            <span>Compartido ({{ resumenFiltrado.porcentajeP2 }}%)</span>
+                            <span>{{ formatCurrency(resumenFiltrado.porcionCompartidaP2) }}</span>
+                        </div>
+                        <div class="flex justify-between items-center mt-1">
+                            <span class="font-medium text-gray-700 dark:text-gray-300">Total {{ configStore.nombre_persona_2 }}</span>
+                            <span class="text-lg font-bold text-red-500">{{ formatCurrency(resumenFiltrado.totalPersona2) }}</span>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </div>
+
         <!-- Lista de gastos y abonos -->
         <HistorialSkeleton v-if="gastosStore.loading || abonosStore.loading" />
 
@@ -410,6 +457,54 @@ const cantidadFiltrosActivos = computed(() => {
     if (filtros.value.tipos.length > 0) count++;
     if (filtros.value.categorias.length > 0) count++;
     return count;
+});
+
+// Resumen de totales cuando hay filtros activos
+const resumenFiltrado = computed(() => {
+    // Solo calcular si hay filtros y gastos
+    if (!hayFiltrosActivos.value || gastosStore.gastos.length === 0) {
+        return null;
+    }
+
+    const gastos = gastosStore.gastos;
+    const porcentajeP1 = parseFloat(configStore.porcentaje_persona_1);
+    const porcentajeP2 = parseFloat(configStore.porcentaje_persona_2);
+
+    // Total general
+    const totalGeneral = gastos.reduce((sum, g) => sum + parseFloat(g.valor), 0);
+
+    // Gastos por tipo
+    const gastosPersonales = gastos
+        .filter(g => g.tipo === 'personal')
+        .reduce((sum, g) => sum + parseFloat(g.valor), 0);
+
+    const gastosPareja = gastos
+        .filter(g => g.tipo === 'pareja')
+        .reduce((sum, g) => sum + parseFloat(g.valor), 0);
+
+    const gastosCompartidos = gastos
+        .filter(g => g.tipo === 'compartido')
+        .reduce((sum, g) => sum + parseFloat(g.valor), 0);
+
+    // Porciones de compartidos
+    const porcionCompartidaP1 = gastosCompartidos * (porcentajeP1 / 100);
+    const porcionCompartidaP2 = gastosCompartidos * (porcentajeP2 / 100);
+
+    // Totales por persona
+    const totalPersona1 = gastosPersonales + porcionCompartidaP1;
+    const totalPersona2 = gastosPareja + porcionCompartidaP2;
+
+    return {
+        totalGeneral,
+        totalPersona1,
+        totalPersona2,
+        gastosPersonales,
+        gastosPareja,
+        porcionCompartidaP1,
+        porcionCompartidaP2,
+        porcentajeP1,
+        porcentajeP2
+    };
 });
 
 // Toggle para selección múltiple de tipos en filtros
@@ -830,7 +925,76 @@ const generarPDF = async () => {
         doc.setFontSize(12);
         doc.text('Total General:', 20, yPos + 2);
         doc.text(formatCurrency(total), pageWidth - 20, yPos + 2, { align: 'right' });
-        yPos += 18;
+        yPos += 15;
+
+        // Totales por persona - Solo si hay usuario 2 configurado
+        if (configStore.tieneUsuario2) {
+            const nombrePersona1 = configStore.nombre_persona_1 || 'Yo';
+            const nombrePersona2 = configStore.nombre_persona_2;
+            const porcentajePersona1 = parseFloat(configStore.porcentaje_persona_1);
+            const porcentajePersona2 = parseFloat(configStore.porcentaje_persona_2);
+
+            // Calcular gastos por tipo
+            const gastosPersonales = gastos
+                .filter(g => g.tipo === 'personal')
+                .reduce((sum, g) => sum + parseFloat(g.valor), 0);
+
+            const gastosPareja = gastos
+                .filter(g => g.tipo === 'pareja')
+                .reduce((sum, g) => sum + parseFloat(g.valor), 0);
+
+            const gastosCompartidos = gastos
+                .filter(g => g.tipo === 'compartido')
+                .reduce((sum, g) => sum + parseFloat(g.valor), 0);
+
+            const porcionCompartidaP1 = gastosCompartidos * (porcentajePersona1 / 100);
+            const porcionCompartidaP2 = gastosCompartidos * (porcentajePersona2 / 100);
+
+            const totalPersona1 = gastosPersonales + porcionCompartidaP1;
+            const totalPersona2 = gastosPareja + porcionCompartidaP2;
+
+            // --- Total Persona 1 ---
+            doc.setFontSize(10);
+            doc.setTextColor(60, 60, 60);
+            doc.text(`${nombrePersona1} (100%):`, 20, yPos);
+            doc.text(formatCurrency(gastosPersonales), pageWidth - 20, yPos, { align: 'right' });
+            yPos += 6;
+
+            doc.text(`Compartido (${porcentajePersona1}%):`, 20, yPos);
+            doc.text(formatCurrency(porcionCompartidaP1), pageWidth - 20, yPos, { align: 'right' });
+            yPos += 8;
+
+            // Total persona 1 con fondo verde
+            doc.setFillColor(34, 197, 94); // Verde
+            doc.roundedRect(14, yPos - 5, pageWidth - 28, 12, 2, 2, 'F');
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(12);
+            doc.text(`Total ${nombrePersona1}:`, 20, yPos + 2);
+            doc.text(formatCurrency(totalPersona1), pageWidth - 20, yPos + 2, { align: 'right' });
+            yPos += 18;
+
+            // --- Total Persona 2 ---
+            doc.setFontSize(10);
+            doc.setTextColor(60, 60, 60);
+            doc.text(`${nombrePersona2} (100%):`, 20, yPos);
+            doc.text(formatCurrency(gastosPareja), pageWidth - 20, yPos, { align: 'right' });
+            yPos += 6;
+
+            doc.text(`Compartido (${porcentajePersona2}%):`, 20, yPos);
+            doc.text(formatCurrency(porcionCompartidaP2), pageWidth - 20, yPos, { align: 'right' });
+            yPos += 8;
+
+            // Total persona 2 con fondo rojo
+            doc.setFillColor(239, 68, 68); // Rojo
+            doc.roundedRect(14, yPos - 5, pageWidth - 28, 12, 2, 2, 'F');
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(12);
+            doc.text(`Total ${nombrePersona2}:`, 20, yPos + 2);
+            doc.text(formatCurrency(totalPersona2), pageWidth - 20, yPos + 2, { align: 'right' });
+            yPos += 15;
+        }
+
+        yPos += 3;
 
         // Tabla de gastos
         doc.setTextColor(79, 70, 229);
@@ -838,18 +1002,73 @@ const generarPDF = async () => {
         doc.text('Detalle de Gastos', 14, yPos);
         yPos += 5;
 
-        const tableData = gastos.map(g => [
-            formatDateShort(g.fecha),
-            g.concepto || '-',
-            g.categoria?.nombre || '-',
-            configStore.getNombreTipo(g.tipo),
-            g.medio_pago?.nombre || '-',
-            formatCurrency(g.valor)
-        ]);
+        // Configurar columnas según si hay usuario 2
+        let tableHeaders;
+        let tableData;
+        let columnStyles;
+
+        if (configStore.tieneUsuario2) {
+            const nombreP1 = configStore.nombre_persona_1 || 'Yo';
+            const nombreP2 = configStore.nombre_persona_2;
+            const porcP1 = parseFloat(configStore.porcentaje_persona_1);
+            const porcP2 = parseFloat(configStore.porcentaje_persona_2);
+
+            tableHeaders = [['Fecha', 'Concepto', 'Categoria', 'Medio Pago', `${porcP1}%`, `${porcP2}%`, 'Total']];
+
+            tableData = gastos.map(g => {
+                const valor = parseFloat(g.valor);
+                let valorP1 = 0;
+                let valorP2 = 0;
+
+                if (g.tipo === 'personal') {
+                    valorP1 = valor;
+                    valorP2 = 0;
+                } else if (g.tipo === 'pareja') {
+                    valorP1 = 0;
+                    valorP2 = valor;
+                } else if (g.tipo === 'compartido') {
+                    valorP1 = valor * (porcP1 / 100);
+                    valorP2 = valor * (porcP2 / 100);
+                }
+
+                return [
+                    formatDateShort(g.fecha),
+                    g.concepto || '-',
+                    g.categoria?.nombre || '-',
+                    g.medio_pago?.nombre || '-',
+                    formatCurrency(valorP1),
+                    formatCurrency(valorP2),
+                    formatCurrency(valor)
+                ];
+            });
+
+            columnStyles = {
+                0: { cellWidth: 20 },
+                4: { halign: 'right' },
+                5: { halign: 'right' },
+                6: { halign: 'right', fontStyle: 'bold' }
+            };
+        } else {
+            tableHeaders = [['Fecha', 'Concepto', 'Categoria', 'Tipo', 'Medio Pago', 'Valor']];
+
+            tableData = gastos.map(g => [
+                formatDateShort(g.fecha),
+                g.concepto || '-',
+                g.categoria?.nombre || '-',
+                configStore.getNombreTipo(g.tipo),
+                g.medio_pago?.nombre || '-',
+                formatCurrency(g.valor)
+            ]);
+
+            columnStyles = {
+                0: { cellWidth: 22 },
+                5: { halign: 'right', fontStyle: 'bold' }
+            };
+        }
 
         autoTable(doc, {
             startY: yPos,
-            head: [['Fecha', 'Concepto', 'Categoria', 'Tipo', 'Medio Pago', 'Valor']],
+            head: tableHeaders,
             body: tableData,
             theme: 'striped',
             headStyles: {
@@ -860,10 +1079,7 @@ const generarPDF = async () => {
             bodyStyles: {
                 fontSize: 8
             },
-            columnStyles: {
-                0: { cellWidth: 22 },
-                5: { halign: 'right', fontStyle: 'bold' }
-            },
+            columnStyles: columnStyles,
             margin: { left: 14, right: 14 }
         });
 
@@ -932,15 +1148,54 @@ const exportarCSV = async () => {
         }
 
         // Crear contenido CSV
-        const headers = ['Fecha', 'Concepto', 'Categoria', 'Tipo', 'Medio de Pago', 'Valor'];
-        const rows = gastos.map(g => [
-            g.fecha,
-            `"${(g.concepto || '').replace(/"/g, '""')}"`,
-            `"${(g.categoria?.nombre || '').replace(/"/g, '""')}"`,
-            configStore.getNombreTipo(g.tipo),
-            `"${(g.medio_pago?.nombre || '').replace(/"/g, '""')}"`,
-            g.valor
-        ]);
+        let headers;
+        let rows;
+
+        if (configStore.tieneUsuario2) {
+            const nombreP1 = configStore.nombre_persona_1 || 'Yo';
+            const nombreP2 = configStore.nombre_persona_2;
+            const porcP1 = parseFloat(configStore.porcentaje_persona_1);
+            const porcP2 = parseFloat(configStore.porcentaje_persona_2);
+
+            headers = ['Fecha', 'Concepto', 'Categoria', 'Medio de Pago', `${nombreP1} (${porcP1}%)`, `${nombreP2} (${porcP2}%)`, 'Total'];
+
+            rows = gastos.map(g => {
+                const valor = parseFloat(g.valor);
+                let valorP1 = 0;
+                let valorP2 = 0;
+
+                if (g.tipo === 'personal') {
+                    valorP1 = valor;
+                    valorP2 = 0;
+                } else if (g.tipo === 'pareja') {
+                    valorP1 = 0;
+                    valorP2 = valor;
+                } else if (g.tipo === 'compartido') {
+                    valorP1 = valor * (porcP1 / 100);
+                    valorP2 = valor * (porcP2 / 100);
+                }
+
+                return [
+                    g.fecha,
+                    `"${(g.concepto || '').replace(/"/g, '""')}"`,
+                    `"${(g.categoria?.nombre || '').replace(/"/g, '""')}"`,
+                    `"${(g.medio_pago?.nombre || '').replace(/"/g, '""')}"`,
+                    valorP1,
+                    valorP2,
+                    valor
+                ];
+            });
+        } else {
+            headers = ['Fecha', 'Concepto', 'Categoria', 'Tipo', 'Medio de Pago', 'Valor'];
+            rows = gastos.map(g => [
+                g.fecha,
+                `"${(g.concepto || '').replace(/"/g, '""')}"`,
+                `"${(g.categoria?.nombre || '').replace(/"/g, '""')}"`,
+                configStore.getNombreTipo(g.tipo),
+                `"${(g.medio_pago?.nombre || '').replace(/"/g, '""')}"`,
+                g.valor
+            ]);
+        }
 
         const csvContent = [
             headers.join(','),
