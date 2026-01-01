@@ -884,16 +884,14 @@ const generarPDF = async () => {
             let saldoTexto = '';
 
             if (deuda > 0) {
-                doc.setFillColor(239, 68, 68); // Rojo
                 saldoTexto = `${nombrePareja} te debe: ${formatCurrency(deuda)}`;
             } else if (deuda < 0) {
-                doc.setFillColor(245, 158, 11); // Amarillo
                 saldoTexto = `Le debes a ${nombrePareja}: ${formatCurrency(Math.abs(deuda))}`;
             } else {
-                doc.setFillColor(34, 197, 94); // Verde
                 saldoTexto = 'Estan a paz y salvo';
             }
 
+            doc.setFillColor(67, 56, 202); // Morado oscuro
             doc.roundedRect(14, yPos - 5, pageWidth - 28, 18, 3, 3, 'F');
             doc.setTextColor(255, 255, 255);
             doc.setFontSize(12);
@@ -984,8 +982,8 @@ const generarPDF = async () => {
             doc.text(formatCurrency(porcionCompartidaP2), pageWidth - 20, yPos, { align: 'right' });
             yPos += 8;
 
-            // Total persona 2 con fondo rojo
-            doc.setFillColor(239, 68, 68); // Rojo
+            // Total persona 2 con fondo morado oscuro
+            doc.setFillColor(67, 56, 202); // Morado oscuro
             doc.roundedRect(14, yPos - 5, pageWidth - 28, 12, 2, 2, 'F');
             doc.setTextColor(255, 255, 255);
             doc.setFontSize(12);
@@ -1013,28 +1011,33 @@ const generarPDF = async () => {
             const porcP1 = parseFloat(configStore.porcentaje_persona_1);
             const porcP2 = parseFloat(configStore.porcentaje_persona_2);
 
-            tableHeaders = [['Fecha', 'Concepto', 'Categoria', 'Medio Pago', `${porcP1}%`, `${porcP2}%`, 'Total']];
+            tableHeaders = [['Fecha', 'Concepto', 'Categoria', 'Tipo', 'Medio Pago', nombreP1, nombreP2, 'Total']];
 
             tableData = gastos.map(g => {
                 const valor = parseFloat(g.valor);
                 let valorP1 = 0;
                 let valorP2 = 0;
+                let tipoLabel = '';
 
                 if (g.tipo === 'personal') {
                     valorP1 = valor;
                     valorP2 = 0;
+                    tipoLabel = nombreP1;
                 } else if (g.tipo === 'pareja') {
                     valorP1 = 0;
                     valorP2 = valor;
+                    tipoLabel = nombreP2;
                 } else if (g.tipo === 'compartido') {
                     valorP1 = valor * (porcP1 / 100);
                     valorP2 = valor * (porcP2 / 100);
+                    tipoLabel = `${porcP1}/${porcP2}`;
                 }
 
                 return [
                     formatDateShort(g.fecha),
                     g.concepto || '-',
                     g.categoria?.nombre || '-',
+                    tipoLabel,
                     g.medio_pago?.nombre || '-',
                     formatCurrency(valorP1),
                     formatCurrency(valorP2),
@@ -1043,10 +1046,11 @@ const generarPDF = async () => {
             });
 
             columnStyles = {
-                0: { cellWidth: 20 },
-                4: { halign: 'right' },
+                0: { cellWidth: 18 },
+                3: { cellWidth: 18 },
                 5: { halign: 'right' },
-                6: { halign: 'right', fontStyle: 'bold' }
+                6: { halign: 'right' },
+                7: { halign: 'right', fontStyle: 'bold' }
             };
         } else {
             tableHeaders = [['Fecha', 'Concepto', 'Categoria', 'Tipo', 'Medio Pago', 'Valor']];
@@ -1157,28 +1161,33 @@ const exportarCSV = async () => {
             const porcP1 = parseFloat(configStore.porcentaje_persona_1);
             const porcP2 = parseFloat(configStore.porcentaje_persona_2);
 
-            headers = ['Fecha', 'Concepto', 'Categoria', 'Medio de Pago', `${nombreP1} (${porcP1}%)`, `${nombreP2} (${porcP2}%)`, 'Total'];
+            headers = ['Fecha', 'Concepto', 'Categoria', 'Tipo', 'Medio de Pago', nombreP1, nombreP2, 'Total'];
 
             rows = gastos.map(g => {
                 const valor = parseFloat(g.valor);
                 let valorP1 = 0;
                 let valorP2 = 0;
+                let tipoLabel = '';
 
                 if (g.tipo === 'personal') {
                     valorP1 = valor;
                     valorP2 = 0;
+                    tipoLabel = nombreP1;
                 } else if (g.tipo === 'pareja') {
                     valorP1 = 0;
                     valorP2 = valor;
+                    tipoLabel = nombreP2;
                 } else if (g.tipo === 'compartido') {
                     valorP1 = valor * (porcP1 / 100);
                     valorP2 = valor * (porcP2 / 100);
+                    tipoLabel = `${porcP1}/${porcP2}`;
                 }
 
                 return [
                     g.fecha,
                     `"${(g.concepto || '').replace(/"/g, '""')}"`,
                     `"${(g.categoria?.nombre || '').replace(/"/g, '""')}"`,
+                    tipoLabel,
                     `"${(g.medio_pago?.nombre || '').replace(/"/g, '""')}"`,
                     valorP1,
                     valorP2,
