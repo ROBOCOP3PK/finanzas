@@ -305,7 +305,7 @@ const irASolicitudes = () => {
 };
 
 const irAServicios = () => {
-    router.push('/configuracion');
+    router.push('/configuracion?seccion=servicios');
 };
 
 // Funciones de swipe

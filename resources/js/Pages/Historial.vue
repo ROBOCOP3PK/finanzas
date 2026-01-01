@@ -477,7 +477,16 @@ const historialCombinado = computed(() => {
         }))
         : [];
 
-    return [...gastos, ...abonos].sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+    return [...gastos, ...abonos].sort((a, b) => {
+        // Primero ordenar por fecha descendente
+        const fechaCompare = new Date(b.fecha) - new Date(a.fecha);
+        if (fechaCompare !== 0) return fechaCompare;
+
+        // Si las fechas son iguales, ordenar por created_at descendente
+        const createdA = a.created_at ? new Date(a.created_at) : new Date(0);
+        const createdB = b.created_at ? new Date(b.created_at) : new Date(0);
+        return createdB - createdA;
+    });
 });
 
 const aplicarFiltros = () => {

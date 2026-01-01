@@ -908,7 +908,7 @@
 
 <script setup>
 import { ref, reactive, onMounted, computed } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 import {
     PlusIcon,
     PencilIcon,
@@ -942,6 +942,7 @@ import axios from 'axios';
 import { useCurrency } from '../Composables/useCurrency';
 
 const router = useRouter();
+const route = useRoute();
 const themeStore = useThemeStore();
 const mediosPagoStore = useMediosPagoStore();
 const categoriasStore = useCategoriasStore();
@@ -1571,5 +1572,11 @@ onMounted(async () => {
     formCompartidos.nombre_persona_2 = configStore.nombre_persona_2;
     formCompartidos.porcentaje_persona_1 = configStore.porcentaje_persona_1;
     formCompartidos.porcentaje_persona_2 = configStore.porcentaje_persona_2;
+
+    // Abrir seccion si viene por query param
+    const seccion = route.query.seccion;
+    if (seccion && seccionesAbiertas.hasOwnProperty(seccion)) {
+        seccionesAbiertas[seccion] = true;
+    }
 });
 </script>
