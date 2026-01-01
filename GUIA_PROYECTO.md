@@ -2635,6 +2635,11 @@ private function calcularCicloFacturacion(\DateTimeInterface $fecha, int $diaRes
     $mes = (int) $fecha->format('n');
     $anio = (int) $fecha->format('Y');
 
+    // CASO ESPECIAL: Si día de restablecimiento es 1, usar mes calendario normal
+    if ($diaRestablecimiento === 1) {
+        return ['mes' => $mes, 'anio' => $anio];
+    }
+
     // Si el día >= día de restablecimiento, pertenece al ciclo del MES SIGUIENTE
     if ($dia >= $diaRestablecimiento) {
         $mes++;
@@ -2647,6 +2652,8 @@ private function calcularCicloFacturacion(\DateTimeInterface $fecha, int $diaRes
     return ['mes' => $mes, 'anio' => $anio];
 }
 ```
+
+> **Nota:** Si el día de restablecimiento es 1, se usa el mes calendario normal (enero = enero, febrero = febrero, etc.) ya que no tiene sentido que el día 1 de cada mes ya pertenezca al ciclo del mes siguiente.
 
 ### 16.3 Ejemplos Prácticos
 
