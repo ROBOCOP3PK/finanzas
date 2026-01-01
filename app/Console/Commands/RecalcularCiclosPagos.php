@@ -51,6 +51,13 @@ class RecalcularCiclosPagos extends Command
         $mes = (int) $fecha->format('n');
         $anio = (int) $fecha->format('Y');
 
+        // Si el día de restablecimiento es 1, usamos el mes calendario normal
+        if ($diaRestablecimiento === 1) {
+            return ['mes' => $mes, 'anio' => $anio];
+        }
+
+        // Para otros días, si estamos en o después del día de restablecimiento,
+        // pertenecemos al ciclo del mes siguiente
         if ($dia >= $diaRestablecimiento) {
             $mes++;
             if ($mes > 12) {

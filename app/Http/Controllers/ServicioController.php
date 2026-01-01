@@ -13,7 +13,12 @@ class ServicioController extends Controller
 {
     /**
      * Calcula el mes y año del ciclo de facturación basado en el día de restablecimiento.
-     * Si la fecha es >= día de restablecimiento, pertenece al ciclo del mes siguiente.
+     *
+     * Lógica:
+     * - El ciclo va del día de restablecimiento hasta el día anterior del mes siguiente
+     * - Ejemplo con día 27: del 27 de diciembre al 26 de enero = ciclo de enero
+     * - Si día >= día de restablecimiento, pertenece al ciclo del mes siguiente
+     * - EXCEPCIÓN: Si día de restablecimiento es 1, usamos mes calendario normal
      */
     private function calcularCicloFacturacion(\DateTimeInterface $fecha, int $diaRestablecimiento): array
     {
@@ -21,8 +26,15 @@ class ServicioController extends Controller
         $mes = (int) $fecha->format('n');
         $anio = (int) $fecha->format('Y');
 
+        // Si el día de restablecimiento es 1, usamos el mes calendario normal
+        // (el ciclo de enero es del 1 al 31 de enero)
+        if ($diaRestablecimiento === 1) {
+            return ['mes' => $mes, 'anio' => $anio];
+        }
+
+        // Para otros días, si estamos en o después del día de restablecimiento,
+        // pertenecemos al ciclo del mes siguiente
         if ($dia >= $diaRestablecimiento) {
-            // Pertenece al ciclo del mes siguiente
             $mes++;
             if ($mes > 12) {
                 $mes = 1;

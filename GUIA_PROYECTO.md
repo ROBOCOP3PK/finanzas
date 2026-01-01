@@ -110,11 +110,15 @@ Para gastos que se repiten mensualmente:
 ### 2.12 Servicios (Recibos)
 Sistema para gestionar pagos de servicios mensuales:
 - Cada usuario tiene su lista de servicios (luz, agua, internet, etc.)
-- Cada servicio tiene: nombre, icono, color, valor estimado, categoría
-- Estado de pago por mes/año (pagado/pendiente)
-- Alerta visual cuando hay servicios pendientes de pagar
+- Cada servicio tiene: nombre, icono, color, valor estimado, categoría, **referencia**
+- **Campo referencia**: Para almacenar número de cuenta, código de cliente, datos de pago
+- **Ciclos de facturación**: No usan mes calendario, sino ciclo basado en día de restablecimiento
+  - Ejemplo: Con día 15, un pago del 20 de enero pertenece al ciclo de febrero
+- Estado de pago por ciclo (pagado/pendiente)
+- Alerta visual cuando hay servicios pendientes y faltan 3 días o menos para el restablecimiento
 - Al marcar como pagado, se crea automáticamente un gasto asociado
-- Día de restablecimiento configurable (día del mes en que se resetean los estados)
+- **Doble-click** en un servicio copia la referencia al portapapeles
+- Día de restablecimiento configurable por usuario
 
 ### 2.13 Sistema de Compartición de Datos
 Permite compartir datos financieros con otra persona registrada:
@@ -346,7 +350,7 @@ finanzas/
 │                                   users                                       │
 ├──────────────────────────────────────────────────────────────────────────────┤
 │ id | name | email | password | persona_secundaria_id (FK, nullable) |        │
-│ porcentaje_persona_2 | dia_restablecimiento_servicios | created_at           │
+│ porcentaje_persona_2 | dia_restablecimiento_servicios | tema | created_at    │
 └──────────────────────────────────────────────────────────────────────────────┘
         │
         │ user_id (FK)
@@ -400,7 +404,7 @@ finanzas/
 ┌──────────────────────────────────────────────────────────────────────────────┐
 │                                servicios                                      │
 ├──────────────────────────────────────────────────────────────────────────────┤
-│ id | user_id (FK) | nombre | icono | color | valor_estimado |                │
+│ id | user_id (FK) | nombre | icono | color | valor_estimado | referencia |   │
 │ categoria_id | activo | orden | created_at                                    │
 └──────────────────────────────────────────────────────────────────────────────┘
 
@@ -448,6 +452,8 @@ finanzas/
 | password | VARCHAR(255) | NOT NULL | Password hasheado |
 | persona_secundaria_id | BIGINT | NULLABLE, FK → users.id | Referencia a otro usuario (pareja) |
 | porcentaje_persona_2 | DECIMAL(5,2) | NOT NULL, DEFAULT 40.00 | % de gastos compartidos para la pareja |
+| dia_restablecimiento_servicios | INT | DEFAULT 1 | Día del mes para ciclo de servicios |
+| tema | VARCHAR(20) | DEFAULT 'system' | Tema: light, dark, system |
 | created_at | TIMESTAMP | | Fecha de creación |
 | updated_at | TIMESTAMP | | Fecha de actualización |
 
@@ -965,19 +971,19 @@ php artisan serve --port=8080
 | Auth | Registro con verificación email + Login + Recuperación | ✅ |
 | Gastos | CRUD completo con filtros y exportación CSV | ✅ |
 | Abonos | CRUD completo | ✅ |
-| Dashboard | Resumen, deuda, por categoría, últimos movimientos | ✅ |
+| Dashboard | Resumen, deuda, por categoría, navegación meses | ✅ |
 | Categorías | CRUD con iconos y colores | ✅ |
 | Medios de Pago | CRUD con iconos | ✅ |
 | Plantillas | Plantillas rápidas para registro en 2-3 taps | ✅ |
-| Gastos Recurrentes | Gastos mensuales automáticos | ✅ |
+| Gastos Recurrentes | Gastos mensuales automáticos con alertas | ✅ |
 | Conceptos Frecuentes | Autocompletado y favoritos | ✅ |
-| Servicios | Gestión de recibos/servicios mensuales | ✅ |
-| Configuración | Porcentajes, moneda, tema, nombres | ✅ |
-| PWA | Manifest, Service Worker, iconos | ✅ |
+| Servicios | Ciclos de facturación, referencia, doble-click copiar | ✅ |
+| Configuración | Porcentajes, moneda, tema, día restablecimiento | ✅ |
+| PWA Offline | IndexedDB, cola offline, sincronización, conflictos | ✅ |
+| Tema Oscuro | Claro, oscuro, sistema automático | ✅ |
 | Compartición | Sistema completo de compartir datos | ✅ |
-| Notificaciones | Sistema de notificaciones persistentes | ✅ |
-| Exportación | CSV con filtros | ✅ |
-| PDF | Exportación de historial como PDF | ✅ |
+| Notificaciones | Sistema de notificaciones con navegación | ✅ |
+| Exportación | CSV con filtros + compartir como imagen | ✅ |
 | Despliegue | Servidor casero + Cloudflare Tunnel | ✅ |
 
 ### Detalle de Funcionalidades
@@ -1001,11 +1007,16 @@ php artisan serve --port=8080
 - [x] Revocar acceso
 
 #### Servicios (Recibos) ✅
-- [x] CRUD de servicios
+- [x] CRUD de servicios con icono, color, valor estimado
+- [x] Campo referencia para datos de pago (número cuenta, etc.)
+- [x] Ciclos de facturación basados en día de restablecimiento
 - [x] Marcar como pagado (crea gasto automáticamente)
-- [x] Desmarcar pago
-- [x] Alertas de servicios pendientes
-- [x] Día de restablecimiento configurable
+- [x] Desmarcar pago (elimina gasto asociado)
+- [x] Doble-click para copiar referencia al portapapeles
+- [x] Alertas cuando faltan 3 días o menos y hay pendientes
+- [x] Navegación desde alertas a pestaña de servicios
+- [x] Comando artisan para recalcular ciclos existentes
+- [x] Reordenamiento personalizado
 
 ---
 
@@ -1035,17 +1046,23 @@ php artisan serve --port=8080
 
 ### Características PWA
 - **Manifest**: Nombre, iconos, colores, orientación portrait
-- **Service Worker**: Cache de assets, estrategia network-first
-- **Iconos**: Múltiples tamaños (72x72 a 512x512), maskable
+- **Service Worker**: Cache de assets, estrategia network-first para API
+- **Iconos**: Múltiples tamaños (32x32 a 512x512), maskable
 - **Instalable**: En Android, iOS y desktop
+- **Funcionamiento Offline**:
+  - Cola de operaciones en IndexedDB
+  - Sincronización automática al recuperar conexión
+  - Manejo de conflictos (elegir versión local o servidor)
+  - Indicador visual de estado offline
+  - Operaciones fallidas guardadas para revisión
 
 ### Futuras Mejoras Potenciales
 - [ ] Gráficos de evolución de deuda en el tiempo
 - [ ] Presupuestos por categoría con alertas
 - [ ] Importación de gastos desde CSV/Excel
-- [ ] Sincronización entre dispositivos
-- [ ] Notificaciones push
+- [ ] Notificaciones push nativas
 - [ ] Múltiples monedas con conversión
+- [ ] Reportes mensuales automáticos por email
 
 ---
 
@@ -2342,3 +2359,655 @@ crontab -l
 | **Repo de la App** | https://github.com/TU_USUARIO/finanzas |
 | **Repo de Backups** | https://github.com/ROBOCOP3PK/finanzas-backups |
 | **Hostinger (dominio)** | https://hpanel.hostinger.com |
+
+---
+
+## 14. Sistema PWA y Funcionamiento Offline
+
+### 14.1 Arquitectura PWA
+
+La aplicación es una **Progressive Web App (PWA)** completa que puede funcionar sin conexión a internet.
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    NAVEGADOR DEL USUARIO                      │
+├─────────────────────────────────────────────────────────────┤
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐  │
+│  │  Vue App    │  │  Service    │  │  IndexedDB          │  │
+│  │  (Pinia)    │◄─►│  Worker     │◄─►│  (Cola offline)     │  │
+│  └─────────────┘  └─────────────┘  └─────────────────────┘  │
+│         │                │                    │              │
+│         ▼                ▼                    ▼              │
+│  ┌─────────────────────────────────────────────────────────┐│
+│  │                    localStorage                          ││
+│  │  - Token de auth    - Tema preferido   - Conflictos     ││
+│  │  - Operaciones fallidas                                  ││
+│  └─────────────────────────────────────────────────────────┘│
+└─────────────────────────────────────────────────────────────┘
+                            │
+                            ▼ (cuando hay conexión)
+┌─────────────────────────────────────────────────────────────┐
+│                       API LARAVEL                            │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### 14.2 Archivos del Sistema Offline
+
+| Archivo | Propósito |
+|---------|-----------|
+| `public/manifest.json` | Configuración PWA (nombre, iconos, colores, orientación) |
+| `public/sw.js` | Service Worker para caché y sincronización |
+| `resources/js/Stores/offline.js` | Store Pinia para gestión offline |
+| `resources/js/Services/offlineDb.js` | Wrapper de IndexedDB |
+| `resources/js/Components/Layout/OfflineIndicator.vue` | UI del indicador offline |
+
+### 14.3 Estrategias de Caché (Service Worker)
+
+```javascript
+// sw.js - Estrategias implementadas
+
+// Assets de build (JS, CSS, imágenes) → Cache First
+// Si está en caché, usar caché. Si no, ir a red.
+// Resultado: Carga instantánea de la app
+
+// Peticiones API → Network First
+// Intentar red primero. Si falla, usar caché.
+// Resultado: Datos siempre actualizados cuando hay conexión
+
+// Iconos y fuentes → Cache First con revalidación
+// Usar caché pero actualizar en background
+```
+
+### 14.4 Cola de Operaciones Offline
+
+Cuando no hay conexión, las operaciones se guardan en **IndexedDB**:
+
+```javascript
+// Estructura de una operación en cola
+{
+    id: 'temp_1704067200000',  // ID temporal
+    type: 'gasto',             // Tipo de entidad
+    method: 'POST',            // POST, PUT, DELETE
+    endpoint: '/api/gastos',   // Endpoint de la API
+    data: { ... },             // Datos de la operación
+    timestamp: 1704067200000,  // Cuándo se creó
+    retries: 0                 // Intentos de sincronización
+}
+```
+
+**Flujo de sincronización:**
+1. Usuario crea/edita/elimina mientras está offline
+2. Operación se guarda en IndexedDB con ID temporal
+3. UI se actualiza inmediatamente (optimistic update)
+4. Cuando vuelve la conexión, se sincronizan automáticamente
+5. IDs temporales se reemplazan por IDs reales del servidor
+
+### 14.5 Manejo de Conflictos
+
+Cuando hay ediciones simultáneas desde múltiples dispositivos:
+
+```
+Dispositivo A (offline)          Servidor              Dispositivo B
+       │                            │                        │
+       │  Edita gasto #123          │                        │
+       │  (guardado local)          │                        │
+       │                            │◄──── Edita gasto #123 ─┤
+       │                            │      (guardado)        │
+       │                            │                        │
+       │──── Sincroniza ───────────►│                        │
+       │                            │                        │
+       │◄─── Error 409 ────────────│                        │
+       │     (Conflicto)            │                        │
+       │                            │                        │
+       │  Usuario elige:            │                        │
+       │  - Mi versión (local)      │                        │
+       │  - Versión del servidor    │                        │
+```
+
+**Estados de conflicto:**
+| Estado | Descripción |
+|--------|-------------|
+| `pending` | Esperando decisión del usuario |
+| `resolved_local` | Usuario eligió su versión |
+| `resolved_server` | Usuario eligió versión del servidor |
+
+### 14.6 Operaciones Fallidas
+
+Si una operación falla por error de validación o problema no recuperable:
+
+```javascript
+// Se guarda en localStorage para revisión manual
+{
+    id: 'failed_1704067200000',
+    operation: { ... },        // La operación original
+    error: 'El valor debe ser mayor a 0',
+    timestamp: 1704067200000,
+    canRetry: true             // Si se puede reintentar
+}
+```
+
+**Acciones disponibles:**
+- **Reintentar**: Volver a intentar la operación
+- **Descartar**: Eliminar la operación (requiere confirmación)
+
+### 14.7 Indicador Offline (UI)
+
+Componente `OfflineIndicator.vue`:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  ⚠️ Sin conexión                                    [Sync]  │
+│  3 operaciones pendientes                                    │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**Características:**
+- Banner rojo cuando está offline
+- Badge con contador de operaciones pendientes
+- Botón para forzar sincronización manual
+- Animación de sincronización en progreso
+- Desaparece automáticamente cuando hay conexión y todo sincronizado
+
+### 14.8 IDs Temporales
+
+Para entidades creadas offline:
+
+```javascript
+// Generación de ID temporal
+const tempId = `temp_${Date.now()}`;  // ej: temp_1704067200000
+
+// Detección de ID temporal
+const isTempId = (id) => String(id).startsWith('temp_');
+
+// Después de sincronizar, el ID temporal se reemplaza
+// por el ID real asignado por el servidor
+```
+
+---
+
+## 15. Sistema de Tema Oscuro (Dark Mode)
+
+### 15.1 Modos Disponibles
+
+| Modo | Descripción |
+|------|-------------|
+| `light` | Tema claro siempre |
+| `dark` | Tema oscuro siempre |
+| `system` | Sigue preferencia del sistema operativo |
+
+### 15.2 Archivos Involucrados
+
+| Archivo | Propósito |
+|---------|-----------|
+| `resources/js/Stores/theme.js` | Store Pinia para gestión del tema |
+| `resources/js/Components/Layout/ThemeToggle.vue` | Botón de cambio de tema |
+| `tailwind.config.js` | Configuración de clase `dark` |
+
+### 15.3 Implementación
+
+```javascript
+// theme.js - Store de tema
+export const useThemeStore = defineStore('theme', {
+    state: () => ({
+        tema: localStorage.getItem('tema') || 'system'
+    }),
+
+    getters: {
+        temaActivo() {
+            if (this.tema === 'system') {
+                return window.matchMedia('(prefers-color-scheme: dark)').matches
+                    ? 'dark' : 'light';
+            }
+            return this.tema;
+        }
+    },
+
+    actions: {
+        setTema(nuevoTema) {
+            this.tema = nuevoTema;
+            localStorage.setItem('tema', nuevoTema);
+            this.aplicarTema();
+            // También se guarda en servidor para sincronizar entre dispositivos
+        },
+
+        aplicarTema() {
+            if (this.temaActivo === 'dark') {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        }
+    }
+});
+```
+
+### 15.4 Estilos con Tailwind
+
+```html
+<!-- Ejemplo de componente con soporte dark mode -->
+<div class="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
+    <p class="text-gray-500 dark:text-gray-400">Texto secundario</p>
+</div>
+```
+
+### 15.5 Toggle de Tema
+
+```vue
+<!-- ThemeToggle.vue -->
+<button @click="cambiarTema">
+    <SunIcon v-if="temaActivo === 'dark'" />
+    <MoonIcon v-else />
+</button>
+```
+
+**Ciclo de cambio:** light → dark → system → light
+
+---
+
+## 16. Sistema de Ciclos de Facturación de Servicios
+
+### 16.1 Concepto
+
+A diferencia del mes calendario, los servicios usan un **ciclo de facturación** basado en el día de restablecimiento configurado por el usuario.
+
+```
+Ejemplo: dia_restablecimiento_servicios = 15
+
+Timeline:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    Enero                         Febrero
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+       15                            15
+        │◄──── Ciclo Febrero ────────►│
+        │                              │
+   Pagos entre el 15 de enero      Se "restablece"
+   y el 14 de febrero pertenecen   el ciclo
+   al ciclo de febrero
+```
+
+### 16.2 Lógica de Cálculo
+
+```php
+// ServicioController.php
+private function calcularCicloFacturacion(\DateTimeInterface $fecha, int $diaRestablecimiento): array
+{
+    $dia = (int) $fecha->format('d');
+    $mes = (int) $fecha->format('n');
+    $anio = (int) $fecha->format('Y');
+
+    // Si el día >= día de restablecimiento, pertenece al ciclo del MES SIGUIENTE
+    if ($dia >= $diaRestablecimiento) {
+        $mes++;
+        if ($mes > 12) {
+            $mes = 1;
+            $anio++;
+        }
+    }
+
+    return ['mes' => $mes, 'anio' => $anio];
+}
+```
+
+### 16.3 Ejemplos Prácticos
+
+Con `dia_restablecimiento_servicios = 27`:
+
+| Fecha de Pago | Ciclo Calculado |
+|---------------|-----------------|
+| 26 de diciembre | Diciembre 2024 |
+| 27 de diciembre | **Enero 2025** |
+| 29 de diciembre | **Enero 2025** |
+| 1 de enero | Enero 2025 |
+| 26 de enero | Enero 2025 |
+| 27 de enero | **Febrero 2025** |
+
+### 16.4 Alertas de Servicios
+
+El sistema genera alertas cuando:
+- Faltan **3 días o menos** para el próximo restablecimiento
+- Hay servicios **pendientes de pago** en el ciclo actual
+
+```php
+// ServicioController::alertas()
+$diasRestantes = (int) ceil($hoy->diffInDays($fechaRestablecimiento, false));
+$mostrarAlerta = $diasRestantes <= 3 && $pendientes > 0;
+```
+
+### 16.5 Campo Referencia
+
+Cada servicio puede tener un campo `referencia` para almacenar:
+- Número de cuenta/contrato
+- Código de cliente
+- Referencia de pago
+- Cualquier dato útil para el pago
+
+```php
+// Modelo Servicio
+$fillable = [
+    'nombre', 'icono', 'color', 'valor_estimado',
+    'referencia',  // ← Campo para datos de referencia
+    'categoria_id', 'activo', 'orden'
+];
+```
+
+### 16.6 Copiar Referencia con Doble-Click
+
+En el formulario de gastos, al hacer **doble-click** sobre un servicio:
+1. Se copia la referencia al portapapeles
+2. El dispositivo vibra brevemente (si soporta vibración)
+3. Se muestra un Toast de confirmación
+
+```javascript
+// GastoForm.vue
+const handleServiceClick = (servicio) => {
+    const now = Date.now();
+
+    if (lastClickServiceId.value === servicio.id &&
+        (now - lastClickTime.value) < 300) {
+        // Doble click detectado
+        if (servicio.referencia) {
+            navigator.clipboard.writeText(servicio.referencia);
+            navigator.vibrate?.(100);
+            emit('referencia-copiada', servicio.referencia);
+        }
+    } else {
+        // Click simple - seleccionar servicio
+        seleccionarServicio(servicio);
+    }
+
+    lastClickTime.value = now;
+    lastClickServiceId.value = servicio.id;
+};
+```
+
+### 16.7 Comando de Recálculo
+
+Para migrar pagos existentes al nuevo sistema de ciclos:
+
+```bash
+php artisan pagos:recalcular-ciclos
+```
+
+Este comando:
+1. Lee todos los pagos de servicios
+2. Recalcula el mes/año basado en la fecha de pago y día de restablecimiento
+3. Actualiza los registros que tengan ciclo incorrecto
+
+---
+
+## 17. Navegación desde Alertas
+
+### 17.1 Tipos de Alertas y Destinos
+
+| Alerta | Ubicación | Destino |
+|--------|-----------|---------|
+| Gastos recurrentes pendientes | Dashboard | Botón "Registrar todos" |
+| Servicios por pagar | Dashboard / Notificaciones | `/gastos/nuevo?seccion=servicios` |
+| Invitación de compartición | Notificaciones | Aceptar/Rechazar inline |
+| Solicitud de gasto pendiente | Notificaciones | `/configuracion` |
+
+### 17.2 Navegación a Servicios desde Notificaciones
+
+Al pulsar la alerta de "X servicios por pagar" en la página de Notificaciones:
+
+```javascript
+// Notificaciones.vue
+const irAServicios = () => {
+    router.push('/gastos/nuevo?seccion=servicios');
+};
+```
+
+La página de registro lee el query param y activa la pestaña correspondiente:
+
+```javascript
+// Gastos/Create.vue
+const route = useRoute();
+const seccionInicial = computed(() => route.query.seccion || null);
+
+// GastoForm.vue
+onMounted(async () => {
+    // ...cargar datos...
+
+    if (props.seccionInicial === 'servicios' && serviciosStore.activos.length > 0) {
+        tabActivo.value = 'servicios';
+    }
+});
+```
+
+---
+
+## 18. Exportación y Compartir
+
+### 18.1 Exportación a CSV
+
+**Endpoint:** `GET /api/gastos/exportar`
+
+**Parámetros opcionales:**
+| Parámetro | Descripción |
+|-----------|-------------|
+| `exportar_todos` | Si es true, ignora otros filtros |
+| `desde` | Fecha inicio (YYYY-MM-DD) |
+| `hasta` | Fecha fin (YYYY-MM-DD) |
+| `tipo` | personal, pareja, compartido |
+| `categoria_id` | ID de categoría |
+
+**Formato del CSV:**
+```csv
+Fecha,Concepto,Valor,Tipo,Categoría,Medio de Pago
+2024-12-29,Almuerzo,25000,personal,Alimentación,Nequi
+2024-12-30,Internet,80000,compartido,Servicios,Davivienda
+```
+
+### 18.2 Compartir como Imagen (Historial)
+
+El historial puede compartirse como imagen usando `html2canvas`:
+
+1. Usuario pulsa botón "Compartir"
+2. Se captura el contenido visible como canvas
+3. Se convierte a imagen PNG
+4. Se abre el modal de compartir del sistema (Web Share API)
+
+```javascript
+// Historial.vue
+const compartir = async () => {
+    const canvas = await html2canvas(contenedor.value);
+    const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
+
+    if (navigator.share) {
+        await navigator.share({
+            files: [new File([blob], 'historial.png', { type: 'image/png' })]
+        });
+    }
+};
+```
+
+---
+
+## 19. Resumen de Funcionalidades Completas
+
+### 19.1 Funcionalidades por Módulo
+
+#### Autenticación ✅
+- [x] Registro con verificación email (código 6 dígitos)
+- [x] Login con tokens persistentes (Sanctum)
+- [x] Recuperación de contraseña
+- [x] Logout y logout de todas las sesiones
+- [x] Borrar todos los datos del usuario
+
+#### Dashboard ✅
+- [x] Card de deuda de la pareja
+- [x] Card de gasto del mes actual
+- [x] Navegación entre meses (anterior/siguiente)
+- [x] Resumen por categorías con porcentajes
+- [x] Resumen por tipo (personal/pareja/compartido)
+- [x] Alerta de gastos recurrentes pendientes
+- [x] Reset automático al mes actual al entrar
+
+#### Gastos ✅
+- [x] CRUD completo
+- [x] Filtros por fecha, tipo, categoría, medio de pago
+- [x] Paginación con "cargar más"
+- [x] Exportación a CSV
+- [x] Tipos: personal, pareja, compartido
+- [x] Soporte offline con sincronización
+
+#### Abonos ✅
+- [x] CRUD completo
+- [x] Filtros por fecha
+- [x] Reduce deuda de la pareja
+- [x] Soporte offline
+
+#### Servicios (Recibos) ✅
+- [x] CRUD de servicios
+- [x] Ciclos de facturación configurables
+- [x] Marcar/desmarcar como pagado
+- [x] Crear gasto automáticamente al pagar
+- [x] Campo referencia para datos de pago
+- [x] Doble-click para copiar referencia
+- [x] Alertas de servicios pendientes
+- [x] Reordenamiento personalizado
+
+#### Gastos Recurrentes ✅
+- [x] CRUD de gastos mensuales
+- [x] Detección de pendientes por día del mes
+- [x] Registrar todos los pendientes de una vez
+- [x] Alerta visual en dashboard
+
+#### Categorías ✅
+- [x] CRUD con iconos y colores
+- [x] Reordenamiento personalizado
+- [x] Estadísticas por categoría
+
+#### Medios de Pago ✅
+- [x] CRUD con iconos
+- [x] Reordenamiento personalizado
+- [x] No eliminar si tiene gastos asociados
+
+#### Plantillas Rápidas ✅
+- [x] CRUD de plantillas
+- [x] Usar plantilla para crear gasto
+- [x] Top 6 plantillas más usadas
+- [x] Reordenamiento
+
+#### Conceptos Frecuentes ✅
+- [x] Auto-registro de conceptos usados
+- [x] Búsqueda y autocompletado
+- [x] Marcar favoritos
+- [x] Sugerir medio de pago y tipo
+
+#### Configuración ✅
+- [x] Nombre de persona secundaria
+- [x] Porcentaje de gastos compartidos
+- [x] Día de restablecimiento de servicios
+- [x] Tema (claro/oscuro/sistema)
+- [x] Moneda y formato
+
+#### Sistema de Compartición ✅
+- [x] Invitar usuario por email
+- [x] Aceptar/rechazar invitaciones
+- [x] Ver dashboard del propietario
+- [x] Ver historial del propietario
+- [x] Crear solicitudes de gasto
+- [x] Aprobar/rechazar solicitudes
+- [x] Revocar acceso
+- [x] Notificaciones de cada acción
+
+#### Notificaciones ✅
+- [x] Badge con contador en header
+- [x] Lista de notificaciones
+- [x] Marcar como leída
+- [x] Eliminar notificación (swipe)
+- [x] Navegación a acciones relacionadas
+
+#### PWA y Offline ✅
+- [x] Service Worker con caché
+- [x] Manifest para instalación
+- [x] Iconos múltiples tamaños
+- [x] Funcionamiento sin conexión
+- [x] Cola de operaciones offline
+- [x] Sincronización automática
+- [x] Manejo de conflictos
+- [x] Indicador visual de estado
+
+#### Tema Oscuro ✅
+- [x] Modo claro
+- [x] Modo oscuro
+- [x] Modo sistema (automático)
+- [x] Persistencia de preferencia
+
+#### Exportación ✅
+- [x] CSV con filtros
+- [x] Compartir historial como imagen
+
+### 19.2 Comandos Artisan Disponibles
+
+| Comando | Descripción |
+|---------|-------------|
+| `php artisan pagos:recalcular-ciclos` | Recalcula ciclos de pagos de servicios |
+| `php artisan migrate:fresh --seed` | Reinicia BD con datos de ejemplo |
+| `php artisan config:cache` | Cachea configuración (producción) |
+| `php artisan route:cache` | Cachea rutas (producción) |
+| `php artisan view:cache` | Cachea vistas (producción) |
+
+### 19.3 Stores Pinia Disponibles
+
+| Store | Propósito |
+|-------|-----------|
+| `auth` | Autenticación y usuario actual |
+| `gastos` | CRUD de gastos con filtros |
+| `abonos` | CRUD de abonos |
+| `dashboard` | Datos del dashboard |
+| `servicios` | Gestión de servicios/recibos |
+| `gastosRecurrentes` | Gastos mensuales automáticos |
+| `categorias` | Categorías de gasto |
+| `mediosPago` | Medios de pago |
+| `plantillas` | Plantillas rápidas |
+| `conceptosFrecuentes` | Autocompletado de conceptos |
+| `config` | Configuración del usuario |
+| `theme` | Tema oscuro/claro |
+| `offline` | Sistema offline y sincronización |
+| `dataShare` | Compartición de datos |
+| `sharedDashboard` | Dashboard de datos compartidos |
+| `shareNotifications` | Notificaciones del sistema |
+
+---
+
+## 20. Troubleshooting
+
+### 20.1 Problemas Comunes
+
+| Problema | Causa | Solución |
+|----------|-------|----------|
+| Fecha se guarda con día siguiente | Zona horaria UTC vs local | Usar `toLocaleDateString('sv-SE')` |
+| Modal se desborda | Contenido muy largo | Agregar `max-h-[90vh]` y `overflow-y-auto` |
+| Servicio pierde marca de pagado al editar | No se carga estado de pago en update | Incluir pagos en respuesta del controller |
+| Servicios se reinician en año nuevo | Ciclo por mes calendario | Usar sistema de ciclos de facturación |
+| Long-press no funciona | Selección de texto interfiere | Usar doble-click en su lugar |
+| Operaciones offline no sincronizan | Error no recuperable | Revisar en Notificaciones → Operaciones pendientes |
+| Conflicto de edición | Mismo registro editado en 2 dispositivos | Elegir versión (local o servidor) |
+
+### 20.2 Logs Útiles
+
+```bash
+# Laravel (errores de API)
+tail -f /var/www/finanzas/storage/logs/laravel.log
+
+# Nginx (errores de servidor web)
+sudo tail -f /var/log/nginx/error.log
+
+# Service Worker (en navegador)
+# DevTools → Application → Service Workers → Ver logs
+
+# IndexedDB (en navegador)
+# DevTools → Application → IndexedDB → finanzas-offline
+```
+
+### 20.3 Resetear Datos de Prueba
+
+```bash
+# En el servidor
+cd /var/www/finanzas
+php artisan migrate:fresh --seed
+```
+
+**Advertencia:** Esto borra TODOS los datos y crea usuarios de prueba.
