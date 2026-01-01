@@ -66,7 +66,7 @@ export const useGastosRecurrentesStore = defineStore('gastosRecurrentes', {
             // Actualizar ultimo_registro en la lista principal
             const index = this.gastosRecurrentes.findIndex(gr => gr.id === id);
             if (index !== -1) {
-                this.gastosRecurrentes[index].ultimo_registro = new Date().toISOString().split('T')[0];
+                this.gastosRecurrentes[index].ultimo_registro = new Date().toLocaleDateString('sv-SE');
             }
 
             return response.data.data;

@@ -86,7 +86,7 @@ const onValorInput = (event) => {
 };
 
 const form = ref({
-    fecha: new Date().toISOString().split('T')[0],
+    fecha: new Date().toLocaleDateString('sv-SE'),
     valor: '',
     nota: ''
 });

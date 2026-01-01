@@ -953,8 +953,8 @@ const exportarCSV = async () => {
 
         // Determinar nombre del archivo
         const fechas = gastos.map(g => new Date(g.fecha)).sort((a, b) => a - b);
-        const fechaInicio = fechas[0].toISOString().split('T')[0];
-        const fechaFin = fechas[fechas.length - 1].toISOString().split('T')[0];
+        const fechaInicio = fechas[0].toLocaleDateString('sv-SE');
+        const fechaFin = fechas[fechas.length - 1].toLocaleDateString('sv-SE');
         const fileName = `gastos_${fechaInicio}_${fechaFin}.csv`;
 
         // Crear blob

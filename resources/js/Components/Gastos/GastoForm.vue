@@ -554,7 +554,7 @@ const submit = async () => {
     if (servicioSeleccionado.value) {
         try {
             await serviciosStore.marcarPagado(servicioSeleccionado.value.id, {
-                fecha: form.value.fecha || new Date().toISOString().split('T')[0],
+                fecha: form.value.fecha || new Date().toLocaleDateString('sv-SE'),
                 valor: form.value.valor,
                 medio_pago_id: form.value.medio_pago_id || null,
                 tipo: form.value.tipo,

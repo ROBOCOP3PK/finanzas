@@ -82,7 +82,7 @@ export const useServiciosStore = defineStore('servicios', {
 
         async marcarPagado(servicioId, datos = {}) {
             const response = await api.post(`/servicios/${servicioId}/pagar`, {
-                fecha: datos.fecha || new Date().toISOString().split('T')[0],
+                fecha: datos.fecha || new Date().toLocaleDateString('sv-SE'),
                 valor: datos.valor,
                 medio_pago_id: datos.medio_pago_id,
                 tipo: datos.tipo || 'personal',
