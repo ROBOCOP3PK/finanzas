@@ -81,6 +81,21 @@ class AbonoController extends Controller
             ], 403);
         }
 
+        // Detectar conflicto: si el cliente envia _last_updated_at y es diferente al actual
+        if ($request->has('_last_updated_at') && !$request->boolean('_forceUpdate')) {
+            $clientUpdatedAt = $request->input('_last_updated_at');
+            $serverUpdatedAt = $abono->updated_at->toISOString();
+
+            if ($clientUpdatedAt !== $serverUpdatedAt) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'El registro fue modificado por otro dispositivo',
+                    'conflict' => true,
+                    'data' => $abono
+                ], 409);
+            }
+        }
+
         $abono->update($request->validated());
 
         return response()->json([

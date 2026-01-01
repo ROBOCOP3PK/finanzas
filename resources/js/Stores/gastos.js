@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import api from '../axios';
+import api, { withOfflineSupport } from '../axios';
 
 export const useGastosStore = defineStore('gastos', {
     state: () => ({
@@ -83,7 +83,9 @@ export const useGastosStore = defineStore('gastos', {
         },
 
         async crearGasto(data) {
-            const response = await api.post('/gastos', data);
+            const response = await api.post('/gastos', data, {
+                headers: withOfflineSupport('gasto')
+            });
             return response.data.data;
         },
 
@@ -92,8 +94,16 @@ export const useGastosStore = defineStore('gastos', {
             return response.data.data;
         },
 
-        async actualizarGasto(id, data) {
-            const response = await api.put(`/gastos/${id}`, data);
+        async actualizarGasto(id, data, lastUpdatedAt = null) {
+            // Incluir el updated_at para deteccion de conflictos
+            const payload = { ...data };
+            if (lastUpdatedAt) {
+                payload._last_updated_at = lastUpdatedAt;
+            }
+
+            const response = await api.put(`/gastos/${id}`, payload, {
+                headers: withOfflineSupport('gasto')
+            });
             const index = this.gastos.findIndex(g => g.id === id);
             if (index !== -1) {
                 this.gastos[index] = response.data.data;
@@ -102,7 +112,9 @@ export const useGastosStore = defineStore('gastos', {
         },
 
         async eliminarGasto(id) {
-            await api.delete(`/gastos/${id}`);
+            await api.delete(`/gastos/${id}`, {
+                headers: withOfflineSupport('gasto')
+            });
             this.gastos = this.gastos.filter(g => g.id !== id);
         },
 

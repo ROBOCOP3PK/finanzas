@@ -89,7 +89,9 @@ const actualizar = async (data) => {
     errors.value = {};
 
     try {
-        await gastosStore.actualizarGasto(route.params.id, data);
+        // Enviar updated_at para deteccion de conflictos
+        const lastUpdatedAt = gasto.value?.updated_at || null;
+        await gastosStore.actualizarGasto(route.params.id, data, lastUpdatedAt);
         toastMessage.value = 'Gasto actualizado correctamente';
         toastType.value = 'success';
         showToast.value = true;
@@ -100,8 +102,16 @@ const actualizar = async (data) => {
     } catch (error) {
         if (error.response?.data?.errors) {
             errors.value = error.response.data.errors;
+        } else if (error.response?.data?._offline) {
+            // Guardado offline
+            toastMessage.value = 'Guardado localmente. Se sincronizara cuando vuelva la conexion.';
+            toastType.value = 'warning';
+            showToast.value = true;
+            setTimeout(() => {
+                router.push('/historial');
+            }, 1500);
         } else {
-            toastMessage.value = 'Error al actualizar el gasto';
+            toastMessage.value = error.response?.data?.message || 'Error al actualizar el gasto';
             toastType.value = 'error';
             showToast.value = true;
         }

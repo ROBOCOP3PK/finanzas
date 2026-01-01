@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import api from '../axios';
+import api, { withOfflineSupport } from '../axios';
 
 export const useAbonosStore = defineStore('abonos', {
     state: () => ({
@@ -46,7 +46,9 @@ export const useAbonosStore = defineStore('abonos', {
         },
 
         async crearAbono(data) {
-            const response = await api.post('/abonos', data);
+            const response = await api.post('/abonos', data, {
+                headers: withOfflineSupport('abono')
+            });
             return response.data.data;
         },
 
@@ -55,8 +57,16 @@ export const useAbonosStore = defineStore('abonos', {
             return response.data.data;
         },
 
-        async actualizarAbono(id, data) {
-            const response = await api.put(`/abonos/${id}`, data);
+        async actualizarAbono(id, data, lastUpdatedAt = null) {
+            // Incluir el updated_at para deteccion de conflictos
+            const payload = { ...data };
+            if (lastUpdatedAt) {
+                payload._last_updated_at = lastUpdatedAt;
+            }
+
+            const response = await api.put(`/abonos/${id}`, payload, {
+                headers: withOfflineSupport('abono')
+            });
             const index = this.abonos.findIndex(a => a.id === id);
             if (index !== -1) {
                 this.abonos[index] = response.data.data;
@@ -65,7 +75,9 @@ export const useAbonosStore = defineStore('abonos', {
         },
 
         async eliminarAbono(id) {
-            await api.delete(`/abonos/${id}`);
+            await api.delete(`/abonos/${id}`, {
+                headers: withOfflineSupport('abono')
+            });
             this.abonos = this.abonos.filter(a => a.id !== id);
         },
 

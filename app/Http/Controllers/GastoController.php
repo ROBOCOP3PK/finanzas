@@ -126,6 +126,23 @@ class GastoController extends Controller
             ], 403);
         }
 
+        // Detectar conflicto: si el cliente envia _last_updated_at y es diferente al actual
+        if ($request->has('_last_updated_at') && !$request->boolean('_forceUpdate')) {
+            $clientUpdatedAt = $request->input('_last_updated_at');
+            $serverUpdatedAt = $gasto->updated_at->toISOString();
+
+            if ($clientUpdatedAt !== $serverUpdatedAt) {
+                $gasto->load(['medioPago', 'categoria']);
+
+                return response()->json([
+                    'success' => false,
+                    'message' => 'El registro fue modificado por otro dispositivo',
+                    'conflict' => true,
+                    'data' => $gasto
+                ], 409);
+            }
+        }
+
         $gasto->update($request->validated());
         $gasto->load(['medioPago', 'categoria']);
 

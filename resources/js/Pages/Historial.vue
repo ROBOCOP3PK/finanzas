@@ -9,8 +9,15 @@
 
         <!-- Modal Compartir -->
         <div v-if="mostrarModalCompartir" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <Card class="w-full max-w-md max-h-[90vh] overflow-y-auto">
-                <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Compartir Gastos</h2>
+            <Card class="w-full max-w-md max-h-[90vh] overflow-y-auto relative">
+                <!-- Boton cerrar arriba derecha -->
+                <button
+                    @click="cerrarModalCompartir"
+                    class="absolute top-3 right-3 p-1 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:text-gray-300 dark:hover:bg-gray-700 transition-colors"
+                >
+                    <XMarkIcon class="w-5 h-5" />
+                </button>
+                <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 pr-8">Compartir Gastos</h2>
 
                 <div class="space-y-4">
                     <!-- Saldo pendiente - solo si hay usuario 2 -->
@@ -179,11 +186,6 @@
                     </p>
                 </div>
 
-                <div class="flex gap-2 mt-6">
-                    <Button variant="ghost" class="w-full" @click="cerrarModalCompartir">
-                        Cerrar
-                    </Button>
-                </div>
             </Card>
         </div>
 
@@ -368,7 +370,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { ShareIcon, DocumentTextIcon, TableCellsIcon, FunnelIcon, ChevronDownIcon } from '@heroicons/vue/24/outline';
+import { ShareIcon, DocumentTextIcon, TableCellsIcon, FunnelIcon, ChevronDownIcon, XMarkIcon } from '@heroicons/vue/24/outline';
 import Card from '../Components/UI/Card.vue';
 import Input from '../Components/UI/Input.vue';
 import Button from '../Components/UI/Button.vue';

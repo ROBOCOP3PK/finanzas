@@ -120,6 +120,142 @@
                 </div>
             </div>
 
+            <!-- Conflictos de sincronizacion -->
+            <div v-if="offlineStore.hasConflicts" class="space-y-3">
+                <h2 class="text-sm font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wide">
+                    Conflictos de sincronizacion
+                </h2>
+                <div
+                    v-for="conflict in offlineStore.conflicts"
+                    :key="conflict.id"
+                    class="bg-orange-50 dark:bg-orange-900/30 border border-orange-200 dark:border-orange-800 rounded-lg p-4"
+                >
+                    <div class="flex items-start gap-3 mb-3">
+                        <div class="w-10 h-10 rounded-full bg-orange-100 dark:bg-orange-800 flex items-center justify-center flex-shrink-0">
+                            <ExclamationTriangleIcon class="w-5 h-5 text-orange-600 dark:text-orange-400" />
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="font-medium text-gray-900 dark:text-white">
+                                Conflicto en {{ conflict.operation.type === 'gasto' ? 'Gasto' : 'Abono' }}
+                            </p>
+                            <p class="text-sm text-gray-600 dark:text-gray-300 mt-1">
+                                {{ conflict.message }}
+                            </p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                {{ formatearFecha(conflict.timestamp) }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Comparacion de versiones -->
+                    <div class="grid grid-cols-2 gap-3 mt-3">
+                        <!-- Version Local (dispositivo) -->
+                        <div class="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+                            <p class="text-xs font-semibold text-blue-700 dark:text-blue-400 uppercase mb-2">
+                                Tu version (dispositivo)
+                            </p>
+                            <div class="space-y-1 text-sm">
+                                <p class="text-gray-900 dark:text-white font-medium truncate">
+                                    {{ conflict.operation.data?.concepto || 'Sin concepto' }}
+                                </p>
+                                <p class="text-gray-700 dark:text-gray-300">
+                                    {{ formatCurrency(conflict.operation.data?.valor || 0) }}
+                                </p>
+                                <p class="text-xs text-gray-500 dark:text-gray-400">
+                                    {{ conflict.operation.data?.fecha || 'Sin fecha' }}
+                                </p>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 capitalize">
+                                    {{ conflict.operation.data?.tipo || '' }}
+                                </p>
+                            </div>
+                            <button
+                                @click="resolverConflicto(conflict.id, 'local')"
+                                :disabled="resolvingConflict === conflict.id"
+                                class="w-full mt-3 px-3 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 disabled:opacity-50 font-medium"
+                            >
+                                Usar esta
+                            </button>
+                        </div>
+
+                        <!-- Version Servidor -->
+                        <div class="bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3">
+                            <p class="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase mb-2">
+                                Version servidor
+                            </p>
+                            <div v-if="conflict.serverData" class="space-y-1 text-sm">
+                                <p class="text-gray-900 dark:text-white font-medium truncate">
+                                    {{ conflict.serverData.concepto || 'Sin concepto' }}
+                                </p>
+                                <p class="text-gray-700 dark:text-gray-300">
+                                    {{ formatCurrency(conflict.serverData.valor || 0) }}
+                                </p>
+                                <p class="text-xs text-gray-500 dark:text-gray-400">
+                                    {{ conflict.serverData.fecha || 'Sin fecha' }}
+                                </p>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 capitalize">
+                                    {{ conflict.serverData.tipo || '' }}
+                                </p>
+                            </div>
+                            <div v-else class="text-sm text-gray-500 dark:text-gray-400 italic">
+                                El registro fue eliminado o no existe
+                            </div>
+                            <button
+                                @click="resolverConflicto(conflict.id, 'server')"
+                                :disabled="resolvingConflict === conflict.id"
+                                class="w-full mt-3 px-3 py-2 bg-gray-500 text-white text-sm rounded-lg hover:bg-gray-600 disabled:opacity-50 font-medium"
+                            >
+                                Usar esta
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Operaciones fallidas -->
+            <div v-if="offlineStore.hasFailedOperations" class="space-y-3">
+                <h2 class="text-sm font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wide">
+                    Operaciones pendientes
+                </h2>
+                <div
+                    v-for="failed in offlineStore.failedOperations"
+                    :key="failed.id"
+                    class="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg p-4"
+                >
+                    <div class="flex items-start gap-3">
+                        <div class="w-10 h-10 rounded-full bg-red-100 dark:bg-red-800 flex items-center justify-center flex-shrink-0">
+                            <XCircleIcon class="w-5 h-5 text-red-600 dark:text-red-400" />
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="font-medium text-gray-900 dark:text-white">
+                                {{ failed.operation.type === 'gasto' ? 'Gasto' : 'Abono' }} no sincronizado
+                            </p>
+                            <p class="text-sm text-gray-600 dark:text-gray-300 mt-1">
+                                {{ failed.operation.data?.concepto || 'Sin concepto' }} - {{ formatCurrency(failed.operation.data?.valor || 0) }}
+                            </p>
+                            <p class="text-xs text-red-500 dark:text-red-400 mt-1">
+                                Error: {{ failed.error }}
+                            </p>
+                            <div class="flex gap-2 mt-3">
+                                <button
+                                    @click="reintentarOperacion(failed.id)"
+                                    :disabled="retryingOperation === failed.id"
+                                    class="px-3 py-1.5 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 disabled:opacity-50"
+                                >
+                                    Reintentar
+                                </button>
+                                <button
+                                    @click="descartarOperacion(failed.id)"
+                                    :disabled="retryingOperation === failed.id"
+                                    class="px-3 py-1.5 bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300 text-sm rounded-lg hover:bg-red-200 dark:hover:bg-red-800 disabled:opacity-50"
+                                >
+                                    Descartar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Otras notificaciones -->
             <div v-if="notificationsStore.notifications.length > 0" class="space-y-3">
                 <h2 class="text-sm font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wide">
@@ -204,14 +340,20 @@ import {
 import { useShareNotificationsStore } from '../Stores/shareNotifications';
 import { useDataShareStore } from '../Stores/dataShare';
 import { useServiciosStore } from '../Stores/servicios';
+import { useOfflineStore } from '../Stores/offline';
+import { useCurrency } from '../Composables/useCurrency';
 
 const router = useRouter();
 const notificationsStore = useShareNotificationsStore();
 const dataShareStore = useDataShareStore();
 const serviciosStore = useServiciosStore();
+const offlineStore = useOfflineStore();
+const { formatCurrency } = useCurrency();
 
 const loading = ref(true);
 const processingId = ref(null);
+const resolvingConflict = ref(null);
+const retryingOperation = ref(null);
 
 // Estado para swipe
 const swipeState = ref({});
@@ -221,6 +363,8 @@ const tieneNotificaciones = computed(() => {
     return dataShareStore.pendingInvitations.length > 0 ||
            dataShareStore.pendingExpensesCount > 0 ||
            serviciosStore.serviciosPendientesCount > 0 ||
+           offlineStore.hasConflicts ||
+           offlineStore.hasFailedOperations ||
            notificationsStore.notifications.length > 0;
 });
 
@@ -306,6 +450,31 @@ const irASolicitudes = () => {
 
 const irAServicios = () => {
     router.push('/configuracion?seccion=servicios');
+};
+
+// Funciones de conflictos y operaciones offline
+const resolverConflicto = async (conflictId, choice) => {
+    resolvingConflict.value = conflictId;
+    try {
+        await offlineStore.resolveConflict(conflictId, choice);
+    } finally {
+        resolvingConflict.value = null;
+    }
+};
+
+const reintentarOperacion = async (failedId) => {
+    retryingOperation.value = failedId;
+    try {
+        await offlineStore.retryFailedOperation(failedId);
+    } finally {
+        retryingOperation.value = null;
+    }
+};
+
+const descartarOperacion = (failedId) => {
+    if (confirm('¿Seguro que quieres descartar esta operacion? Los datos se perderan.')) {
+        offlineStore.discardFailedOperation(failedId);
+    }
 };
 
 // Funciones de swipe
