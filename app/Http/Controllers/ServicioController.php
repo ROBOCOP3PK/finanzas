@@ -82,9 +82,21 @@ class ServicioController extends Controller
 
         $servicio->update($request->validated());
 
+        // Cargar categoria y estado de pago del mes actual
+        $mes = now()->month;
+        $anio = now()->year;
+
+        $servicio->load(['categoria', 'pagos' => function ($q) use ($mes, $anio) {
+            $q->where('mes', $mes)->where('anio', $anio);
+        }]);
+
+        $servicio->pagado = $servicio->pagos->isNotEmpty();
+        $servicio->pago_mes = $servicio->pagos->first();
+        unset($servicio->pagos);
+
         return response()->json([
             'success' => true,
-            'data' => $servicio->load('categoria'),
+            'data' => $servicio,
             'message' => 'Servicio actualizado correctamente'
         ]);
     }
