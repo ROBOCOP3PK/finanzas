@@ -29,6 +29,7 @@ class ServicioRequest extends FormRequest
             'color' => 'nullable|string|max:20',
             'valor_estimado' => 'nullable|numeric|min:0',
             'referencia' => 'nullable|string|max:255',
+            'frecuencia_meses' => 'nullable|integer|min:1|max:12',
             'activo' => 'boolean',
             'orden' => 'integer|min:0'
         ];

@@ -101,13 +101,7 @@ Combinaciones predefinidas para registro en **2-3 taps**:
 - Al usar una plantilla: solo confirmar fecha y valor (si no está predefinido)
 - Máximo 6 plantillas visibles en dashboard (las más usadas)
 
-### 2.11 Gastos Recurrentes
-Para gastos que se repiten mensualmente:
-- Cada usuario configura sus propios gastos recurrentes
-- El usuario configura: concepto, medio de pago, tipo, categoría, valor, día del mes
-- Notificación visual cuando hay gastos recurrentes pendientes de confirmar
-
-### 2.12 Servicios (Recibos)
+### 2.11 Servicios (Recibos)
 Sistema para gestionar pagos de servicios mensuales:
 - Cada usuario tiene su lista de servicios (luz, agua, internet, etc.)
 - Cada servicio tiene: nombre, icono, color, valor estimado, categoría, **referencia**
@@ -120,44 +114,31 @@ Sistema para gestionar pagos de servicios mensuales:
 - **Doble-click** en un servicio copia la referencia al portapapeles
 - Día de restablecimiento configurable por usuario
 
-### 2.13 Sistema de Compartición de Datos
+### 2.12 Sistema de Compartición de Datos
 Permite compartir datos financieros con otra persona registrada:
 
 **Como Propietario:**
 - Invitar a una persona por email (debe estar registrada)
-- Ver solicitudes de gastos pendientes de aprobación
-- Aprobar o rechazar gastos propuestos por el invitado
 - Revocar acceso en cualquier momento
 - Solo puede compartir con 1 persona a la vez
 
 **Como Invitado:**
 - Aceptar o rechazar invitaciones
 - Ver dashboard y historial del propietario
-- Proponer gastos (quedan pendientes de aprobación)
-- Ver estado de sus propias solicitudes
 - NO puede eliminar ni editar gastos, ni acceder a configuración
 
-**Flujo de Aprobación:**
-1. Invitado propone un gasto → Crea `PendingExpense` con status "pending"
-2. Propietario recibe notificación
-3. Propietario aprueba → Se crea `Gasto` real, invitado notificado
-4. O propietario rechaza → Con razón opcional, invitado notificado
-
-### 2.14 Sistema de Notificaciones
+### 2.13 Sistema de Notificaciones
 Notificaciones persistentes para el sistema de compartición:
 - **Tipos:**
-  - `expense_request` - Solicitud de gasto recibida
-  - `expense_approved` - Gasto aprobado
-  - `expense_rejected` - Gasto rechazado
   - `share_invitation` - Invitación recibida
   - `share_revoked` - Acceso revocado
 - Badge con contador en el header de la app
 - Marcar como leída individual o todas
 - Historial de notificaciones
 
-### 2.15 Exportación de Datos
+### 2.14 Exportación de Datos
 - **CSV**: Exportar gastos con filtros (fecha, tipo, categoría)
-- **PDF**: Exportar dashboard/historial como imagen PDF (usando html2canvas)
+- **PDF**: Generar reporte PDF con resumen y tabla de gastos (usando jsPDF)
 
 ---
 
@@ -228,13 +209,11 @@ finanzas/
 │   │   │   ├── CategoriaController.php         # CRUD categorías
 │   │   │   ├── ConceptoFrecuenteController.php # Búsqueda y favoritos
 │   │   │   ├── PlantillaController.php         # CRUD plantillas rápidas
-│   │   │   ├── GastoRecurrenteController.php   # CRUD gastos recurrentes
 │   │   │   ├── ServicioController.php          # CRUD servicios/recibos
 │   │   │   ├── ConfiguracionController.php     # Configuración global
 │   │   │   ├── DashboardController.php         # Dashboard y resúmenes
 │   │   │   ├── DataShareController.php         # Compartición (propietario)
 │   │   │   ├── SharedDataController.php        # Datos compartidos (invitado)
-│   │   │   ├── PendingExpenseController.php    # Solicitudes de gastos
 │   │   │   └── ShareNotificationController.php # Notificaciones
 │   │   └── Requests/
 │   │       └── ...
@@ -246,13 +225,11 @@ finanzas/
 │       ├── Categoria.php               # Categorías de gasto
 │       ├── ConceptoFrecuente.php       # Conceptos frecuentes
 │       ├── Plantilla.php               # Plantillas rápidas
-│       ├── GastoRecurrente.php         # Gastos recurrentes mensuales
 │       ├── Servicio.php                # Servicios/recibos
 │       ├── PagoServicio.php            # Pagos de servicios por mes
 │       ├── Configuracion.php           # Configuración global
 │       ├── VerificationCode.php        # Códigos de verificación email
 │       ├── DataShare.php               # Compartición de datos
-│       ├── PendingExpense.php          # Gastos pendientes de aprobación
 │       └── ShareNotification.php       # Notificaciones del sistema
 ├── database/
 │   ├── migrations/
@@ -264,13 +241,11 @@ finanzas/
 │   │   ├── *_create_abonos_table.php
 │   │   ├── *_create_conceptos_frecuentes_table.php
 │   │   ├── *_create_plantillas_table.php
-│   │   ├── *_create_gastos_recurrentes_table.php
 │   │   ├── *_create_configuraciones_table.php
 │   │   ├── *_create_verification_codes_table.php
 │   │   ├── *_create_servicios_table.php
 │   │   ├── *_create_pagos_servicios_table.php
 │   │   ├── *_create_data_shares_table.php
-│   │   ├── *_create_pending_expenses_table.php
 │   │   └── *_create_share_notifications_table.php
 │   └── seeders/
 │       └── ...
@@ -287,9 +262,7 @@ finanzas/
 │   │   │   ├── Gastos/                 # Componentes de gastos
 │   │   │   ├── Shared/                 # Componentes de compartición
 │   │   │   │   ├── SharedDataNav.vue
-│   │   │   │   ├── SharedGastoForm.vue
 │   │   │   │   ├── ShareInviteModal.vue
-│   │   │   │   ├── PendingExpensesList.vue
 │   │   │   │   └── NotificationBell.vue
 │   │   │   └── UI/                     # Componentes reutilizables
 │   │   ├── Composables/
@@ -319,7 +292,6 @@ finanzas/
 │   │       ├── mediosPago.js           # Medios de pago
 │   │       ├── categorias.js           # Categorías
 │   │       ├── plantillas.js           # Plantillas
-│   │       ├── gastosRecurrentes.js    # Gastos recurrentes
 │   │       ├── conceptosFrecuentes.js  # Conceptos frecuentes
 │   │       ├── servicios.js            # Servicios
 │   │       ├── config.js               # Configuración
@@ -395,13 +367,6 @@ finanzas/
 └──────────────────────────────────────────────────────────────────────────────┘
 
 ┌──────────────────────────────────────────────────────────────────────────────┐
-│                           gastos_recurrentes                                  │
-├──────────────────────────────────────────────────────────────────────────────┤
-│ id | user_id (FK) | concepto | medio_pago_id | categoria_id | tipo |         │
-│ valor | dia_mes | activo | ultimo_registro | created_at                       │
-└──────────────────────────────────────────────────────────────────────────────┘
-
-┌──────────────────────────────────────────────────────────────────────────────┐
 │                                servicios                                      │
 ├──────────────────────────────────────────────────────────────────────────────┤
 │ id | user_id (FK) | nombre | icono | color | valor_estimado | referencia |   │
@@ -425,14 +390,6 @@ finanzas/
 ├──────────────────────────────────────────────────────────────────────────────┤
 │ id | owner_id (FK users) | guest_id (FK users, nullable) | guest_email |     │
 │ status (pending/accepted/rejected/revoked) | accepted_at | revoked_at        │
-└──────────────────────────────────────────────────────────────────────────────┘
-
-┌──────────────────────────────────────────────────────────────────────────────┐
-│                            pending_expenses                                   │
-├──────────────────────────────────────────────────────────────────────────────┤
-│ id | data_share_id (FK) | created_by (FK users) | owner_id (FK users) |      │
-│ fecha | medio_pago_id | categoria_id | concepto | valor | tipo |             │
-│ status (pending/approved/rejected) | rejection_reason | resulting_gasto_id   │
 └──────────────────────────────────────────────────────────────────────────────┘
 
 ┌──────────────────────────────────────────────────────────────────────────────┐
@@ -511,7 +468,6 @@ class User extends Authenticatable
     public function mediosPago() { return $this->hasMany(MedioPago::class); }
     public function categorias() { return $this->hasMany(Categoria::class); }
     public function plantillas() { return $this->hasMany(Plantilla::class); }
-    public function gastosRecurrentes() { return $this->hasMany(GastoRecurrente::class); }
     public function conceptosFrecuentes() { return $this->hasMany(ConceptoFrecuente::class); }
 
     // Cálculo de deuda
@@ -670,17 +626,6 @@ Authorization: Bearer {token}
 | POST | `/api/plantillas/reordenar` | Reordenar |
 | POST | `/api/plantillas/{id}/usar` | Usar plantilla (crea gasto) |
 
-#### Gastos Recurrentes
-| Método | Endpoint | Descripción |
-|--------|----------|-------------|
-| GET | `/api/gastos-recurrentes` | Listar |
-| GET | `/api/gastos-recurrentes/pendientes` | Listar pendientes del mes |
-| POST | `/api/gastos-recurrentes` | Crear |
-| PUT | `/api/gastos-recurrentes/{id}` | Actualizar |
-| DELETE | `/api/gastos-recurrentes/{id}` | Eliminar |
-| POST | `/api/gastos-recurrentes/registrar-pendientes` | Registrar todos los pendientes |
-| POST | `/api/gastos-recurrentes/{id}/registrar` | Registrar uno específico |
-
 #### Servicios (Recibos)
 | Método | Endpoint | Descripción |
 |--------|----------|-------------|
@@ -712,16 +657,6 @@ Authorization: Bearer {token}
 | GET | `/api/shared-with-me/{id}/categorias` | Ver categorías del propietario |
 | GET | `/api/shared-with-me/{id}/medios-pago` | Ver medios de pago del propietario |
 
-#### Gastos Pendientes de Aprobación
-| Método | Endpoint | Descripción |
-|--------|----------|-------------|
-| POST | `/api/pending-expenses/share/{id}` | Crear solicitud (invitado) |
-| GET | `/api/pending-expenses/pending` | Listar pendientes (propietario) |
-| GET | `/api/pending-expenses/history` | Historial de solicitudes |
-| POST | `/api/pending-expenses/{id}/approve` | Aprobar solicitud |
-| POST | `/api/pending-expenses/{id}/reject` | Rechazar solicitud |
-| GET | `/api/pending-expenses/my-requests` | Mis solicitudes (invitado) |
-
 #### Notificaciones
 | Método | Endpoint | Descripción |
 |--------|----------|-------------|
@@ -749,8 +684,7 @@ Authorization: Bearer {token}
             "total_abonos": 50000.00
         },
         "por_medio_pago": { ... },
-        "ultimos_movimientos": [ ... ],
-        "pendientes_recurrentes": 2
+        "ultimos_movimientos": [ ... ]
     }
 }
 ```
@@ -912,10 +846,9 @@ El dashboard muestra prominentemente:
 
 1. **Card "Te debe"**: Deuda actual de la pareja (rojo si > 0, verde si = 0)
 2. **Card "Gasto este mes"**: Total de gastos del mes actual
-3. **Alerta de recurrentes**: Si hay gastos recurrentes pendientes
-4. **Plantillas rápidas**: Acceso rápido a plantillas favoritas
-5. **Resumen del mes**: Desglose por tipo (personal, pareja, compartido)
-6. **Últimos movimientos**: Lista de últimas transacciones
+3. **Plantillas rápidas**: Acceso rápido a plantillas favoritas
+4. **Resumen del mes**: Desglose por tipo (personal, pareja, compartido)
+5. **Últimos movimientos**: Lista de últimas transacciones
 
 ---
 
@@ -975,7 +908,6 @@ php artisan serve --port=8080
 | Categorías | CRUD con iconos y colores | ✅ |
 | Medios de Pago | CRUD con iconos | ✅ |
 | Plantillas | Plantillas rápidas para registro en 2-3 taps | ✅ |
-| Gastos Recurrentes | Gastos mensuales automáticos con alertas | ✅ |
 | Conceptos Frecuentes | Autocompletado y favoritos | ✅ |
 | Servicios | Ciclos de facturación, referencia, doble-click copiar | ✅ |
 | Configuración | Porcentajes, moneda, tema, día restablecimiento | ✅ |
@@ -983,7 +915,7 @@ php artisan serve --port=8080
 | Tema Oscuro | Claro, oscuro, sistema automático | ✅ |
 | Compartición | Sistema completo de compartir datos | ✅ |
 | Notificaciones | Sistema de notificaciones con navegación | ✅ |
-| Exportación | CSV con filtros + compartir como imagen | ✅ |
+| Exportación | CSV con filtros + PDF con resumen detallado | ✅ |
 | Despliegue | Servidor casero + Cloudflare Tunnel | ✅ |
 
 ### Detalle de Funcionalidades
@@ -1001,8 +933,6 @@ php artisan serve --port=8080
 - [x] Aceptar/rechazar invitaciones
 - [x] Ver dashboard del propietario (como invitado)
 - [x] Ver historial del propietario (como invitado)
-- [x] Proponer gastos (requiere aprobación)
-- [x] Aprobar/rechazar solicitudes de gastos
 - [x] Notificaciones para cada acción
 - [x] Revocar acceso
 
@@ -1041,7 +971,7 @@ php artisan serve --port=8080
 - Login persistente (no expira)
 - Modo oscuro con preferencia del sistema
 - PWA instalable en móviles
-- Alertas visuales de servicios y gastos recurrentes pendientes
+- Alertas visuales de servicios pendientes
 - Sistema de compartición para parejas/roommates
 
 ### Características PWA
@@ -2748,10 +2678,8 @@ Este comando:
 
 | Alerta | Ubicación | Destino |
 |--------|-----------|---------|
-| Gastos recurrentes pendientes | Dashboard | Botón "Registrar todos" |
 | Servicios por pagar | Dashboard / Notificaciones | `/gastos/nuevo?seccion=servicios` |
 | Invitación de compartición | Notificaciones | Aceptar/Rechazar inline |
-| Solicitud de gasto pendiente | Notificaciones | `/configuracion` |
 
 ### 17.2 Navegación a Servicios desde Notificaciones
 
@@ -2805,25 +2733,35 @@ Fecha,Concepto,Valor,Tipo,Categoría,Medio de Pago
 2024-12-30,Internet,80000,compartido,Servicios,Davivienda
 ```
 
-### 18.2 Compartir como Imagen (Historial)
+### 18.2 Exportación a PDF
 
-El historial puede compartirse como imagen usando `html2canvas`:
+Genera un PDF profesional con resumen de gastos usando `jsPDF`:
 
-1. Usuario pulsa botón "Compartir"
-2. Se captura el contenido visible como canvas
-3. Se convierte a imagen PNG
-4. Se abre el modal de compartir del sistema (Web Share API)
+**Contenido del PDF:**
+- Encabezado con título y rango de fechas
+- Resumen con totales (gastos, abonos, balance)
+- Desglose por tipo (personal, pareja, compartido)
+- Tabla detallada de gastos
+
+**Características:**
+- Usa Web Share API si está disponible para compartir
+- Fallback a descarga directa del archivo
+- Formato de moneda colombiana (COP)
 
 ```javascript
 // Historial.vue
-const compartir = async () => {
-    const canvas = await html2canvas(contenedor.value);
-    const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
-    if (navigator.share) {
-        await navigator.share({
-            files: [new File([blob], 'historial.png', { type: 'image/png' })]
-        });
+const generarPDF = async () => {
+    const doc = new jsPDF();
+    // ... generar contenido
+    const pdfBlob = doc.output('blob');
+
+    if (navigator.canShare?.({ files: [new File([pdfBlob], 'gastos.pdf')] })) {
+        await navigator.share({ files: [file] });
+    } else {
+        // Descargar directamente
     }
 };
 ```
@@ -2847,7 +2785,6 @@ const compartir = async () => {
 - [x] Navegación entre meses (anterior/siguiente)
 - [x] Resumen por categorías con porcentajes
 - [x] Resumen por tipo (personal/pareja/compartido)
-- [x] Alerta de gastos recurrentes pendientes
 - [x] Reset automático al mes actual al entrar
 
 #### Gastos ✅
@@ -2873,12 +2810,6 @@ const compartir = async () => {
 - [x] Doble-click para copiar referencia
 - [x] Alertas de servicios pendientes
 - [x] Reordenamiento personalizado
-
-#### Gastos Recurrentes ✅
-- [x] CRUD de gastos mensuales
-- [x] Detección de pendientes por día del mes
-- [x] Registrar todos los pendientes de una vez
-- [x] Alerta visual en dashboard
 
 #### Categorías ✅
 - [x] CRUD con iconos y colores
@@ -2914,8 +2845,6 @@ const compartir = async () => {
 - [x] Aceptar/rechazar invitaciones
 - [x] Ver dashboard del propietario
 - [x] Ver historial del propietario
-- [x] Crear solicitudes de gasto
-- [x] Aprobar/rechazar solicitudes
 - [x] Revocar acceso
 - [x] Notificaciones de cada acción
 
@@ -2965,7 +2894,6 @@ const compartir = async () => {
 | `abonos` | CRUD de abonos |
 | `dashboard` | Datos del dashboard |
 | `servicios` | Gestión de servicios/recibos |
-| `gastosRecurrentes` | Gastos mensuales automáticos |
 | `categorias` | Categorías de gasto |
 | `mediosPago` | Medios de pago |
 | `plantillas` | Plantillas rápidas |

@@ -17,6 +17,9 @@ class Servicio extends Model
         'color',
         'valor_estimado',
         'referencia',
+        'frecuencia_meses',
+        'proximo_mes_pago',
+        'proximo_anio_pago',
         'activo',
         'orden'
     ];
@@ -24,7 +27,10 @@ class Servicio extends Model
     protected $casts = [
         'activo' => 'boolean',
         'orden' => 'integer',
-        'valor_estimado' => 'integer'
+        'valor_estimado' => 'integer',
+        'frecuencia_meses' => 'integer',
+        'proximo_mes_pago' => 'integer',
+        'proximo_anio_pago' => 'integer'
     ];
 
     public function user(): BelongsTo

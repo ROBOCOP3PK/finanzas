@@ -77,9 +77,15 @@ class ServicioController extends Controller
     public function store(ServicioRequest $request): JsonResponse
     {
         $user = $request->user();
+        $diaRestablecimiento = $user->dia_restablecimiento_servicios ?? 1;
 
         $data = $request->validated();
         $data['user_id'] = $user->id;
+
+        // Inicializar próximo pago al ciclo actual
+        $ciclo = $this->calcularCicloFacturacion(now(), $diaRestablecimiento);
+        $data['proximo_mes_pago'] = $ciclo['mes'];
+        $data['proximo_anio_pago'] = $ciclo['anio'];
 
         $servicio = Servicio::create($data);
 
@@ -227,11 +233,28 @@ class ServicioController extends Controller
             'fecha_pago' => $fecha
         ]);
 
+        // Calcular próximo pago según frecuencia
+        $frecuencia = $servicio->frecuencia_meses ?? 1;
+        $proximoMes = $mes + $frecuencia;
+        $proximoAnio = $anio;
+        while ($proximoMes > 12) {
+            $proximoMes -= 12;
+            $proximoAnio++;
+        }
+        $servicio->update([
+            'proximo_mes_pago' => $proximoMes,
+            'proximo_anio_pago' => $proximoAnio
+        ]);
+
         return response()->json([
             'success' => true,
             'data' => [
                 'pago' => $pago,
-                'gasto_id' => $gastoId
+                'gasto_id' => $gastoId,
+                'proximo_pago' => [
+                    'mes' => $proximoMes,
+                    'anio' => $proximoAnio
+                ]
             ],
             'message' => 'Servicio marcado como pagado'
         ]);
@@ -286,18 +309,25 @@ class ServicioController extends Controller
         $mes = $ciclo['mes'];
         $anio = $ciclo['anio'];
 
-        $serviciosActivos = Servicio::where('user_id', $user->id)
-            ->activos()
-            ->pluck('id');
-
-        $serviciosPagados = PagoServicio::whereIn('servicio_id', $serviciosActivos)
+        $serviciosPagados = PagoServicio::whereIn('servicio_id', function ($q) use ($user) {
+                $q->select('id')->from('servicios')->where('user_id', $user->id);
+            })
             ->where('mes', $mes)
             ->where('anio', $anio)
             ->pluck('servicio_id');
 
+        // Solo mostrar servicios cuyo próximo pago sea <= ciclo actual
         $pendientes = Servicio::where('user_id', $user->id)
             ->activos()
             ->whereNotIn('id', $serviciosPagados)
+            ->where(function ($q) use ($mes, $anio) {
+                $q->whereNull('proximo_mes_pago')
+                  ->orWhere('proximo_anio_pago', '<', $anio)
+                  ->orWhere(function ($q2) use ($mes, $anio) {
+                      $q2->where('proximo_anio_pago', '=', $anio)
+                         ->where('proximo_mes_pago', '<=', $mes);
+                  });
+            })
             ->with('categoria')
             ->ordenados()
             ->get();
@@ -344,9 +374,21 @@ class ServicioController extends Controller
             })
             ->where('mes', $mes)
             ->where('anio', $anio)
-            ->count();
+            ->pluck('servicio_id');
 
-        $pendientes = $serviciosActivos - $serviciosPagados;
+        // Contar solo servicios cuyo próximo pago sea <= ciclo actual y no estén pagados
+        $pendientes = Servicio::where('user_id', $user->id)
+            ->activos()
+            ->whereNotIn('id', $serviciosPagados)
+            ->where(function ($q) use ($mes, $anio) {
+                $q->whereNull('proximo_mes_pago')
+                  ->orWhere('proximo_anio_pago', '<', $anio)
+                  ->orWhere(function ($q2) use ($mes, $anio) {
+                      $q2->where('proximo_anio_pago', '=', $anio)
+                         ->where('proximo_mes_pago', '<=', $mes);
+                  });
+            })
+            ->count();
 
         // Alerta si faltan 3 días o menos y hay pendientes
         $mostrarAlerta = $diasRestantes <= 3 && $pendientes > 0;
@@ -357,7 +399,7 @@ class ServicioController extends Controller
                 'dias_restantes' => $diasRestantes,
                 'fecha_restablecimiento' => $fechaRestablecimiento->toDateString(),
                 'servicios_pendientes' => $pendientes,
-                'servicios_pagados' => $serviciosPagados,
+                'servicios_pagados' => $serviciosPagados->count(),
                 'servicios_total' => $serviciosActivos,
                 'mostrar_alerta' => $mostrarAlerta
             ]

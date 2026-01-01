@@ -292,7 +292,7 @@
                                 <i v-else class="pi pi-file" :style="{ color: serv.color }"></i>
                             </div>
                             <div class="min-w-0 flex-1">
-                                <div class="flex items-center gap-2">
+                                <div class="flex items-center gap-2 flex-wrap">
                                     <span :class="['text-gray-900 dark:text-white truncate', !serv.activo && 'opacity-50']">
                                         {{ serv.nombre }}
                                     </span>
@@ -300,6 +300,12 @@
                                         ({{ serv.categoria.nombre }})
                                     </span>
                                     <span v-if="!serv.activo" class="text-xs text-gray-400 flex-shrink-0">(inactivo)</span>
+                                    <span
+                                        v-if="serv.frecuencia_meses > 1"
+                                        class="text-xs px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 flex-shrink-0"
+                                    >
+                                        cada {{ serv.frecuencia_meses }} meses
+                                    </span>
                                 </div>
                                 <div v-if="serv.referencia" class="flex items-center gap-1 mt-0.5">
                                     <ClipboardDocumentIcon class="w-3 h-3 text-gray-400" />
@@ -812,6 +818,23 @@
                     label="Referencia de pago (opcional)"
                     placeholder="Ej: 123456789"
                 />
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Frecuencia de pago
+                    </label>
+                    <select
+                        v-model="formServicio.frecuencia_meses"
+                        class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-primary"
+                    >
+                        <option
+                            v-for="opcion in frecuenciasOptions"
+                            :key="opcion.value"
+                            :value="opcion.value"
+                        >
+                            {{ opcion.label }}
+                        </option>
+                    </select>
+                </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Icono
@@ -1368,8 +1391,18 @@ const formServicio = reactive({
     color: '#06B6D4',
     valor_estimado: null,
     referencia: '',
+    frecuencia_meses: 1,
     activo: true
 });
+
+const frecuenciasOptions = [
+    { value: 1, label: 'Mensual' },
+    { value: 2, label: 'Bimestral (cada 2 meses)' },
+    { value: 3, label: 'Trimestral (cada 3 meses)' },
+    { value: 4, label: 'Cuatrimestral (cada 4 meses)' },
+    { value: 6, label: 'Semestral (cada 6 meses)' },
+    { value: 12, label: 'Anual' }
+];
 
 // Valor estimado formateado
 const valorEstimadoFormateado = ref('');
@@ -1399,6 +1432,7 @@ const abrirModalServicio = (servicio = null) => {
         formServicio.color = servicio.color || '#06B6D4';
         formServicio.valor_estimado = servicio.valor_estimado;
         formServicio.referencia = servicio.referencia || '';
+        formServicio.frecuencia_meses = servicio.frecuencia_meses || 1;
         formServicio.activo = servicio.activo;
         valorEstimadoFormateado.value = servicio.valor_estimado ? formatInputValue(servicio.valor_estimado) : '';
     } else {
@@ -1408,6 +1442,7 @@ const abrirModalServicio = (servicio = null) => {
         formServicio.color = '#06B6D4';
         formServicio.valor_estimado = null;
         formServicio.referencia = '';
+        formServicio.frecuencia_meses = 1;
         formServicio.activo = true;
         valorEstimadoFormateado.value = '';
     }
@@ -1437,6 +1472,7 @@ const guardarServicio = async () => {
             color: formServicio.color,
             valor_estimado: formServicio.valor_estimado || null,
             referencia: formServicio.referencia || null,
+            frecuencia_meses: formServicio.frecuencia_meses,
             activo: formServicio.activo
         };
 
