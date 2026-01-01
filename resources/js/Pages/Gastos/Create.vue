@@ -5,6 +5,7 @@
                 ref="gastoFormRef"
                 :loading="loading"
                 :errors="errors"
+                :seccion-inicial="seccionInicial"
                 submitText="Guardar Gasto"
                 @submit="guardar"
                 @referencia-copiada="mostrarReferenciCopiada"
@@ -21,13 +22,17 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
+import { useRoute } from 'vue-router';
 import Card from '../../Components/UI/Card.vue';
 import Toast from '../../Components/UI/Toast.vue';
 import GastoForm from '../../Components/Gastos/GastoForm.vue';
 import { useGastosStore } from '../../Stores/gastos';
 
+const route = useRoute();
 const gastosStore = useGastosStore();
+
+const seccionInicial = computed(() => route.query.seccion || null);
 
 const gastoFormRef = ref(null);
 const loading = ref(false);

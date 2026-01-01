@@ -11,11 +11,37 @@ use Illuminate\Http\Request;
 
 class ServicioController extends Controller
 {
+    /**
+     * Calcula el mes y año del ciclo de facturación basado en el día de restablecimiento.
+     * Si la fecha es >= día de restablecimiento, pertenece al ciclo del mes siguiente.
+     */
+    private function calcularCicloFacturacion(\DateTimeInterface $fecha, int $diaRestablecimiento): array
+    {
+        $dia = (int) $fecha->format('d');
+        $mes = (int) $fecha->format('n');
+        $anio = (int) $fecha->format('Y');
+
+        if ($dia >= $diaRestablecimiento) {
+            // Pertenece al ciclo del mes siguiente
+            $mes++;
+            if ($mes > 12) {
+                $mes = 1;
+                $anio++;
+            }
+        }
+
+        return ['mes' => $mes, 'anio' => $anio];
+    }
+
     public function index(Request $request): JsonResponse
     {
         $user = $request->user();
-        $mes = $request->input('mes', now()->month);
-        $anio = $request->input('anio', now()->year);
+        $diaRestablecimiento = $user->dia_restablecimiento_servicios ?? 1;
+
+        // Calcular el ciclo actual basado en la fecha de hoy
+        $cicloActual = $this->calcularCicloFacturacion(now(), $diaRestablecimiento);
+        $mes = $request->input('mes', $cicloActual['mes']);
+        $anio = $request->input('anio', $cicloActual['anio']);
 
         $servicios = Servicio::where('user_id', $user->id)
             ->with(['categoria', 'pagos' => function ($q) use ($mes, $anio) {
@@ -82,9 +108,11 @@ class ServicioController extends Controller
 
         $servicio->update($request->validated());
 
-        // Cargar categoria y estado de pago del mes actual
-        $mes = now()->month;
-        $anio = now()->year;
+        // Cargar categoria y estado de pago del ciclo actual
+        $diaRestablecimiento = $user->dia_restablecimiento_servicios ?? 1;
+        $ciclo = $this->calcularCicloFacturacion(now(), $diaRestablecimiento);
+        $mes = $ciclo['mes'];
+        $anio = $ciclo['anio'];
 
         $servicio->load(['categoria', 'pagos' => function ($q) use ($mes, $anio) {
             $q->where('mes', $mes)->where('anio', $anio);
@@ -139,11 +167,16 @@ class ServicioController extends Controller
             'crear_gasto' => 'boolean'
         ]);
 
-        $mes = now()->month;
-        $anio = now()->year;
+        $diaRestablecimiento = $user->dia_restablecimiento_servicios ?? 1;
         $fecha = $request->input('fecha', now()->toDateString());
+        $fechaPago = new \DateTime($fecha);
 
-        // Verificar si ya está pagado este mes
+        // Calcular el ciclo de facturación basado en la fecha del pago
+        $ciclo = $this->calcularCicloFacturacion($fechaPago, $diaRestablecimiento);
+        $mes = $ciclo['mes'];
+        $anio = $ciclo['anio'];
+
+        // Verificar si ya está pagado en este ciclo
         $pagoExistente = PagoServicio::where('servicio_id', $servicio->id)
             ->where('mes', $mes)
             ->where('anio', $anio)
@@ -152,7 +185,7 @@ class ServicioController extends Controller
         if ($pagoExistente) {
             return response()->json([
                 'success' => false,
-                'message' => 'Este servicio ya está marcado como pagado este mes'
+                'message' => 'Este servicio ya está marcado como pagado en este ciclo'
             ], 422);
         }
 
@@ -203,8 +236,10 @@ class ServicioController extends Controller
             ], 403);
         }
 
-        $mes = now()->month;
-        $anio = now()->year;
+        $diaRestablecimiento = $user->dia_restablecimiento_servicios ?? 1;
+        $ciclo = $this->calcularCicloFacturacion(now(), $diaRestablecimiento);
+        $mes = $ciclo['mes'];
+        $anio = $ciclo['anio'];
 
         $pago = PagoServicio::where('servicio_id', $servicio->id)
             ->where('mes', $mes)
@@ -214,7 +249,7 @@ class ServicioController extends Controller
         if (!$pago) {
             return response()->json([
                 'success' => false,
-                'message' => 'Este servicio no está marcado como pagado este mes'
+                'message' => 'Este servicio no está marcado como pagado en este ciclo'
             ], 422);
         }
 
@@ -234,8 +269,10 @@ class ServicioController extends Controller
     public function pendientes(Request $request): JsonResponse
     {
         $user = $request->user();
-        $mes = now()->month;
-        $anio = now()->year;
+        $diaRestablecimiento = $user->dia_restablecimiento_servicios ?? 1;
+        $ciclo = $this->calcularCicloFacturacion(now(), $diaRestablecimiento);
+        $mes = $ciclo['mes'];
+        $anio = $ciclo['anio'];
 
         $serviciosActivos = Servicio::where('user_id', $user->id)
             ->activos()
@@ -265,7 +302,7 @@ class ServicioController extends Controller
         $diaRestablecimiento = $user->dia_restablecimiento_servicios ?? 1;
         $hoy = now();
 
-        // Calcular días hasta el restablecimiento
+        // Calcular días hasta el próximo restablecimiento
         $fechaRestablecimiento = now()->copy()->day($diaRestablecimiento);
 
         // Si ya pasó el día este mes, calcular para el próximo mes
@@ -281,9 +318,10 @@ class ServicioController extends Controller
 
         $diasRestantes = (int) ceil($hoy->diffInDays($fechaRestablecimiento, false));
 
-        // Servicios pendientes de pago
-        $mes = now()->month;
-        $anio = now()->year;
+        // Usar el ciclo de facturación actual
+        $ciclo = $this->calcularCicloFacturacion($hoy, $diaRestablecimiento);
+        $mes = $ciclo['mes'];
+        $anio = $ciclo['anio'];
 
         $serviciosActivos = Servicio::where('user_id', $user->id)
             ->activos()

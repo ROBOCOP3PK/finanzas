@@ -335,6 +335,10 @@ const props = defineProps({
     submitText: {
         type: String,
         default: 'Guardar'
+    },
+    seccionInicial: {
+        type: String,
+        default: null
     }
 });
 
@@ -500,6 +504,11 @@ onMounted(async () => {
     // Si hay exactamente 1 medio de pago, asignarlo automaticamente
     if (mediosPagoStore.activos.length === 1 && !form.value.medio_pago_id) {
         form.value.medio_pago_id = mediosPagoStore.activos[0].id;
+    }
+
+    // Si viene con seccion inicial de servicios, cambiar a esa pestaña
+    if (props.seccionInicial === 'servicios' && serviciosStore.activos.length > 0) {
+        tabActivo.value = 'servicios';
     }
 });
 

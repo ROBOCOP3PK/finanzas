@@ -449,7 +449,7 @@ const irASolicitudes = () => {
 };
 
 const irAServicios = () => {
-    router.push('/configuracion?seccion=servicios');
+    router.push('/gastos/nuevo?seccion=servicios');
 };
 
 // Funciones de conflictos y operaciones offline

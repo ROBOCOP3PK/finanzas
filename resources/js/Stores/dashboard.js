@@ -135,7 +135,36 @@ export const useDashboardStore = defineStore('dashboard', {
                 }
             }
 
-            this.cargarPorCategoria(mes, anio);
+            this.cargarDatosMes(mes, anio);
+        },
+
+        async cargarDatosMes(mes, anio) {
+            this.loadingCategorias = true;
+            try {
+                const [categoriasRes, resumenRes] = await Promise.all([
+                    api.get('/dashboard/por-categoria', { params: { mes, anio } }),
+                    api.get('/dashboard/resumen-mes', { params: { mes, anio } })
+                ]);
+
+                const categoriasData = categoriasRes.data.data;
+                this.porCategoria = categoriasData.categorias || [];
+                this.porCategoriaMes = categoriasData.mes;
+                this.porCategoriaAnio = categoriasData.anio;
+                this.gastosPorCategoriaCache = {};
+
+                this.resumenMes = resumenRes.data.data;
+                this.gastoMesActual = resumenRes.data.data.total_gastos || 0;
+            } catch (error) {
+                console.error('Error cargando datos del mes:', error);
+            } finally {
+                this.loadingCategorias = false;
+            }
+        },
+
+        resetearAlMesActual() {
+            const now = new Date();
+            this.porCategoriaMes = now.getMonth() + 1;
+            this.porCategoriaAnio = now.getFullYear();
         }
     }
 });

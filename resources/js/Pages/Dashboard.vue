@@ -22,7 +22,9 @@
             </router-link>
             <!-- Card Gasto Mes -->
             <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-4">
-                <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Gasto este mes</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                    Gasto {{ esMesActual ? 'este mes' : nombreMesActual }}
+                </p>
                 <p class="text-xl font-bold text-gray-900 dark:text-white">
                     {{ formatCurrency(dashboardStore.gastoMesActual) }}
                 </p>
@@ -85,7 +87,22 @@ const showToast = ref(false);
 const toastMessage = ref('');
 const toastType = ref('success');
 
+const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+
+const esMesActual = computed(() => {
+    const now = new Date();
+    return dashboardStore.porCategoriaMes === (now.getMonth() + 1) &&
+           dashboardStore.porCategoriaAnio === now.getFullYear();
+});
+
+const nombreMesActual = computed(() => {
+    const mes = dashboardStore.porCategoriaMes;
+    return mes ? meses[mes - 1] : '';
+});
+
 onMounted(async () => {
+    // Siempre resetear al mes actual al entrar
+    dashboardStore.resetearAlMesActual();
     await Promise.all([
         dashboardStore.cargarDashboard(),
         configStore.cargarConfiguracion()
