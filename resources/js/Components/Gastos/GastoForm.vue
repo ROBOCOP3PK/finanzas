@@ -92,14 +92,22 @@
                                 v-for="serv in serviciosActivos"
                                 :key="serv.id"
                                 type="button"
-                                @click="seleccionarServicio(serv)"
+                                @click="handleServiceClick(serv)"
+                                @touchstart="handleServiceTouchStart(serv, $event)"
+                                @touchend="handleServiceTouchEnd"
+                                @touchcancel="handleServiceTouchEnd"
+                                @mousedown="handleServiceMouseDown(serv)"
+                                @mouseup="handleServiceTouchEnd"
+                                @mouseleave="handleServiceTouchEnd"
                                 :class="[
                                     'flex flex-col items-center justify-center p-2 rounded-lg border-2 transition-all min-h-[60px]',
-                                    servicioSeleccionado?.id === serv.id
-                                        ? 'border-primary bg-primary/10 dark:bg-primary/20'
-                                        : serv.pagado
-                                            ? 'border-green-300 dark:border-green-700 bg-green-50 dark:bg-green-900/20'
-                                            : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800'
+                                    longPressServiceId === serv.id
+                                        ? 'border-indigo-500 bg-indigo-100 dark:bg-indigo-900/40'
+                                        : servicioSeleccionado?.id === serv.id
+                                            ? 'border-primary bg-primary/10 dark:bg-primary/20'
+                                            : serv.pagado
+                                                ? 'border-green-300 dark:border-green-700 bg-green-50 dark:bg-green-900/20'
+                                                : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800'
                                 ]"
                             >
                                 <div
@@ -338,7 +346,7 @@ const props = defineProps({
     }
 });
 
-const emit = defineEmits(['submit', 'servicio-pagado']);
+const emit = defineEmits(['submit', 'servicio-pagado', 'referencia-copiada']);
 
 const mediosPagoStore = useMediosPagoStore();
 const categoriasStore = useCategoriasStore();
@@ -360,6 +368,65 @@ const touchStartX = ref(0);
 const touchCurrentX = ref(0);
 const isSwiping = ref(false);
 const swipeThreshold = 50;
+
+// Long-press para copiar referencia
+const longPressTimer = ref(null);
+const longPressServiceId = ref(null);
+const longPressCopied = ref(false);
+const LONG_PRESS_DURATION = 2000;
+
+const handleServiceTouchStart = (servicio, event) => {
+    if (!servicio.referencia) return;
+
+    longPressServiceId.value = servicio.id;
+    longPressCopied.value = false;
+    longPressTimer.value = setTimeout(() => {
+        copiarReferencia(servicio);
+    }, LONG_PRESS_DURATION);
+};
+
+const handleServiceMouseDown = (servicio) => {
+    if (!servicio.referencia) return;
+
+    longPressServiceId.value = servicio.id;
+    longPressCopied.value = false;
+    longPressTimer.value = setTimeout(() => {
+        copiarReferencia(servicio);
+    }, LONG_PRESS_DURATION);
+};
+
+const handleServiceTouchEnd = () => {
+    if (longPressTimer.value) {
+        clearTimeout(longPressTimer.value);
+        longPressTimer.value = null;
+    }
+    longPressServiceId.value = null;
+};
+
+const handleServiceClick = (servicio) => {
+    // Si se copió la referencia, no seleccionar el servicio
+    if (longPressCopied.value) {
+        longPressCopied.value = false;
+        return;
+    }
+    seleccionarServicio(servicio);
+};
+
+const copiarReferencia = async (servicio) => {
+    try {
+        await navigator.clipboard.writeText(servicio.referencia);
+
+        if (navigator.vibrate) {
+            navigator.vibrate(100);
+        }
+
+        longPressCopied.value = true;
+        emit('referencia-copiada', servicio.referencia);
+    } catch (error) {
+        console.error('Error al copiar referencia:', error);
+    }
+    longPressServiceId.value = null;
+};
 
 const swipeOffset = computed(() => {
     const containerWidth = swipeContainer.value?.offsetWidth || 0;

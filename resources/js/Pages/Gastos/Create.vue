@@ -7,6 +7,7 @@
                 :errors="errors"
                 submitText="Guardar Gasto"
                 @submit="guardar"
+                @referencia-copiada="mostrarReferenciCopiada"
             />
         </Card>
 
@@ -34,6 +35,12 @@ const errors = ref({});
 const showToast = ref(false);
 const toastMessage = ref('');
 const toastType = ref('success');
+
+const mostrarReferenciCopiada = (referencia) => {
+    toastMessage.value = `Referencia copiada: ${referencia}`;
+    toastType.value = 'success';
+    showToast.value = true;
+};
 
 const guardar = async (data) => {
     loading.value = true;
