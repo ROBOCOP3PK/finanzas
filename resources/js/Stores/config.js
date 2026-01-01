@@ -30,9 +30,9 @@ export const useConfigStore = defineStore('config', {
 
         getNombreTipo: (state) => (tipo) => {
             const tipos = {
-                'personal': 'Personal',
+                'personal': state.nombre_persona_1 || 'Yo',
                 'pareja': state.nombre_persona_2 || 'Pareja',
-                'compartido': `Compartido (${state.porcentaje_persona_1}/${state.porcentaje_persona_2})`
+                'compartido': `${state.porcentaje_persona_1}/${state.porcentaje_persona_2}`
             };
             return tipos[tipo] || tipo;
         },

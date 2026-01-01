@@ -155,6 +155,7 @@
 import { ref, computed, watch } from 'vue';
 import { ChevronLeftIcon, ChevronRightIcon, ChevronDownIcon } from '@heroicons/vue/24/outline';
 import { useDashboardStore } from '../../Stores/dashboard';
+import { useConfigStore } from '../../Stores/config';
 import { useCurrency } from '../../Composables/useCurrency';
 
 const props = defineProps({
@@ -173,6 +174,7 @@ const props = defineProps({
 });
 
 const dashboardStore = useDashboardStore();
+const configStore = useConfigStore();
 const { formatCurrency } = useCurrency();
 
 const expandedCategoria = ref(null);
@@ -237,12 +239,12 @@ const formatFecha = (fecha) => {
 };
 
 const tipoLabel = (tipo) => {
-    const labels = {
-        personal: 'Personal',
-        pareja: 'Pareja',
-        compartido: 'Compartido'
+    const tipos = {
+        'personal': configStore.nombre_persona_1 || 'Yo',
+        'pareja': configStore.nombre_persona_2 || 'Pareja',
+        'compartido': `${configStore.porcentaje_persona_1}/${configStore.porcentaje_persona_2}`
     };
-    return labels[tipo] || tipo;
+    return tipos[tipo] || tipo;
 };
 
 const tipoClass = (tipo) => {
