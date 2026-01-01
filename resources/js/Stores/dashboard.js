@@ -18,9 +18,13 @@ export const useDashboardStore = defineStore('dashboard', {
         },
         porMedioPago: {},
         porCategoria: [],
+        porCategoriaMes: null,
+        porCategoriaAnio: null,
+        gastosPorCategoriaCache: {},
         ultimosMovimientos: [],
         pendientesRecurrentes: 0,
         loading: false,
+        loadingCategorias: false,
         error: null
     }),
 
@@ -41,8 +45,11 @@ export const useDashboardStore = defineStore('dashboard', {
                 this.resumenMes = data.resumen_mes;
                 this.porMedioPago = data.por_medio_pago;
                 this.porCategoria = data.por_categoria || [];
+                this.porCategoriaMes = data.resumen_mes?.mes || new Date().getMonth() + 1;
+                this.porCategoriaAnio = data.resumen_mes?.anio || new Date().getFullYear();
                 this.ultimosMovimientos = data.ultimos_movimientos;
                 this.pendientesRecurrentes = data.pendientes_recurrentes;
+                this.gastosPorCategoriaCache = {};
             } catch (error) {
                 this.error = 'Error cargando dashboard';
                 console.error(error);
@@ -72,6 +79,63 @@ export const useDashboardStore = defineStore('dashboard', {
             } catch (error) {
                 console.error('Error cargando resumen:', error);
             }
+        },
+
+        async cargarPorCategoria(mes, anio) {
+            this.loadingCategorias = true;
+            try {
+                const response = await api.get('/dashboard/por-categoria', {
+                    params: { mes, anio }
+                });
+                const data = response.data.data;
+                this.porCategoria = data.categorias || [];
+                this.porCategoriaMes = data.mes;
+                this.porCategoriaAnio = data.anio;
+                this.gastosPorCategoriaCache = {};
+            } catch (error) {
+                console.error('Error cargando categorías:', error);
+            } finally {
+                this.loadingCategorias = false;
+            }
+        },
+
+        async cargarGastosCategoria(categoriaId, mes, anio) {
+            const cacheKey = `${categoriaId}-${mes}-${anio}`;
+            if (this.gastosPorCategoriaCache[cacheKey]) {
+                return this.gastosPorCategoriaCache[cacheKey];
+            }
+
+            try {
+                const response = await api.get(`/dashboard/categoria/${categoriaId}/gastos`, {
+                    params: { mes, anio }
+                });
+                this.gastosPorCategoriaCache[cacheKey] = response.data.data;
+                return response.data.data;
+            } catch (error) {
+                console.error('Error cargando gastos de categoría:', error);
+                return [];
+            }
+        },
+
+        cambiarMesCategorias(direccion) {
+            let mes = this.porCategoriaMes;
+            let anio = this.porCategoriaAnio;
+
+            if (direccion === 'anterior') {
+                mes--;
+                if (mes < 1) {
+                    mes = 12;
+                    anio--;
+                }
+            } else {
+                mes++;
+                if (mes > 12) {
+                    mes = 1;
+                    anio++;
+                }
+            }
+
+            this.cargarPorCategoria(mes, anio);
         }
     }
 });

@@ -67,6 +67,51 @@ class DashboardController extends Controller
         ]);
     }
 
+    public function porCategoria(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        $mes = $request->input('mes', now()->month);
+        $anio = $request->input('anio', now()->year);
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'mes' => (int) $mes,
+                'anio' => (int) $anio,
+                'categorias' => $this->getGastosPorCategoria($user, $mes, $anio)
+            ]
+        ]);
+    }
+
+    public function gastosPorCategoria(Request $request, int $categoriaId): JsonResponse
+    {
+        $user = $request->user();
+        $mes = $request->input('mes', now()->month);
+        $anio = $request->input('anio', now()->year);
+
+        $gastos = $user->gastos()
+            ->delMes($mes, $anio)
+            ->where('categoria_id', $categoriaId)
+            ->with(['medioPago', 'categoria'])
+            ->orderByDesc('fecha')
+            ->get()
+            ->map(function ($gasto) {
+                return [
+                    'id' => $gasto->id,
+                    'fecha' => $gasto->fecha->format('Y-m-d'),
+                    'concepto' => $gasto->concepto,
+                    'valor' => $gasto->valor,
+                    'tipo' => $gasto->tipo,
+                    'medio_pago' => $gasto->medioPago->nombre ?? null
+                ];
+            });
+
+        return response()->json([
+            'success' => true,
+            'data' => $gastos
+        ]);
+    }
+
     private function getResumenMes($user, ?int $mes = null, ?int $anio = null): array
     {
         $mes = $mes ?? now()->month;
@@ -112,10 +157,10 @@ class DashboardController extends Controller
             ->toArray();
     }
 
-    private function getGastosPorCategoria($user): array
+    private function getGastosPorCategoria($user, ?int $mes = null, ?int $anio = null): array
     {
-        $mes = now()->month;
-        $anio = now()->year;
+        $mes = $mes ?? now()->month;
+        $anio = $anio ?? now()->year;
 
         $gastos = $user->gastos()
             ->delMes($mes, $anio)
@@ -126,7 +171,7 @@ class DashboardController extends Controller
         $totalMes = $user->gastos()->delMes($mes, $anio)->sum('valor');
 
         $resultado = [];
-        foreach ($gastos as $categoriaId => $gastosCategoria) {
+        foreach ($gastos as $gastosCategoria) {
             $categoria = $gastosCategoria->first()->categoria;
             if (!$categoria) continue;
 

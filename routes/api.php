@@ -38,6 +38,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index']);
     Route::get('/dashboard/saldo', [DashboardController::class, 'saldo']);
     Route::get('/dashboard/resumen-mes', [DashboardController::class, 'resumenMes']);
+    Route::get('/dashboard/por-categoria', [DashboardController::class, 'porCategoria']);
+    Route::get('/dashboard/categoria/{categoria}/gastos', [DashboardController::class, 'gastosPorCategoria']);
 
     // Configuración
     Route::get('/configuracion', [ConfiguracionController::class, 'index']);
