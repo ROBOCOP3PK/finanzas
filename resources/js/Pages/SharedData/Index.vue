@@ -111,33 +111,6 @@
                         </div>
                     </div>
 
-                    <!-- Ultimos movimientos -->
-                    <div v-if="sharedDashboard.ultimosMovimientos.length > 0" class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4">
-                        <h3 class="font-medium text-gray-900 dark:text-white mb-3">Ultimos Movimientos</h3>
-                        <div class="space-y-3">
-                            <div
-                                v-for="mov in sharedDashboard.ultimosMovimientos"
-                                :key="mov.id"
-                                class="flex items-center justify-between"
-                            >
-                                <div class="flex items-center gap-3">
-                                    <div
-                                        class="w-8 h-8 rounded-full flex items-center justify-center"
-                                        :style="{ backgroundColor: (mov.categoria_color || '#6B7280') + '20' }"
-                                    >
-                                        <ArrowUpIcon class="w-4 h-4 text-red-500" />
-                                    </div>
-                                    <div>
-                                        <p class="text-sm text-gray-900 dark:text-white">{{ mov.concepto }}</p>
-                                        <p class="text-xs text-gray-500 dark:text-gray-400">{{ formatDateShort(mov.fecha) }}</p>
-                                    </div>
-                                </div>
-                                <p class="font-medium text-gray-900 dark:text-white">
-                                    {{ formatCurrency(mov.valor) }}
-                                </p>
-                            </div>
-                        </div>
-                    </div>
                 </div>
 
                 <!-- Tab: Historial -->
@@ -166,44 +139,64 @@
                         </div>
                     </div>
 
-                    <!-- Lista de gastos -->
-                    <div v-if="sharedDashboard.gastos.length > 0" class="bg-white dark:bg-gray-800 rounded-xl shadow-sm divide-y divide-gray-100 dark:divide-gray-700">
+                    <!-- Lista de movimientos (gastos + abonos) -->
+                    <div v-if="sharedDashboard.movimientos.length > 0" class="bg-white dark:bg-gray-800 rounded-xl shadow-sm divide-y divide-gray-100 dark:divide-gray-700">
                         <div
-                            v-for="gasto in sharedDashboard.gastos"
-                            :key="gasto.id"
+                            v-for="mov in sharedDashboard.movimientos"
+                            :key="`${mov.tipo_movimiento}-${mov.id}`"
                             class="p-4"
                         >
                             <div class="flex items-center justify-between">
                                 <div class="flex items-center gap-3">
+                                    <!-- Icono segun tipo de movimiento -->
                                     <div
+                                        v-if="mov.tipo_movimiento === 'abono'"
+                                        class="w-10 h-10 rounded-lg flex items-center justify-center bg-green-100 dark:bg-green-900/30"
+                                    >
+                                        <ArrowDownIcon class="w-5 h-5 text-green-600 dark:text-green-400" />
+                                    </div>
+                                    <div
+                                        v-else
                                         class="w-10 h-10 rounded-lg flex items-center justify-center"
-                                        :style="{ backgroundColor: (gasto.categoria?.color || '#6B7280') + '20' }"
+                                        :style="{ backgroundColor: (mov.categoria?.color || '#6B7280') + '20' }"
                                     >
                                         <i
-                                            v-if="gasto.categoria?.icono"
-                                            :class="gasto.categoria.icono"
-                                            :style="{ color: gasto.categoria?.color || '#6B7280' }"
+                                            v-if="mov.categoria?.icono"
+                                            :class="mov.categoria.icono"
+                                            :style="{ color: mov.categoria?.color || '#6B7280' }"
                                         ></i>
                                     </div>
                                     <div>
-                                        <p class="font-medium text-gray-900 dark:text-white">{{ gasto.concepto }}</p>
+                                        <p class="font-medium text-gray-900 dark:text-white">{{ mov.concepto }}</p>
                                         <div class="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-                                            <span>{{ formatDateShort(gasto.fecha) }}</span>
-                                            <span v-if="gasto.medio_pago">· {{ gasto.medio_pago.nombre }}</span>
+                                            <span>{{ formatDateShort(mov.fecha) }}</span>
+                                            <span v-if="mov.medio_pago">· {{ mov.medio_pago.nombre }}</span>
                                         </div>
                                     </div>
                                 </div>
                                 <div class="text-right">
-                                    <p class="font-bold text-gray-900 dark:text-white">{{ formatCurrency(gasto.valor) }}</p>
+                                    <p
+                                        class="font-bold"
+                                        :class="mov.tipo_movimiento === 'abono' ? 'text-green-600 dark:text-green-400' : 'text-gray-900 dark:text-white'"
+                                    >
+                                        {{ mov.tipo_movimiento === 'abono' ? '+' : '' }}{{ formatCurrency(mov.valor) }}
+                                    </p>
                                     <span
+                                        v-if="mov.tipo_movimiento === 'abono'"
+                                        class="text-xs px-1.5 py-0.5 rounded bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                                    >
+                                        Abono
+                                    </span>
+                                    <span
+                                        v-else
                                         class="text-xs px-1.5 py-0.5 rounded"
                                         :class="{
-                                            'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400': gasto.tipo === 'personal',
-                                            'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400': gasto.tipo === 'pareja',
-                                            'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400': gasto.tipo === 'compartido'
+                                            'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400': mov.tipo === 'personal',
+                                            'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400': mov.tipo === 'pareja',
+                                            'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400': mov.tipo === 'compartido'
                                         }"
                                     >
-                                        {{ configStore.getNombreTipo(gasto.tipo) }}
+                                        {{ configStore.getNombreTipo(mov.tipo) }}
                                     </span>
                                 </div>
                             </div>
@@ -211,29 +204,31 @@
                     </div>
 
                     <div v-else class="text-center py-8 text-gray-500 dark:text-gray-400">
-                        No hay gastos registrados
+                        No hay movimientos registrados
                     </div>
 
-                    <!-- Paginacion -->
-                    <div v-if="sharedDashboard.gastosMeta.last_page > 1" class="flex justify-center gap-2 mt-4">
+                    <!-- Cargar más -->
+                    <div v-if="sharedDashboard.hayMas" class="flex justify-center mt-4">
                         <button
-                            @click="cargarPagina(sharedDashboard.gastosMeta.current_page - 1)"
-                            :disabled="sharedDashboard.gastosMeta.current_page === 1"
-                            class="px-3 py-1 bg-gray-200 dark:bg-gray-700 rounded disabled:opacity-50"
+                            @click="sharedDashboard.cargarMasHistorial()"
+                            :disabled="sharedDashboard.loadingMore"
+                            class="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors disabled:opacity-50"
                         >
-                            Anterior
-                        </button>
-                        <span class="px-3 py-1 text-gray-600 dark:text-gray-400">
-                            {{ sharedDashboard.gastosMeta.current_page }} / {{ sharedDashboard.gastosMeta.last_page }}
-                        </span>
-                        <button
-                            @click="cargarPagina(sharedDashboard.gastosMeta.current_page + 1)"
-                            :disabled="sharedDashboard.gastosMeta.current_page === sharedDashboard.gastosMeta.last_page"
-                            class="px-3 py-1 bg-gray-200 dark:bg-gray-700 rounded disabled:opacity-50"
-                        >
-                            Siguiente
+                            <span v-if="sharedDashboard.loadingMore" class="flex items-center gap-2">
+                                <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                Cargando...
+                            </span>
+                            <span v-else>Cargar más</span>
                         </button>
                     </div>
+
+                    <!-- Info de registros -->
+                    <p v-if="sharedDashboard.movimientos.length > 0" class="text-center text-xs text-gray-400 dark:text-gray-500 mt-2">
+                        Mostrando {{ sharedDashboard.movimientos.length }} de {{ sharedDashboard.movimientosMeta.total }} registros
+                    </p>
                 </div>
             </template>
         </div>
@@ -304,7 +299,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { ArrowUpIcon, XMarkIcon, DocumentTextIcon, TableCellsIcon } from '@heroicons/vue/24/outline';
+import { XMarkIcon, DocumentTextIcon, TableCellsIcon, ArrowDownIcon } from '@heroicons/vue/24/outline';
 import SharedDataNav from '../../Components/Shared/SharedDataNav.vue';
 import SharedGastoForm from '../../Components/Shared/SharedGastoForm.vue';
 import Toast from '../../Components/UI/Toast.vue';
@@ -371,11 +366,7 @@ const crearSolicitud = async (data) => {
 
 const aplicarFiltros = () => {
     sharedDashboard.setFiltros(filtros.value);
-    sharedDashboard.cargarGastos(shareId.value, 1);
-};
-
-const cargarPagina = (page) => {
-    sharedDashboard.cargarGastos(shareId.value, page);
+    sharedDashboard.cargarHistorial(shareId.value, 1);
 };
 
 // Funciones de compartir

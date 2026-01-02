@@ -23,7 +23,22 @@ export const useSharedDashboardStore = defineStore('sharedDashboard', {
         porCategoria: [],
         ultimosMovimientos: [],
 
-        // Historial de gastos
+        // Historial de movimientos (gastos + abonos)
+        movimientos: [],
+        movimientosMeta: {
+            current_page: 1,
+            last_page: 1,
+            per_page: 20,
+            total: 0
+        },
+        movimientosFiltros: {
+            desde: null,
+            hasta: null,
+            tipo: null,
+            categoria_id: null
+        },
+
+        // Mantener gastos para compatibilidad con exportación
         gastos: [],
         gastosMeta: {
             current_page: 1,
@@ -43,12 +58,14 @@ export const useSharedDashboardStore = defineStore('sharedDashboard', {
         mediosPago: [],
 
         loading: false,
+        loadingMore: false,
         error: null
     }),
 
     getters: {
         hasData: (state) => state.owner !== null,
-        ownerName: (state) => state.owner?.name || ''
+        ownerName: (state) => state.owner?.name || '',
+        hayMas: (state) => state.movimientosMeta.current_page < state.movimientosMeta.last_page
     },
 
     actions: {
@@ -115,12 +132,67 @@ export const useSharedDashboardStore = defineStore('sharedDashboard', {
             }
         },
 
+        async cargarHistorial(shareId = null, page = 1, append = false) {
+            const id = shareId || this.shareId;
+            if (!id) return { success: false };
+
+            if (append) {
+                this.loadingMore = true;
+            } else {
+                this.loading = true;
+            }
+
+            try {
+                const params = { page, ...this.movimientosFiltros };
+
+                // Limpiar params vacios
+                Object.keys(params).forEach(key => {
+                    if (params[key] === null || params[key] === '') {
+                        delete params[key];
+                    }
+                });
+
+                const response = await api.get(`/shared-with-me/${id}/historial`, { params });
+
+                if (append) {
+                    // Agregar a los existentes
+                    this.movimientos = [...this.movimientos, ...response.data.data];
+                } else {
+                    // Reemplazar
+                    this.movimientos = response.data.data;
+                }
+                this.movimientosMeta = response.data.meta;
+
+                return { success: true };
+            } catch (error) {
+                console.error('Error loading shared historial:', error);
+                return { success: false };
+            } finally {
+                this.loading = false;
+                this.loadingMore = false;
+            }
+        },
+
+        async cargarMasHistorial() {
+            if (!this.hayMas || this.loadingMore) return;
+
+            const nextPage = this.movimientosMeta.current_page + 1;
+            await this.cargarHistorial(this.shareId, nextPage, true);
+        },
+
         setFiltros(filtros) {
             this.gastosFiltros = { ...this.gastosFiltros, ...filtros };
+            this.movimientosFiltros = { ...this.movimientosFiltros, ...filtros };
         },
 
         limpiarFiltros() {
             this.gastosFiltros = {
+                desde: null,
+                hasta: null,
+                tipo: null,
+                categoria_id: null
+            };
+            this.movimientosFiltros = {
                 desde: null,
                 hasta: null,
                 tipo: null,
@@ -162,7 +234,7 @@ export const useSharedDashboardStore = defineStore('sharedDashboard', {
                 this.cargarDashboard(shareId),
                 this.cargarCategorias(shareId),
                 this.cargarMediosPago(shareId),
-                this.cargarGastos(shareId)
+                this.cargarHistorial(shareId)
             ]);
         },
 
@@ -175,9 +247,16 @@ export const useSharedDashboardStore = defineStore('sharedDashboard', {
             this.porCategoria = [];
             this.ultimosMovimientos = [];
             this.gastos = [];
+            this.movimientos = [];
             this.categorias = [];
             this.mediosPago = [];
             this.gastosFiltros = {
+                desde: null,
+                hasta: null,
+                tipo: null,
+                categoria_id: null
+            };
+            this.movimientosFiltros = {
                 desde: null,
                 hasta: null,
                 tipo: null,

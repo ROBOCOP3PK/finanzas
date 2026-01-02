@@ -57,7 +57,8 @@ class SharedDataController extends Controller
 
         // Aplicar filtros
         if ($request->filled('desde') && $request->filled('hasta')) {
-            $query->whereBetween('fecha', [$request->desde, $request->hasta]);
+            $query->whereDate('fecha', '>=', $request->desde)
+                  ->whereDate('fecha', '<=', $request->hasta);
         }
 
         if ($request->filled('tipo')) {
@@ -116,6 +117,132 @@ class SharedDataController extends Controller
         return response()->json([
             'success' => true,
             'data' => $mediosPago
+        ]);
+    }
+
+    /**
+     * Historial de abonos del propietario
+     */
+    public function abonos(Request $request, DataShare $dataShare): JsonResponse
+    {
+        $this->authorizeGuestAccess($request, $dataShare);
+
+        $owner = $dataShare->owner;
+
+        $query = $owner->abonos()
+            ->orderByDesc('fecha')
+            ->orderByDesc('created_at');
+
+        // Aplicar filtros
+        if ($request->filled('desde') && $request->filled('hasta')) {
+            $query->whereDate('fecha', '>=', $request->desde)
+                  ->whereDate('fecha', '<=', $request->hasta);
+        }
+
+        $perPage = $request->input('per_page', 20);
+        $abonos = $query->paginate($perPage);
+
+        return response()->json([
+            'success' => true,
+            'data' => $abonos->items(),
+            'meta' => [
+                'current_page' => $abonos->currentPage(),
+                'last_page' => $abonos->lastPage(),
+                'per_page' => $abonos->perPage(),
+                'total' => $abonos->total()
+            ]
+        ]);
+    }
+
+    /**
+     * Historial combinado de gastos y abonos del propietario
+     */
+    public function historial(Request $request, DataShare $dataShare): JsonResponse
+    {
+        $this->authorizeGuestAccess($request, $dataShare);
+
+        $owner = $dataShare->owner;
+
+        // Query de gastos
+        $gastosQuery = $owner->gastos()
+            ->with(['medioPago', 'categoria'])
+            ->select('id', 'fecha', 'concepto', 'valor', 'tipo', 'medio_pago_id', 'categoria_id', 'created_at')
+            ->selectRaw("'gasto' as tipo_movimiento");
+
+        // Query de abonos
+        $abonosQuery = $owner->abonos()
+            ->select('id', 'fecha', 'nota as concepto', 'valor', 'created_at')
+            ->selectRaw("NULL as tipo, NULL as medio_pago_id, NULL as categoria_id")
+            ->selectRaw("'abono' as tipo_movimiento");
+
+        // Aplicar filtros a ambos queries
+        if ($request->filled('desde') && $request->filled('hasta')) {
+            $gastosQuery->whereDate('fecha', '>=', $request->desde)
+                        ->whereDate('fecha', '<=', $request->hasta);
+            $abonosQuery->whereDate('fecha', '>=', $request->desde)
+                        ->whereDate('fecha', '<=', $request->hasta);
+        }
+
+        if ($request->filled('tipo')) {
+            $gastosQuery->where('tipo', $request->tipo);
+        }
+
+        if ($request->filled('categoria_id')) {
+            $gastosQuery->where('categoria_id', $request->categoria_id);
+        }
+
+        // Obtener todos los registros
+        $gastos = $gastosQuery->get()->map(function ($gasto) {
+            return [
+                'id' => $gasto->id,
+                'tipo_movimiento' => 'gasto',
+                'fecha' => $gasto->fecha->format('Y-m-d'),
+                'concepto' => $gasto->concepto,
+                'valor' => $gasto->valor,
+                'tipo' => $gasto->tipo,
+                'medio_pago' => $gasto->medioPago,
+                'categoria' => $gasto->categoria,
+                'created_at' => $gasto->created_at
+            ];
+        });
+
+        $abonos = $abonosQuery->get()->map(function ($abono) {
+            return [
+                'id' => $abono->id,
+                'tipo_movimiento' => 'abono',
+                'fecha' => $abono->fecha->format('Y-m-d'),
+                'concepto' => $abono->concepto ?: 'Abono',
+                'valor' => $abono->valor,
+                'tipo' => null,
+                'medio_pago' => null,
+                'categoria' => null,
+                'created_at' => $abono->created_at
+            ];
+        });
+
+        // Combinar y ordenar por fecha descendente
+        $movimientos = $gastos->concat($abonos)
+            ->sortByDesc('fecha')
+            ->sortByDesc('created_at')
+            ->values();
+
+        // Paginación manual
+        $perPage = $request->input('per_page', 20);
+        $page = $request->input('page', 1);
+        $total = $movimientos->count();
+        $lastPage = max(1, ceil($total / $perPage));
+
+        $items = $movimientos->slice(($page - 1) * $perPage, $perPage)->values();
+
+        return response()->json([
+            'success' => true,
+            'data' => $items,
+            'meta' => [
+                'current_page' => (int) $page,
+                'last_page' => $lastPage,
+                'per_page' => $perPage,
+                'total' => $total
+            ]
         ]);
     }
 

@@ -110,6 +110,8 @@ Route::middleware('auth:sanctum')->group(function () {
         // Acceso a datos del propietario
         Route::get('/{dataShare}/dashboard', [SharedDataController::class, 'dashboard']);
         Route::get('/{dataShare}/gastos', [SharedDataController::class, 'gastos']);
+        Route::get('/{dataShare}/abonos', [SharedDataController::class, 'abonos']);
+        Route::get('/{dataShare}/historial', [SharedDataController::class, 'historial']);
         Route::get('/{dataShare}/categorias', [SharedDataController::class, 'categorias']);
         Route::get('/{dataShare}/medios-pago', [SharedDataController::class, 'mediosPago']);
     });
