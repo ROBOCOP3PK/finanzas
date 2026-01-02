@@ -8,11 +8,13 @@ use Illuminate\Http\Request;
 
 class ConfiguracionController extends Controller
 {
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
+        $userId = $request->user()->id;
+
         return response()->json([
             'success' => true,
-            'data' => Configuracion::todas()
+            'data' => Configuracion::todas($userId)
         ]);
     }
 
@@ -29,9 +31,12 @@ class ConfiguracionController extends Controller
             'dia_restablecimiento_servicios' => 'sometimes|integer|min:1|max:31'
         ]);
 
+        $user = $request->user();
+        $userId = $user->id;
+
         // Si se actualiza el dia de restablecimiento, guardarlo en el usuario
         if ($request->has('dia_restablecimiento_servicios')) {
-            $request->user()->update([
+            $user->update([
                 'dia_restablecimiento_servicios' => $request->dia_restablecimiento_servicios
             ]);
         }
@@ -48,8 +53,8 @@ class ConfiguracionController extends Controller
 
         // Validar que los porcentajes sumen 100
         if (isset($configuraciones['porcentaje_persona_1']) || isset($configuraciones['porcentaje_persona_2'])) {
-            $porcentaje1 = $configuraciones['porcentaje_persona_1'] ?? Configuracion::porcentajePersona1();
-            $porcentaje2 = $configuraciones['porcentaje_persona_2'] ?? Configuracion::porcentajePersona2();
+            $porcentaje1 = $configuraciones['porcentaje_persona_1'] ?? Configuracion::porcentajePersona1($userId);
+            $porcentaje2 = $configuraciones['porcentaje_persona_2'] ?? Configuracion::porcentajePersona2($userId);
 
             if (($porcentaje1 + $porcentaje2) != 100) {
                 return response()->json([
@@ -62,19 +67,19 @@ class ConfiguracionController extends Controller
             }
 
             // Sincronizar porcentaje_persona_2 con la tabla users para calculos de deuda
-            $request->user()->update([
+            $user->update([
                 'porcentaje_persona_2' => $porcentaje2
             ]);
         }
 
         foreach ($configuraciones as $clave => $valor) {
-            Configuracion::establecer($clave, (string) $valor);
+            Configuracion::establecer($userId, $clave, (string) $valor);
         }
 
         return response()->json([
             'success' => true,
-            'data' => Configuracion::todas(),
-            'message' => 'Configuración actualizada correctamente'
+            'data' => Configuracion::todas($userId),
+            'message' => 'Configuracion actualizada correctamente'
         ]);
     }
 }

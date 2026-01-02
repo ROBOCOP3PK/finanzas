@@ -300,13 +300,14 @@ class AuthController extends Controller
     }
 
     /**
-     * Crear categorias, medios de pago y servicios por defecto para un nuevo usuario
+     * Crear categorias, medios de pago, servicios y configuracion por defecto para un nuevo usuario
      */
     private function crearDatosPorDefecto(User $user): void
     {
         \Database\Seeders\CategoriaSeeder::crearParaUsuario($user->id);
         \Database\Seeders\MedioPagoSeeder::crearParaUsuario($user->id);
         \Database\Seeders\ServicioSeeder::crearParaUsuario($user->id);
+        $this->crearConfiguracionPorDefecto($user->id);
     }
 
     /**
@@ -367,7 +368,7 @@ class AuthController extends Controller
         $user->servicios()->delete();
 
         // Restablecer configuracion a valores por defecto
-        $this->restablecerConfiguracion();
+        $this->restablecerConfiguracion($user->id);
 
         // Recrear datos por defecto
         $this->crearDatosPorDefecto($user);
@@ -380,7 +381,19 @@ class AuthController extends Controller
     /**
      * Restablecer configuracion a valores por defecto
      */
-    private function restablecerConfiguracion(): void
+    private function restablecerConfiguracion(int $userId): void
+    {
+        // Eliminar configuraciones del usuario
+        \App\Models\Configuracion::where('user_id', $userId)->delete();
+
+        // Crear configuraciones por defecto
+        $this->crearConfiguracionPorDefecto($userId);
+    }
+
+    /**
+     * Crear configuracion por defecto para un usuario
+     */
+    private function crearConfiguracionPorDefecto(int $userId): void
     {
         $configuracionesPorDefecto = [
             'nombre_persona_1' => 'Yo',
@@ -389,10 +402,11 @@ class AuthController extends Controller
             'porcentaje_persona_2' => '50',
             'divisa' => 'COP',
             'formato_divisa' => 'punto',
+            'tema' => 'system',
         ];
 
         foreach ($configuracionesPorDefecto as $clave => $valor) {
-            \App\Models\Configuracion::establecer($clave, $valor);
+            \App\Models\Configuracion::establecer($userId, $clave, $valor);
         }
     }
 }

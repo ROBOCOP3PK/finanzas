@@ -10,7 +10,10 @@ export const useSharedDashboardStore = defineStore('sharedDashboard', {
         // Datos del dashboard
         deudaPersona2: 0,
         gastoMesActual: 0,
-        porcentajePersona2: 40,
+        porcentajePersona1: 50,
+        porcentajePersona2: 50,
+        nombrePersona1: '',
+        nombrePersona2: '',
         resumenMes: {
             mes: null,
             anio: null,
@@ -65,7 +68,27 @@ export const useSharedDashboardStore = defineStore('sharedDashboard', {
     getters: {
         hasData: (state) => state.owner !== null,
         ownerName: (state) => state.owner?.name || '',
-        hayMas: (state) => state.movimientosMeta.current_page < state.movimientosMeta.last_page
+        hayMas: (state) => state.movimientosMeta.current_page < state.movimientosMeta.last_page,
+
+        // Tipos de gasto basados en la configuracion del propietario
+        tiposGasto: (state) => {
+            const tipos = [{ value: 'personal', label: state.nombrePersona1 || 'Persona 1' }];
+            if (state.nombrePersona2 && state.nombrePersona2.trim() !== '') {
+                tipos.push({ value: 'pareja', label: state.nombrePersona2 });
+                tipos.push({ value: 'compartido', label: `${state.porcentajePersona1}/${state.porcentajePersona2}` });
+            }
+            return tipos;
+        },
+
+        // Obtener nombre del tipo
+        getNombreTipo: (state) => (tipo) => {
+            const tipos = {
+                'personal': state.nombrePersona1 || 'Persona 1',
+                'pareja': state.nombrePersona2 || 'Persona 2',
+                'compartido': `${state.porcentajePersona1}/${state.porcentajePersona2}`
+            };
+            return tipos[tipo] || tipo;
+        }
     },
 
     actions: {
@@ -87,7 +110,10 @@ export const useSharedDashboardStore = defineStore('sharedDashboard', {
                 this.owner = data.owner;
                 this.deudaPersona2 = data.deuda_persona_2;
                 this.gastoMesActual = data.gasto_mes_actual;
-                this.porcentajePersona2 = data.porcentaje_persona_2;
+                this.porcentajePersona1 = data.porcentaje_persona_1 || 50;
+                this.porcentajePersona2 = data.porcentaje_persona_2 || 50;
+                this.nombrePersona1 = data.nombre_persona_1 || data.owner?.name || 'Persona 1';
+                this.nombrePersona2 = data.nombre_persona_2 || '';
                 this.resumenMes = data.resumen_mes;
                 this.porCategoria = data.por_categoria;
                 this.ultimosMovimientos = data.ultimos_movimientos;

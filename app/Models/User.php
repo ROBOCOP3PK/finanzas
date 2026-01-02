@@ -98,6 +98,18 @@ class User extends Authenticatable
         return $this->hasMany(Servicio::class);
     }
 
+    // Mis configuraciones
+    public function configuraciones(): HasMany
+    {
+        return $this->hasMany(Configuracion::class);
+    }
+
+    // Obtener una configuracion especifica
+    public function getConfiguracion(string $clave, $default = null)
+    {
+        return Configuracion::obtener($this->id, $clave, $default);
+    }
+
     // ========================================
     // RELACIONES DE COMPARTICION DE DATOS
     // ========================================

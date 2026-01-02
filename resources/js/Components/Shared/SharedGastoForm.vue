@@ -79,13 +79,13 @@
             </button>
             <div v-show="showOpciones" class="p-3 space-y-3 border-t border-gray-200 dark:border-gray-700">
                 <!-- Tipo de gasto - solo mostrar si hay mas de un tipo disponible -->
-                <div v-if="tiposGasto.length > 1">
+                <div v-if="props.tiposGasto.length > 1">
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Tipo de gasto
                     </label>
                     <div class="grid grid-cols-3 gap-2">
                         <button
-                            v-for="tipo in tiposGasto"
+                            v-for="tipo in props.tiposGasto"
                             :key="tipo.value"
                             type="button"
                             @click="form.tipo = tipo.value"
@@ -194,10 +194,9 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, onMounted } from 'vue';
 import { CreditCardIcon, ChevronDownIcon, XCircleIcon } from '@heroicons/vue/24/outline';
 import { useCurrency } from '../../Composables/useCurrency';
-import { useConfigStore } from '../../Stores/config';
 
 const props = defineProps({
     categorias: {
@@ -208,12 +207,15 @@ const props = defineProps({
         type: Array,
         default: () => []
     },
+    tiposGasto: {
+        type: Array,
+        default: () => [{ value: 'personal', label: 'Mio' }]
+    },
     loading: Boolean
 });
 
 const emit = defineEmits(['submit']);
 
-const configStore = useConfigStore();
 const { formatInputValue, parseFormattedValue, divisaInfo } = useCurrency();
 
 const showOpciones = ref(false);
@@ -228,8 +230,6 @@ const form = ref({
 });
 
 const valorFormateado = ref('');
-
-const tiposGasto = computed(() => configStore.tiposGasto);
 
 // Validacion: categoria y valor son obligatorios
 const isValid = computed(() => {

@@ -24,6 +24,7 @@
                         <SharedGastoForm
                             :categorias="sharedDashboard.categorias"
                             :mediosPago="sharedDashboard.mediosPago"
+                            :tiposGasto="sharedDashboard.tiposGasto"
                             :loading="dataShareStore.loading"
                             @submit="crearSolicitud"
                         />
@@ -56,19 +57,19 @@
                         <h3 class="font-medium text-gray-900 dark:text-white mb-3">Resumen del Mes</h3>
                         <div class="space-y-2">
                             <div class="flex justify-between text-sm">
-                                <span class="text-gray-600 dark:text-gray-400">{{ configStore.getNombreTipo('personal') }}</span>
+                                <span class="text-gray-600 dark:text-gray-400">{{ sharedDashboard.getNombreTipo('personal') }}</span>
                                 <span class="text-gray-900 dark:text-white font-medium">
                                     {{ formatCurrency(sharedDashboard.resumenMes.gastos_personal || 0) }}
                                 </span>
                             </div>
                             <div class="flex justify-between text-sm">
-                                <span class="text-gray-600 dark:text-gray-400">{{ configStore.getNombreTipo('pareja') }}</span>
+                                <span class="text-gray-600 dark:text-gray-400">{{ sharedDashboard.getNombreTipo('pareja') }}</span>
                                 <span class="text-gray-900 dark:text-white font-medium">
                                     {{ formatCurrency(sharedDashboard.resumenMes.gastos_pareja || 0) }}
                                 </span>
                             </div>
                             <div class="flex justify-between text-sm">
-                                <span class="text-gray-600 dark:text-gray-400">{{ configStore.getNombreTipo('compartido') }}</span>
+                                <span class="text-gray-600 dark:text-gray-400">{{ sharedDashboard.getNombreTipo('compartido') }}</span>
                                 <span class="text-gray-900 dark:text-white font-medium">
                                     {{ formatCurrency(sharedDashboard.resumenMes.gastos_compartido || 0) }}
                                 </span>
@@ -196,7 +197,7 @@
                                             'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400': mov.tipo === 'compartido'
                                         }"
                                     >
-                                        {{ configStore.getNombreTipo(mov.tipo) }}
+                                        {{ sharedDashboard.getNombreTipo(mov.tipo) }}
                                     </span>
                                 </div>
                             </div>
@@ -305,7 +306,6 @@ import SharedGastoForm from '../../Components/Shared/SharedGastoForm.vue';
 import Toast from '../../Components/UI/Toast.vue';
 import { useDataShareStore } from '../../Stores/dataShare';
 import { useSharedDashboardStore } from '../../Stores/sharedDashboard';
-import { useConfigStore } from '../../Stores/config';
 import { useCurrency } from '../../Composables/useCurrency';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
@@ -314,7 +314,6 @@ const route = useRoute();
 const router = useRouter();
 const dataShareStore = useDataShareStore();
 const sharedDashboard = useSharedDashboardStore();
-const configStore = useConfigStore();
 const { formatCurrency } = useCurrency();
 
 const shareId = ref(route.params.shareId);
@@ -438,7 +437,7 @@ const generarPDF = async () => {
             new Date(g.fecha).toLocaleDateString('es-CO'),
             g.concepto,
             g.categoria?.nombre || '-',
-            configStore.getNombreTipo(g.tipo),
+            sharedDashboard.getNombreTipo(g.tipo),
             formatearMoneda(g.valor)
         ]);
 
@@ -484,7 +483,7 @@ const exportarCSV = async () => {
             const fecha = new Date(g.fecha).toLocaleDateString('es-CO');
             const concepto = `"${(g.concepto || '').replace(/"/g, '""')}"`;
             const categoria = g.categoria?.nombre || '-';
-            const tipo = configStore.getNombreTipo(g.tipo);
+            const tipo = sharedDashboard.getNombreTipo(g.tipo);
             const valor = g.valor;
             csv += `${fecha},${concepto},${categoria},${tipo},${valor}\n`;
         });

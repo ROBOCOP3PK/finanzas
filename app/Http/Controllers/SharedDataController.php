@@ -33,7 +33,10 @@ class SharedDataController extends Controller
                 ],
                 'deuda_persona_2' => $deudaPersona2,
                 'gasto_mes_actual' => $gastoMes,
+                'porcentaje_persona_1' => (float) $owner->getConfiguracion('porcentaje_persona_1', 50),
                 'porcentaje_persona_2' => $owner->porcentaje_persona_2,
+                'nombre_persona_1' => $owner->getConfiguracion('nombre_persona_1', $owner->name),
+                'nombre_persona_2' => $owner->getConfiguracion('nombre_persona_2', ''),
                 'resumen_mes' => $resumenMes,
                 'por_categoria' => $porCategoria,
                 'ultimos_movimientos' => $ultimosMovimientos
