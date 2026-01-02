@@ -8,7 +8,7 @@
             @share="mostrarModalCompartir = true"
         />
 
-        <div class="p-4 pb-24">
+        <div class="p-4 pb-8">
             <!-- Loading -->
             <div v-if="sharedDashboard.loading && !sharedDashboard.hasData" class="flex justify-center py-12">
                 <div class="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full"></div>
@@ -240,7 +240,7 @@
             class="fixed inset-0 z-50 flex items-end justify-center bg-black/50"
             @click.self="mostrarModalCompartir = false"
         >
-            <div class="bg-white dark:bg-gray-800 rounded-t-2xl w-full max-w-lg p-4 pb-8 safe-area-bottom animate-slide-up">
+            <div class="bg-white dark:bg-gray-800 rounded-t-2xl w-full max-w-lg p-4 pb-10 safe-area-bottom animate-slide-up">
                 <div class="flex items-center justify-between mb-4">
                     <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Compartir</h3>
                     <button
