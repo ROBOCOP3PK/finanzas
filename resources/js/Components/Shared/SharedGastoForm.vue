@@ -194,7 +194,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { CreditCardIcon, ChevronDownIcon, XCircleIcon } from '@heroicons/vue/24/outline';
 import { useCurrency } from '../../Composables/useCurrency';
 
