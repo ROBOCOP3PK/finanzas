@@ -464,7 +464,7 @@
                     <Button
                         @click="guardarGastosCompartidos"
                         :loading="guardandoCompartidos"
-                        :disabled="tieneUsuario2Form && formCompartidos.porcentaje_persona_1 + formCompartidos.porcentaje_persona_2 !== 100"
+                        :disabled="botonCompartidosDisabled"
                         class="w-full"
                     >
                         Guardar configuracion
@@ -1658,7 +1658,16 @@ const formCompartidos = reactive({
 const guardandoCompartidos = ref(false);
 
 const tieneUsuario2Form = computed(() => {
-    return (formCompartidos.nombre_persona_2 || '').trim().length > 0;
+    const nombre = formCompartidos.nombre_persona_2;
+    if (!nombre) return false;
+    return nombre.trim().length > 0;
+});
+
+const botonCompartidosDisabled = computed(() => {
+    // Si no hay usuario 2, el boton siempre esta habilitado
+    if (!tieneUsuario2Form.value) return false;
+    // Si hay usuario 2, validar que los porcentajes sumen 100
+    return formCompartidos.porcentaje_persona_1 + formCompartidos.porcentaje_persona_2 !== 100;
 });
 
 const ajustarPorcentaje1 = () => {
