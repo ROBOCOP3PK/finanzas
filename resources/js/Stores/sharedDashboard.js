@@ -75,17 +75,21 @@ export const useSharedDashboardStore = defineStore('sharedDashboard', {
             const tipos = [{ value: 'personal', label: state.nombrePersona1 || 'Persona 1' }];
             if (state.nombrePersona2 && state.nombrePersona2.trim() !== '') {
                 tipos.push({ value: 'pareja', label: state.nombrePersona2 });
-                tipos.push({ value: 'compartido', label: `${state.porcentajePersona1}/${state.porcentajePersona2}` });
+                const p1 = Math.round(state.porcentajePersona1);
+                const p2 = Math.round(state.porcentajePersona2);
+                tipos.push({ value: 'compartido', label: `${p1}/${p2}` });
             }
             return tipos;
         },
 
         // Obtener nombre del tipo
         getNombreTipo: (state) => (tipo) => {
+            const p1 = Math.round(state.porcentajePersona1);
+            const p2 = Math.round(state.porcentajePersona2);
             const tipos = {
                 'personal': state.nombrePersona1 || 'Persona 1',
                 'pareja': state.nombrePersona2 || 'Persona 2',
-                'compartido': `${state.porcentajePersona1}/${state.porcentajePersona2}`
+                'compartido': `${p1}/${p2}`
             };
             return tipos[tipo] || tipo;
         }

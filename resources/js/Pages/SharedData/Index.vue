@@ -175,9 +175,9 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="text-right">
+                                <div class="text-right flex-shrink-0">
                                     <p
-                                        class="font-bold"
+                                        class="font-bold whitespace-nowrap"
                                         :class="mov.tipo_movimiento === 'abono' ? 'text-green-600 dark:text-green-400' : 'text-gray-900 dark:text-white'"
                                     >
                                         {{ mov.tipo_movimiento === 'abono' ? '+' : '' }}{{ formatCurrency(mov.valor) }}

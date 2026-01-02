@@ -392,7 +392,7 @@
                     </div>
 
                     <!-- Porcentajes (solo si hay usuario 2) -->
-                    <div v-if="formCompartidos.nombre_persona_2 && formCompartidos.nombre_persona_2.trim()" class="mb-4">
+                    <div v-if="tieneUsuario2Form" class="mb-4">
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                             Porcentajes de division
                         </label>
@@ -437,7 +437,7 @@
                     </div>
 
                     <!-- Vista previa (solo si hay usuario 2) -->
-                    <div v-if="formCompartidos.nombre_persona_2 && formCompartidos.nombre_persona_2.trim()" class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 mb-4">
+                    <div v-if="tieneUsuario2Form" class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 mb-4">
                         <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">Vista previa:</p>
                         <p class="text-sm text-gray-900 dark:text-white">
                             Si registras un gasto compartido de <strong>$100.000</strong>:
@@ -455,7 +455,7 @@
                     </div>
 
                     <!-- Mensaje cuando es uso individual -->
-                    <div v-if="!formCompartidos.nombre_persona_2 || !formCompartidos.nombre_persona_2.trim()" class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 mb-4">
+                    <div v-if="!tieneUsuario2Form" class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 mb-4">
                         <p class="text-sm text-blue-700 dark:text-blue-300">
                             Modo individual: Todos los gastos seran registrados solo para ti.
                         </p>
@@ -1658,7 +1658,7 @@ const formCompartidos = reactive({
 const guardandoCompartidos = ref(false);
 
 const tieneUsuario2Form = computed(() => {
-    return formCompartidos.nombre_persona_2 && formCompartidos.nombre_persona_2.trim() !== '';
+    return (formCompartidos.nombre_persona_2 || '').trim().length > 0;
 });
 
 const ajustarPorcentaje1 = () => {
