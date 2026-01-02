@@ -1679,8 +1679,17 @@ const ajustarPorcentaje2 = () => {
 };
 
 const guardarGastosCompartidos = async () => {
-    // Solo validar porcentajes si hay usuario 2
-    if (tieneUsuario2Form.value && formCompartidos.porcentaje_persona_1 + formCompartidos.porcentaje_persona_2 !== 100) {
+    // Si no hay usuario 2, establecer porcentajes 100/0
+    let porcentaje1 = formCompartidos.porcentaje_persona_1;
+    let porcentaje2 = formCompartidos.porcentaje_persona_2;
+
+    if (!tieneUsuario2Form.value) {
+        porcentaje1 = 100;
+        porcentaje2 = 0;
+        // Actualizar el form tambien
+        formCompartidos.porcentaje_persona_1 = 100;
+        formCompartidos.porcentaje_persona_2 = 0;
+    } else if (porcentaje1 + porcentaje2 !== 100) {
         mostrarToast('Los porcentajes deben sumar 100%', 'error');
         return;
     }
@@ -1689,9 +1698,9 @@ const guardarGastosCompartidos = async () => {
     try {
         await configStore.actualizarGastosCompartidos({
             nombre_persona_1: formCompartidos.nombre_persona_1,
-            nombre_persona_2: formCompartidos.nombre_persona_2,
-            porcentaje_persona_1: formCompartidos.porcentaje_persona_1,
-            porcentaje_persona_2: formCompartidos.porcentaje_persona_2
+            nombre_persona_2: formCompartidos.nombre_persona_2 || '',
+            porcentaje_persona_1: porcentaje1,
+            porcentaje_persona_2: porcentaje2
         });
         mostrarToast('Configuracion de gastos compartidos actualizada');
     } catch (error) {
