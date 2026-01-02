@@ -50,9 +50,6 @@
             :gastosPareja="dashboardStore.resumenMes.gastos_pareja"
             :gastosCompartido="dashboardStore.resumenMes.gastos_compartido"
             :totalAbonos="dashboardStore.resumenMes.total_abonos"
-            :porcentajePersona1="configStore.porcentaje_persona_1"
-            :porcentajePersona2="dashboardStore.porcentajePersona2"
-            :tieneUsuario2="configStore.tieneUsuario2"
         />
 
         <!-- Toast -->
