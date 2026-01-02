@@ -20,7 +20,7 @@ export const useConfigStore = defineStore('config', {
 
         // Tipos de gasto disponibles segun configuracion
         tiposGasto() {
-            const tipos = [{ value: 'personal', label: 'Mio' }];
+            const tipos = [{ value: 'personal', label: this.nombre_persona_1 || 'Persona 1' }];
             if (this.tieneUsuario2) {
                 const p1 = Math.round(this.porcentaje_persona_1);
                 const p2 = Math.round(this.porcentaje_persona_2);

@@ -214,7 +214,7 @@
                         </button>
                     </div>
                     <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                        Por defecto: Mio
+                        Por defecto: {{ configStore.nombre_persona_1 || 'Persona 1' }}
                     </p>
                     <p v-if="errors.tipo" class="mt-1 text-sm text-red-500">{{ errors.tipo }}</p>
                 </div>
